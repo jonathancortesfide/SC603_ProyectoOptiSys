@@ -7,7 +7,11 @@ import {
   IconBan,
   IconStar,
   IconMoodSmile,
-  IconAperture
+  IconAperture,
+  IconSettings,
+  IconShield,
+  IconShieldCheck,
+  IconKey
 } from '@tabler/icons';
 
 const Menuitems = [
@@ -91,7 +95,12 @@ const Menuitems = [
     icon: IconStar,
     href: '/examenes',
   },
-
+  {
+    id: uniqueId(),
+    title: 'Seguridad',
+    icon: IconKey,
+    href: '/seguridad',
+  },
   {
     id: uniqueId(),
     title: 'Chip',
