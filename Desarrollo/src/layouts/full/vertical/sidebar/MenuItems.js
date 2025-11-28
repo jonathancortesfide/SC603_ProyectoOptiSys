@@ -12,6 +12,7 @@ import {
   IconShield,
   IconShieldCheck,
   IconKey
+  , IconCurrencyDollar
 } from '@tabler/icons';
 
 const Menuitems = [
@@ -100,6 +101,20 @@ const Menuitems = [
     title: 'Seguridad',
     icon: IconKey,
     href: '/seguridad',
+  },
+  {
+    id: uniqueId(),
+    title: 'Mantenimientos',
+    icon: IconSettings,
+    href: '/mantenimientos',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Monedas',
+        icon: IconCurrencyDollar,
+        href: '/mantenimientos/moneda',
+      },
+    ],
   },
   {
     id: uniqueId(),

@@ -20,6 +20,8 @@ const Examenes = Loadable(lazy(() => import('../views/examenes/Examenes')));
 
 /* ***Seguridad*** */
 const Seguridad = Loadable(lazy(() => import('../views/seguridad/Seguridad')));
+/* ***Mantenimientos - Moneda*** */
+const Monedas = Loadable(lazy(() => import('../views/mantenimientos/moneda/Monedas')));
 
 // authentication
 const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
@@ -41,6 +43,7 @@ const Router = [
       { path: '/pacientes', exact: true, element: <Pacientes /> },
       { path: '/examenes', exact: true, element: <Examenes /> },
       { path: '/seguridad', exact: true, element: <Seguridad /> },
+      { path: '/mantenimientos/moneda', exact: true, element: <Monedas /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },
