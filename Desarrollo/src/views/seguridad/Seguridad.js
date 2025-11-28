@@ -10,9 +10,12 @@ import {
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../components/shared/ParentCard';
-import ListadoUsuarios from './usuarios/ListadoUsuarios';
-import ListadoRoles from './roles/ListadoRoles';
-import AsignarPermisos from './permisos/AsignarPermisos';
+import { lazy } from 'react';
+import Loadable from '../../layouts/full/shared/loadable/Loadable';
+
+const ListadoUsuarios = Loadable(lazy(() => import('./usuarios/ListadoUsuarios')));
+const ListadoRoles = Loadable(lazy(() => import('./roles/ListadoRoles')));
+const AsignarPermisos = Loadable(lazy(() => import('./permisos/AsignarPermisos')));
 
 const TabPanel = (props) => {
     const { children, value, index, ...other } = props;

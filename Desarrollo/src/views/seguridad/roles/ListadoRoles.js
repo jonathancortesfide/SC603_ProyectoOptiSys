@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Box,
     Button,
@@ -9,6 +9,7 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    TablePagination,
     Paper,
     IconButton,
     Stack,
@@ -29,6 +30,8 @@ const ListadoRoles = () => {
     const [rolSeleccionado, setRolSeleccionado] = useState(null);
     const [modoEdicion, setModoEdicion] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
         cargarRoles();
@@ -79,9 +82,16 @@ const ListadoRoles = () => {
         }
     };
 
-    const rolesFiltrados = roles.filter(rol =>
-        rol.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const rolesFiltrados = useMemo(() => {
+        const term = searchTerm.trim().toLowerCase();
+        if (!term) return roles;
+        return roles.filter(rol => rol.nombre?.toLowerCase().includes(term));
+    }, [roles, searchTerm]);
+
+    const rolesPaginados = useMemo(() => {
+        const start = page * rowsPerPage;
+        return rolesFiltrados.slice(start, start + rowsPerPage);
+    }, [rolesFiltrados, page, rowsPerPage]);
 
     if (loading) {
         return (
@@ -132,7 +142,7 @@ const ListadoRoles = () => {
                     </TableHead>
                     <TableBody>
                         {rolesFiltrados.length > 0 ? (
-                            rolesFiltrados.map((rol) => (
+                            rolesPaginados.map((rol) => (
                                 <TableRow key={rol.id} hover>
                                     <TableCell>{rol.nombre}</TableCell>
                                     <TableCell>{rol.descripcion || '-'}</TableCell>
@@ -168,6 +178,16 @@ const ListadoRoles = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <TablePagination
+                component="div"
+                count={rolesFiltrados.length}
+                page={page}
+                onPageChange={(event, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                rowsPerPageOptions={[5,10,25,50]}
+            />
 
             {/* Dialog Formulario Rol */}
             <Dialog open={openDialog} onClose={handleCerrarFormulario} maxWidth="md" fullWidth>

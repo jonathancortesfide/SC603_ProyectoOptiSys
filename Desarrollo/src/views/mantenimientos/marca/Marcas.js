@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Dialog, Stack, TextField, CircularProgress, Alert } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Dialog, Stack, TextField, CircularProgress, Alert, TablePagination } from '@mui/material';
 import PageContainer from '../../../components/container/PageContainer';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
@@ -14,6 +14,9 @@ const Marcas = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [modoEdicion, setModoEdicion] = useState(false);
     const [marcaSeleccionada, setMarcaSeleccionada] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => { cargarMarcas(); }, []);
 
@@ -59,7 +62,7 @@ const Marcas = () => {
             <ParentCard title="Marcas">
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
-                    <TextField placeholder="Buscar..." size="small" sx={{ width: 300 }} />
+                    <TextField placeholder="Buscar..." size="small" sx={{ width: 300 }} value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }} />
                     <Button variant="contained" startIcon={<IconPlus />} onClick={() => handleAbrirFormulario()}>Crear Marca</Button>
                 </Stack>
 
@@ -72,17 +75,24 @@ const Marcas = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {marcas.length > 0 ? marcas.map(m => (
-                                <TableRow key={m.id} hover>
-                                    <TableCell>{m.descripcion}</TableCell>
-                                    <TableCell align="center">
-                                        <Stack direction="row" spacing={1} justifyContent="center">
-                                            <Button size="small" color="primary" onClick={() => handleAbrirFormulario(m)} startIcon={<IconEdit />}>Editar</Button>
-                                            <Button size="small" color="error" onClick={() => handleEliminar(m)} startIcon={<IconTrash />}>Eliminar</Button>
-                                        </Stack>
-                                    </TableCell>
-                                </TableRow>
-                            )) : (
+                            {marcas.length > 0 ? (
+                                (() => {
+                                    const term = searchTerm.trim().toLowerCase();
+                                    const filtered = term ? marcas.filter(x => x.descripcion?.toLowerCase().includes(term)) : marcas;
+                                    const start = page * rowsPerPage;
+                                    return filtered.slice(start, start + rowsPerPage).map(m => (
+                                        <TableRow key={m.id} hover>
+                                            <TableCell>{m.descripcion}</TableCell>
+                                            <TableCell align="center">
+                                                <Stack direction="row" spacing={1} justifyContent="center">
+                                                    <Button size="small" color="primary" onClick={() => handleAbrirFormulario(m)} startIcon={<IconEdit />}>Editar</Button>
+                                                    <Button size="small" color="error" onClick={() => handleEliminar(m)} startIcon={<IconTrash />}>Eliminar</Button>
+                                                </Stack>
+                                            </TableCell>
+                                        </TableRow>
+                                    ));
+                                })()
+                            ) : (
                                 <TableRow>
                                     <TableCell colSpan={2} align="center">No hay marcas</TableCell>
                                 </TableRow>
@@ -91,9 +101,19 @@ const Marcas = () => {
                     </Table>
                 </TableContainer>
 
-                <Dialog open={openDialog} onClose={handleCerrarFormulario} maxWidth="sm" fullWidth>
-                    <FormularioMarca marca={marcaSeleccionada} modoEdicion={modoEdicion} onGuardar={handleGuardar} onCancel={handleCerrarFormulario} />
-                </Dialog>
+                <TablePagination
+                    component="div"
+                    count={(searchTerm.trim() ? marcas.filter(x => x.descripcion?.toLowerCase().includes(searchTerm.trim().toLowerCase())) : marcas).length}
+                    page={page}
+                    onPageChange={(event, newPage) => setPage(newPage)}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                    rowsPerPageOptions={[5,10,25,50]}
+                />
+
+                    <Dialog open={openDialog} onClose={handleCerrarFormulario} maxWidth="sm" fullWidth>
+                        <FormularioMarca marca={marcaSeleccionada} modoEdicion={modoEdicion} onGuardar={handleGuardar} onCancel={handleCerrarFormulario} />
+                    </Dialog>
             </ParentCard>
         </PageContainer>
     );

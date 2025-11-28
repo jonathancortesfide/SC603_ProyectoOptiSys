@@ -24,32 +24,44 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hi
   };
 
   // menu collapse for sub-levels
+  // childActive: true when the current route is a child of this menu (e.g. /mantenimientos/moneda)
+  const childActive = pathWithoutLastPart === menu.href;
+
+  // If the user navigates away from this family's path, collapse the group.
   React.useEffect(() => {
-    setOpen(false);
-    menu.children.forEach((item) => {
-      if (item.href === pathname) {
-        setOpen(true);
-      }
-    });
-  }, [pathname, menu.children]);
+    if (!pathname.startsWith(menu.href)) {
+      setOpen(false);
+    }
+  }, [pathname, menu.href]);
   const ListItemStyled = styled(ListItem)(() => ({
     marginBottom: '2px',
     padding: '8px 10px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
-    backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
+      // Use the same solid color (#5D87FF) when the group is open or a child route is active.
+      backgroundColor: (open && level < 2) || childActive ? '#5D87FF' : '',
+      // Ensure MUI selected class uses solid color by default, but allow hover
+      // to show a lighter background for visual feedback.
+      '&.Mui-selected': {
+        backgroundColor: '#5D87FF',
+        color: 'white',
+      },
+      '&.Mui-selected:hover': {
+      backgroundColor: theme.palette.primary.light,
+      color: theme.palette.primary.main,
+    },
     whiteSpace: 'nowrap',
     '&:hover': {
-      backgroundColor: pathname.includes(menu.href) || open
-        ? theme.palette.primary.main
-        : theme.palette.primary.light,
-      color: pathname.includes(menu.href) || open ? 'white' : theme.palette.primary.main,
+      // On hover show the same light background and primary text for consistency
+      backgroundColor: theme.palette.primary.light,
+      color: theme.palette.primary.main,
     },
     color:
-      open && level < 2
+      (open && level < 2) || childActive
         ? 'white'
-        : `inherit` && level > 1 && open
+        : level > 1 && open
         ? theme.palette.primary.main
         : theme.palette.text.secondary,
+    fontWeight: childActive ? 600 : 'normal',
     borderRadius: `${customizer.borderRadius}px`,
   }));
   
@@ -86,7 +98,7 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, onClick, hi
         button
         component="li"
         onClick={handleClick}
-        selected={pathWithoutLastPart === menu.href}
+        selected={open}
       >
         <ListItemIcon
           sx={{

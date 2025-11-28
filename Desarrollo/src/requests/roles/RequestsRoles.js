@@ -28,12 +28,21 @@ axios.interceptors.response.use(async (response) => {
     return Promise.reject(error);
 });
 
+// Simple in-memory cache for roles list
+let _cacheRoles = { data: null, ts: 0 };
+const _CACHE_TTL = 30 * 1000; // 30 seconds
+
 const obtenerListaDeRoles = async () => {
     const urlApi = `${apiObtenerRoles}`;
+    const now = Date.now();
+    if (_cacheRoles.data && (now - _cacheRoles.ts) < _CACHE_TTL) {
+        return _cacheRoles.data;
+    }
     try {
         return axios.get(urlApi)
             .then(respuesta => {
                 if (respuesta.status === 200) {
+                    _cacheRoles = { data: respuesta.data, ts: Date.now() };
                     return respuesta.data;
                 }
             })
@@ -80,6 +89,7 @@ const crearRol = async (rol) => {
             .then(respuesta => {
                 if (respuesta.status === 200 || respuesta.status === 201) {
                     dataRespuesta = respuesta.data;
+                    _cacheRoles = { data: null, ts: 0 };
                     return dataRespuesta;
                 }
             })
@@ -105,6 +115,7 @@ const actualizarRol = async (rolId, rol) => {
             .then(respuesta => {
                 if (respuesta.status === 200) {
                     dataRespuesta = respuesta.data;
+                    _cacheRoles = { data: null, ts: 0 };
                     return dataRespuesta;
                 }
             })
@@ -129,6 +140,7 @@ const eliminarRol = async (rolId) => {
             .then(respuesta => {
                 if (respuesta.status === 200) {
                     dataRespuesta = respuesta.data;
+                    _cacheRoles = { data: null, ts: 0 };
                     return dataRespuesta;
                 }
             })

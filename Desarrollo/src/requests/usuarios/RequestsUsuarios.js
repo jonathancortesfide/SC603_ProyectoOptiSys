@@ -33,12 +33,21 @@ axios.interceptors.response.use(async (response) => {
     return Promise.reject(error);
 });
 
+// Simple in-memory cache for list endpoints
+let _cacheUsuarios = { data: null, ts: 0 };
+const _CACHE_TTL = 30 * 1000; // 30 seconds
+
 const obtenerListaDeUsuarios = async () => {
     const urlApi = `${apiObtenerUsuarios}`;
+    const now = Date.now();
+    if (_cacheUsuarios.data && (now - _cacheUsuarios.ts) < _CACHE_TTL) {
+        return _cacheUsuarios.data;
+    }
     try {
         return axios.get(urlApi)
             .then(respuesta => {
                 if (respuesta.status === 200) {
+                    _cacheUsuarios = { data: respuesta.data, ts: Date.now() };
                     return respuesta.data;
                 }
             })
@@ -109,6 +118,8 @@ const crearUsuario = async (usuario) => {
             .then(respuesta => {
                 if (respuesta.status === 200 || respuesta.status === 201) {
                     dataRespuesta = respuesta.data;
+                    // invalidate cache
+                    _cacheUsuarios = { data: null, ts: 0 };
                     return dataRespuesta;
                 }
             })
@@ -135,6 +146,7 @@ const actualizarUsuario = async (usuarioId, usuario) => {
             .then(respuesta => {
                 if (respuesta.status === 200) {
                     dataRespuesta = respuesta.data;
+                    _cacheUsuarios = { data: null, ts: 0 };
                     return dataRespuesta;
                 }
             })
@@ -188,6 +200,7 @@ const eliminarUsuario = async (usuarioId) => {
             .then(respuesta => {
                 if (respuesta.status === 200) {
                     dataRespuesta = respuesta.data;
+                    _cacheUsuarios = { data: null, ts: 0 };
                     return dataRespuesta;
                 }
             })

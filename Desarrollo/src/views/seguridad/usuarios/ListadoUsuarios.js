@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Box,
     Button,
@@ -12,6 +12,7 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    TablePagination,
     Paper,
     IconButton,
     Chip,
@@ -35,6 +36,8 @@ const ListadoUsuarios = () => {
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
     const [modoEdicion, setModoEdicion] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
         cargarUsuarios();
@@ -106,11 +109,20 @@ const ListadoUsuarios = () => {
         }
     };
 
-    const usuariosFiltrados = usuarios.filter(usuario =>
-        usuario.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        usuario.login?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        usuario.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const usuariosFiltrados = useMemo(() => {
+        const term = searchTerm.trim().toLowerCase();
+        if (!term) return usuarios;
+        return usuarios.filter(usuario =>
+            usuario.nombre?.toLowerCase().includes(term) ||
+            usuario.login?.toLowerCase().includes(term) ||
+            usuario.email?.toLowerCase().includes(term)
+        );
+    }, [usuarios, searchTerm]);
+
+    const usuariosPaginados = useMemo(() => {
+        const start = page * rowsPerPage;
+        return usuariosFiltrados.slice(start, start + rowsPerPage);
+    }, [usuariosFiltrados, page, rowsPerPage]);
 
     if (loading) {
         return (
@@ -168,7 +180,7 @@ const ListadoUsuarios = () => {
                     </TableHead>
                     <TableBody>
                         {usuariosFiltrados.length > 0 ? (
-                            usuariosFiltrados.map((usuario) => (
+                            usuariosPaginados.map((usuario) => (
                                 <TableRow key={usuario.id} hover>
                                     <TableCell>{usuario.login}</TableCell>
                                     <TableCell>{usuario.email}</TableCell>
@@ -237,6 +249,16 @@ const ListadoUsuarios = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <TablePagination
+                component="div"
+                count={usuariosFiltrados.length}
+                page={page}
+                onPageChange={(event, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                rowsPerPageOptions={[5,10,25,50]}
+            />
 
             {/* Dialog Formulario Usuario */}
             <Dialog open={openDialog} onClose={handleCerrarFormulario} maxWidth="sm" fullWidth>
