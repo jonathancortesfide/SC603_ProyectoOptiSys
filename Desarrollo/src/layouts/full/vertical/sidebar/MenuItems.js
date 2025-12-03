@@ -13,6 +13,9 @@ import {
   IconShieldCheck,
   IconKey
   , IconCurrencyDollar, IconTag
+  , IconUserCheck,
+  IconUserSearch,
+  IconUsers
 } from '@tabler/icons';
 
 const Menuitems = [
@@ -36,51 +39,8 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Pacientes',
-    icon: IconBoxMultiple,
-    href: '/menulevel/',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Pacientes',
-        icon: IconPoint,
-        href: '/pacientes',
-        permiso: 'usuarios',
-      },
-      {
-        id: uniqueId(),
-        title: 'Level 1.1',
-        icon: IconPoint,
-        href: '/l1.1',
-        children: [
-          {
-            id: uniqueId(),
-            title: 'Level 2',
-            icon: IconPoint,
-            href: '/l2',
-          },
-          {
-            id: uniqueId(),
-            title: 'Level 2.1',
-            icon: IconPoint,
-            href: '/l2.1',
-            children: [
-              {
-                id: uniqueId(),
-                title: 'Level 3',
-                icon: IconPoint,
-                href: '/l3',
-              },
-              {
-                id: uniqueId(),
-                title: 'Level 3.1',
-                icon: IconPoint,
-                href: '/l3.1',
-              },
-            ],
-          },
-        ],
-      },
-    ],
+    icon: IconUsers,
+    href: '/pacientes',
   },
   {
     id: uniqueId(),
