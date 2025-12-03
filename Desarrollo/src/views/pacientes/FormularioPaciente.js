@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import { IconChevronDown } from '@tabler/icons';
 import { AgregarPaciente, obtenerCuentasDePaciente } from '../../requests/pacientes/RequestsPacientes';
-import CuentasPaciente from './CuentasPaciente';
 
 const tiposIdentificacion = [
   { value: 'fisica', label: 'Cédula física' },
@@ -97,12 +96,7 @@ const FormularioPaciente = ({ paciente, modoEdicion, onGuardar, onCancel }) => {
     setForm((s) => ({ ...s, cuentas: [...(s.cuentas || []), { moneda: 'CRC', saldo: 0 }] }));
   };
 
-  const [openCuentasDialog, setOpenCuentasDialog] = useState(false);
-  const handleOpenCuentasDialog = () => setOpenCuentasDialog(true);
-  const handleCloseCuentasDialog = () => setOpenCuentasDialog(false);
-  const handleImportCuentas = (cuentas) => {
-    if (Array.isArray(cuentas)) setForm((s) => ({ ...s, cuentas }));
-  };
+  
 
   const handleRemoveCuenta = (index) => () => {
     setForm((s) => ({ ...s, cuentas: (s.cuentas || []).filter((_, i) => i !== index) }));
@@ -320,22 +314,11 @@ const FormularioPaciente = ({ paciente, modoEdicion, onGuardar, onCancel }) => {
               <Button variant="contained" color="primary" onClick={handleAddCuenta}>
                 Agregar cuenta
               </Button>
-              <Button variant="outlined" onClick={handleOpenCuentasDialog}>
-                Abrir diálogo de cuentas
-              </Button>
             </Grid>
           </Grid>
         </AccordionDetails>
       </Accordion>
-
-      {/* Cuentas dialog (sync) */}
-      <CuentasPaciente
-        open={openCuentasDialog}
-        onClose={handleCloseCuentasDialog}
-        paciente={paciente || form}
-        cuentas={form.cuentas}
-        onImport={handleImportCuentas}
-      />
+      
 
       {/* DATOS DE CONTACTO */}
       <Accordion>
