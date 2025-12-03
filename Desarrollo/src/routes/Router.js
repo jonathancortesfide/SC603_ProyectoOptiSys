@@ -24,6 +24,8 @@ const Seguridad = Loadable(lazy(() => import('../views/seguridad/Seguridad')));
 const Monedas = Loadable(lazy(() => import('../views/mantenimientos/moneda/Monedas')));
 /* ***Mantenimientos - Marca*** */
 const Marcas = Loadable(lazy(() => import('../views/mantenimientos/marca/Marcas')));
+/* ***Mantenimientos - Producto*** */
+const Productos = Loadable(lazy(() => import('../views/productos/Productos')));
 
 // authentication
 const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
@@ -47,6 +49,7 @@ const Router = [
       { path: '/seguridad', exact: true, element: <Seguridad /> },
       { path: '/mantenimientos/moneda', exact: true, element: <Monedas /> },
       { path: '/mantenimientos/marca', exact: true, element: <Marcas /> },
+      { path: '/productos', exact: true, element: <Productos /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

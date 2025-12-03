@@ -15,7 +15,10 @@ import {
   , IconCurrencyDollar, IconTag
   , IconUserCheck,
   IconUserSearch,
-  IconUsers
+  IconUsers,
+  IconBarcode,
+  IconBoxMultiple1,
+  IconPackage
 } from '@tabler/icons';
 
 const Menuitems = [
@@ -41,6 +44,12 @@ const Menuitems = [
     title: 'Pacientes',
     icon: IconUsers,
     href: '/pacientes',
+  },
+  {
+    id: uniqueId(),
+    title: 'Productos',
+    icon: IconPackage,
+    href: '/productos',
   },
   {
     id: uniqueId(),

@@ -539,3 +539,63 @@ export const ejemploRolesDelUsuario = [
         descripcion: "Acceso limitado para doctores"
     }
 ];
+
+// ============================================
+// PRODUCTOS (MOCK)
+// ============================================
+export const ejemploListaProductos = [
+    {
+        id: 'prod-001',
+        tipoArticulo: 'Material',
+        tipoImpuesto: 'IVA',
+        porcentajeImpuesto: 13,
+        codigoInterno: 'P-1001',
+        codigoBarras: '789100000001',
+        codigoAuxiliar: 'A-1001',
+        nombre: 'Lente Simple 1.5',
+        codigoCabys: '1234567890',
+        esActivo: true,
+        unidadMedida: 'Unidad',
+        grupo: 'Lentes',
+        marca: 'MarcaA',
+        tipoLente: 'Monofocal',
+        existencia: 25,
+        caracteristicas: 'Lente para corrección simple',
+        foto: '',
+        minimo: 2,
+        esPerecedero: false,
+        costoPromedioPonderado: 5.5,
+        costoUltimaCompra: 6.0,
+        costoFinal: 6.5,
+        listasPrecios: [
+            { nombre: 'Retail', utilidad: 50, precioNeto: 9.75, precioCliente: 11.03 }
+        ]
+    },
+    {
+        id: 'prod-002',
+        tipoArticulo: 'Servicio',
+        tipoImpuesto: 'Exento',
+        porcentajeImpuesto: 0,
+        codigoInterno: 'P-2001',
+        codigoBarras: '',
+        codigoAuxiliar: '',
+        nombre: 'Consulta Oftalmológica',
+        codigoCabys: '0987654321',
+        esActivo: true,
+        unidadMedida: 'Servicio',
+        grupo: 'Servicios',
+        marca: '',
+        tipoLente: '',
+        existencia: 0,
+        caracteristicas: 'Consulta especializada',
+        foto: '',
+        minimo: 0,
+        esPerecedero: false,
+        costoPromedioPonderado: 0,
+        costoUltimaCompra: 0,
+        costoFinal: 0,
+        listasPrecios: [
+            { nombre: 'Standard', utilidad: 100, precioNeto: 30, precioCliente: 33.9 }
+        ]
+    }
+];
