@@ -381,23 +381,149 @@ export const requestAsignarRol = {
 };
 
 // RESPONSE
-export const responseAsignarRol = {
-    Mensaje: "Rol asignado exitosamente",
-    EsCorrecto: true
-};
-
-// POST /api/usuarios-roles/desvincular/
-// REQUEST
-export const requestDesvincularRol = {
-    usuarioId: "user-001",
-    rolId: "role-002"
-};
-
-// RESPONSE
 export const responseDesvincularRol = {
     Mensaje: "Rol desvinculado exitosamente",
     EsCorrecto: true
 };
+
+// ============================================
+// PACIENTES
+// ============================================
+
+export const ejemploListaPacientes = [
+    {
+        id: 'pac-001',
+        numeroDePaciente: 1001,
+        tipoIdentificacion: 'fisica',
+        identificacion: '1-2345-6789',
+        cedula: '1-2345-6789',
+        nombre: 'Carlos Ramírez González',
+        nombreComercial: '',
+        direccion: 'San José, Costa Rica',
+        fechaNacimiento: '1980-03-15',
+        email: 'carlos.ramirez@example.com',
+        email1: 'carlos.ramirez@example.com',
+        email2: '',
+        telefono1: '+506 8888-9999',
+        telefono2: '',
+        sexo: 'M',
+        esEmpadronado: true,
+        listaPrecio: 'Estándar',
+        esActivo: true,
+        codigoActividadEconomica: '',
+        esValidadoHacienda: false,
+        noEnviaFacturaElectronica: false,
+        plazo: 30,
+        limiteCredito: 50000,
+        bloqueoFacturasCredito: false,
+        permitirFacturasSaldoVencido: false,
+        contactoEmergenciaNombre: 'María Ramírez',
+        contactoEmergenciaTelefono: '+506 7777-8888',
+        observaciones: '',
+        bloqueoFacturasContado: false,
+        clasificacion: 'A',
+        nacionalidad: 'Costarricense',
+        formatoFacturaEspecial: false,
+        enviaCumpleanos: true
+    },
+    {
+        id: 'pac-002',
+        numeroDePaciente: 1002,
+        tipoIdentificacion: 'fisica',
+        identificacion: '2-3456-7890',
+        cedula: '2-3456-7890',
+        nombre: 'Ana María Solís Pérez',
+        nombreComercial: '',
+        direccion: 'Heredia, Costa Rica',
+        fechaNacimiento: '1992-07-22',
+        email: 'ana.solis@example.com',
+        email1: 'ana.solis@example.com',
+        email2: 'asolis@work.com',
+        telefono1: '+506 6666-5555',
+        telefono2: '+506 2222-3333',
+        sexo: 'F',
+        esEmpadronado: false,
+        listaPrecio: 'Premium',
+        esActivo: true,
+        codigoActividadEconomica: '',
+        esValidadoHacienda: false,
+        noEnviaFacturaElectronica: false,
+        plazo: 15,
+        limiteCredito: 25000,
+        bloqueoFacturasCredito: false,
+        permitirFacturasSaldoVencido: false,
+        contactoEmergenciaNombre: 'Pedro Solís',
+        contactoEmergenciaTelefono: '+506 5555-4444',
+        observaciones: 'Cliente preferencial',
+        bloqueoFacturasContado: false,
+        clasificacion: 'B',
+        nacionalidad: 'Costarricense',
+        formatoFacturaEspecial: false,
+        enviaCumpleanos: true
+    },
+    {
+        id: 'pac-003',
+        numeroDePaciente: 1003,
+        tipoIdentificacion: 'juridica',
+        identificacion: '3-101-234567',
+        cedula: '3-101-234567',
+        nombre: 'Óptica Visión Clara S.A.',
+        nombreComercial: 'Visión Clara',
+        direccion: 'Cartago, Costa Rica',
+        fechaNacimiento: '',
+        email: 'contacto@visionclara.com',
+        email1: 'contacto@visionclara.com',
+        email2: '',
+        telefono1: '+506 2591-0000',
+        telefono2: '',
+        sexo: '',
+        esEmpadronado: true,
+        listaPrecio: 'Mayoreo',
+        esActivo: true,
+        codigoActividadEconomica: '4774',
+        esValidadoHacienda: true,
+        noEnviaFacturaElectronica: false,
+        plazo: 60,
+        limiteCredito: 100000,
+        bloqueoFacturasCredito: false,
+        permitirFacturasSaldoVencido: true,
+        contactoEmergenciaNombre: 'Roberto Castro',
+        contactoEmergenciaTelefono: '+506 8888-7777',
+        observaciones: 'Empresa cliente corporativo',
+        bloqueoFacturasContado: false,
+        clasificacion: 'A+',
+        nacionalidad: 'Costarricense',
+        formatoFacturaEspecial: true,
+        enviaCumpleanos: false
+    }
+];
+
+// ============================================
+// PACIENTES - CUENTAS (MOCK)
+// ============================================
+
+export const ejemploCuentasPaciente = [
+    {
+        moneda: 'CRC',
+        saldo: 12500.50,
+        facturas: [
+            { noFactura: 'F-1001', noExamen: 'EX-5001', fecha: '2025-10-01', moneda: 'CRC', monto: 2500.50, saldo: 500.50 },
+            { noFactura: 'F-1002', noExamen: 'EX-5002', fecha: '2025-09-15', moneda: 'CRC', monto: 5000.00, saldo: 5000.00 },
+        ],
+        creditos: [
+            { noDocumento: 'C-2001', fecha: '2025-08-01', tipoDocumento: 'Nota de crédito', moneda: 'CRC', monto: 1000.00, saldo: 0.00 },
+            { noDocumento: 'C-2002', fecha: '2025-07-20', tipoDocumento: 'Recibo', moneda: 'CRC', monto: 200.00, saldo: 200.00 },
+        ]
+    },
+    {
+        moneda: 'USD',
+        saldo: 300.00,
+        facturas: [
+            { noFactura: 'F-2001', noExamen: 'EX-6001', fecha: '2025-11-05', moneda: 'USD', monto: 300.00, saldo: 300.00 }
+        ],
+        creditos: []
+    }
+];
 
 // GET /api/usuarios-roles/usuario/{usuarioId}
 // Obtener roles de un usuario

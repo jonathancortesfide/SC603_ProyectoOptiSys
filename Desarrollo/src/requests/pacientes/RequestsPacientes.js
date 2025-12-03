@@ -1,5 +1,7 @@
 import axios from "axios";
 import {apiObtenerPacientes, apiBuscarPacientes, apiAgregarPacientes} from './DireccionesRequest';
+import { apiObtenerCuentasPaciente } from './DireccionesRequest';
+import { ejemploCuentasPaciente, ejemploListaPacientes } from '../../views/seguridad/ejemplosDatos';
 
 axios.interceptors.request.use(async (config) => {
 
@@ -18,21 +20,30 @@ axios.interceptors.response.use(async (response)=> {
     return Promise.reject(error);
 });
 
+let _cachePacientes = { data: null, ts: 0 };
+const _CACHE_TTL = 30 * 1000;
+
 const obtenerListaDePacientes = async () => {
     const urlApi = `${apiObtenerPacientes}`;
+    const now = Date.now();
+    if (_cachePacientes.data && (now - _cachePacientes.ts) < _CACHE_TTL) return _cachePacientes.data;
+    if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploListaPacientes;
     try {
         return axios.get(urlApi)
             .then(respuesta => {
                 if (respuesta.status === 200) {
+                    _cachePacientes = { data: respuesta.data, ts: Date.now() };
                     return respuesta.data;
                 }
             })
             .catch(e => {
                 console.log("Error producido al realizar la petición por medio de Axios al API para el método ConsultarParametrosSolicitudCancelacionOmision. Error: " + e);
+                if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploListaPacientes;
                 return [];
             })
     } catch (error) {
         console.log("Se produjo un error en el método ConsultarParametrosSolicitudCancelacionOmision. Error: " + error);
+        if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploListaPacientes;
         return [];
     }
 }
@@ -67,6 +78,7 @@ const AgregarPaciente = async (paciente) => {
             .then(respuesta => {
                 if (respuesta.status === 200) {
                     dataRespuesta = respuesta.data;
+                    _cachePacientes = { data: null, ts: 0 };
                     return dataRespuesta;
                 }
             })
@@ -83,3 +95,27 @@ const AgregarPaciente = async (paciente) => {
 export {
     obtenerListaDePacientes, BuscarPacientePorNombreOIdentificacion, AgregarPaciente
 };
+
+const obtenerCuentasDePaciente = async (pacienteId) => {
+    const urlApi = `${apiObtenerCuentasPaciente}${pacienteId}`;
+    if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploCuentasPaciente;
+    try {
+        return axios.get(urlApi)
+            .then(respuesta => {
+                if (respuesta.status === 200) {
+                    return respuesta.data;
+                }
+            })
+            .catch(e => {
+                console.log("Error al obtener cuentas de paciente: " + e);
+                if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploCuentasPaciente;
+                return [];
+            })
+    } catch (error) {
+        console.log("Error en obtenerCuentasDePaciente: " + error);
+        if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploCuentasPaciente;
+        return [];
+    }
+};
+
+export { obtenerCuentasDePaciente };
