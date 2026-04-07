@@ -17,12 +17,17 @@ import {
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParendCard';
+import FeedbackDialog from '../../components/shared/FeedbackDialog';
 import { obtenerListaDePacientes, AgregarPaciente, ActualizarPaciente } from '../../requests/pacientes/RequestsPacientes';
 import InformacionBasica from './tabs/InformacionBasica';
+import { getSucursalIdentificador } from '../../utils/sucursal';
 
 const BCrumb = [{ title: 'Gestión de Pacientes' }];
 
+const sucursalIdentificador = getSucursalIdentificador();
+
 const crearPacienteVacio = () => ({
+  noEmpresa: sucursalIdentificador,
   nombre: '',
   cedula: '',
   identificacion: '',
@@ -42,6 +47,7 @@ const crearPacienteVacio = () => ({
 });
 
 const normalizarPacientePayload = (paciente) => ({
+  noEmpresa: paciente.noEmpresa || sucursalIdentificador,
   tipoIdentificacion: paciente.tipoIdentificacion || 'fisica',
   identificacion: paciente.identificacion || paciente.cedula || '',
   cedula: paciente.cedula || paciente.identificacion || '',
@@ -67,6 +73,11 @@ const PacientesUnificado = () => {
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
   const [modoCreacion, setModoCreacion] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [feedback, setFeedback] = useState({ open: false, severity: 'info', title: '', message: '' });
+
+  const mostrarFeedback = (severity, title, message) => {
+    setFeedback({ open: true, severity, title, message });
+  };
 
   useEffect(() => {
     cargarPacientes();
@@ -125,11 +136,11 @@ const PacientesUnificado = () => {
   const handleGuardarCambios = async () => {
     if (!pacienteSeleccionado) return;
     if (!String(pacienteSeleccionado.identificacion || pacienteSeleccionado.cedula || '').trim()) {
-      alert('La identificación es obligatoria');
+      mostrarFeedback('warning', 'Dato requerido', 'La identificación es obligatoria');
       return;
     }
     if (!String(pacienteSeleccionado.nombre || '').trim()) {
-      alert('El nombre es obligatorio');
+      mostrarFeedback('warning', 'Dato requerido', 'El nombre es obligatorio');
       return;
     }
     
@@ -145,15 +156,19 @@ const PacientesUnificado = () => {
       }
       
       if (modoCreacion) {
-        alert('Paciente creado correctamente');
+        mostrarFeedback('success', 'Paciente creado', 'Paciente creado correctamente');
         setModoCreacion(false);
       } else {
-        alert('Cambios guardados correctamente');
+        mostrarFeedback('success', 'Cambios guardados', 'Cambios guardados correctamente');
       }
       
       await cargarPacientes();
     } catch (err) {
-      alert(err?.message || (modoCreacion ? 'Error al crear el paciente' : 'Error al guardar los cambios'));
+      mostrarFeedback(
+        'error',
+        modoCreacion ? 'Error al crear paciente' : 'Error al guardar cambios',
+        err?.message || (modoCreacion ? 'Error al crear el paciente' : 'Error al guardar los cambios')
+      );
     } finally {
       setGuardando(false);
     }
@@ -183,6 +198,13 @@ const PacientesUnificado = () => {
     <PageContainer title="Gestión de Pacientes" description="Gestión de pacientes">
       <ParentCard title="">
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <FeedbackDialog
+          open={feedback.open}
+          onClose={() => setFeedback((prev) => ({ ...prev, open: false }))}
+          severity={feedback.severity}
+          title={feedback.title}
+          message={feedback.message}
+        />
 
         <Grid container spacing={2}>
           {/* Panel izquierdo - Listado de pacientes */}

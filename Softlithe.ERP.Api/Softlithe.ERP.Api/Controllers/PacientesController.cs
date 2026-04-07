@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.AgregarPaciente;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.BuscarPacientePorNombreOIdentificacion;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.ObtenerListaDePacientes;
+using Softlithe.ERP.Abstracciones.BW.Pacientes.ActualizarPaciente;
 using Softlithe.ERP.Abstracciones.Contenedores;
 using Softlithe.ERP.Abstracciones.Contenedores.Pacientes;
 
@@ -10,27 +12,30 @@ namespace Softlithe.ERP.Api.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	[Authorize]
 	public class PacientesController : ControllerBase
 	{
 
 		private readonly IObtenerListaDePacientesBW _obtenerListaDePacientes;
 		private readonly IBuscarPacientePorNombreOIdentificacionBW _buscarPacientePorNombreOIdentificacionBW;
 		private readonly IAgregarPacienteBW _agregarPacienteBW;
+		private readonly IActualizarPacienteBW _actualizarPacienteBW;
 		public PacientesController(IObtenerListaDePacientesBW obtenerListaDePacientes,
 			IBuscarPacientePorNombreOIdentificacionBW buscarPacientePorNombreOIdentificacionBW,
-			IAgregarPacienteBW agregarPacienteBW) 
+			IAgregarPacienteBW agregarPacienteBW,
+			IActualizarPacienteBW actualizarPacienteBW) 
 		{
 			_obtenerListaDePacientes = obtenerListaDePacientes;
 			_buscarPacientePorNombreOIdentificacionBW = buscarPacientePorNombreOIdentificacionBW;
 			_agregarPacienteBW = agregarPacienteBW;
-		}	
+			_actualizarPacienteBW = actualizarPacienteBW;
+		}
 		// GET /Pacientes
 		[HttpGet]
 		public async Task<IActionResult> GetPacientes()
 		{
-			// TODO: Implementar lógica real
-			// var pacientes = await _obtenerListaDePacientes.Obtener();
-			return Ok(new List<PacienteDto>()); // Envelope no requerido para listados
+			var pacientes = await _obtenerListaDePacientes.Obtener();
+			return Ok(pacientes);
 		}
 		// GET /Pacientes/BuscarPacientePorNombreOIdentificacion?parametroDeBusqueda={value}
 		[HttpGet("BuscarPacientePorNombreOIdentificacion")]
@@ -44,17 +49,16 @@ namespace Softlithe.ERP.Api.Controllers
 		[HttpPost("AgregarPaciente")]
 		public async Task<IActionResult> AgregarPaciente([FromBody] PacienteDto elPaciente)
 		{
-			// TODO: Implementar lógica real
-			// var resultado = await _agregarPacienteBW.Agregar(elPaciente);
-			return Ok(new { EsCorrecto = true, Mensaje = "Paciente creado correctamente.", Data = new { numeroDePaciente = 0 } });
+			var resultado = await _agregarPacienteBW.Agregar(elPaciente);
+			return Ok(new { EsCorrecto = true, Mensaje = "Paciente creado correctamente.", Data = new { numeroDePaciente = resultado } });
 		}
 
 		// PUT /Pacientes/{numeroDePaciente}
 		[HttpPut("{numeroDePaciente}")]
 		public async Task<IActionResult> ActualizarPaciente(int numeroDePaciente, [FromBody] PacienteDto elPaciente)
 		{
-			// TODO: Implementar lógica real para actualizar paciente
-			return Ok(new { EsCorrecto = true, Mensaje = "Paciente actualizado." });
+			var resultado = await _actualizarPacienteBW.Actualizar(numeroDePaciente, elPaciente);
+			return Ok(new { EsCorrecto = resultado.EsCorrecto, Mensaje = resultado.Mensaje });
 		}
 
 		// GET /Pacientes/Cuentas?pacienteId={id}

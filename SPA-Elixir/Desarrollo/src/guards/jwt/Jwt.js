@@ -1,7 +1,12 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { decodeToken } from 'react-jwt';
 
+import baseAxios from 'axios';
 import axios from 'src/utils/axios';
+
+const ACCESS_TOKEN_KEY = 'accessToken';
+const USER_KEY = 'usuario';
+let authInterceptorsRegistered = false;
 
 const isValidToken = (accessToken) => {
   if (!accessToken) {
@@ -9,20 +14,75 @@ const isValidToken = (accessToken) => {
   }
 
   const decoded = decodeToken(accessToken);
+  if (!decoded?.exp) {
+    return false;
+  }
 
   const currentTime = Date.now() / 1000;
 
   return decoded.exp > currentTime;
 };
 
-const setSession = (accessToken) => {
-  if (accessToken) {
-    localStorage.setItem('accessToken', accessToken);
-    axios.defaults.headers.common.Authorization = `${accessToken}`;
-  } else {
-    localStorage.removeItem('accessToken');
-    delete axios.defaults.headers.common.Authorization;
+const getStoredUser = () => {
+  try {
+    const rawUser = localStorage.getItem(USER_KEY);
+    return rawUser ? JSON.parse(rawUser) : null;
+  } catch (error) {
+    console.error('No se pudo leer el usuario autenticado.', error);
+    return null;
   }
+};
+
+const getUserFromToken = (accessToken) => {
+  const decoded = decodeToken(accessToken);
+  if (!decoded) return null;
+
+  return {
+    noUsuario: Number(decoded.noUsuario ?? decoded.nameid ?? decoded.sub ?? 0) || 0,
+    nombreUsuario: decoded.unique_name ?? decoded.name ?? '',
+    correo: decoded.email ?? '',
+  };
+};
+
+const clearSession = () => {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  delete axios.defaults.headers.common.Authorization;
+  delete baseAxios.defaults.headers.common.Authorization;
+};
+
+const setSession = (accessToken, user = null) => {
+  if (accessToken) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+
+    const headerValue = `Bearer ${accessToken}`;
+    axios.defaults.headers.common.Authorization = headerValue;
+    baseAxios.defaults.headers.common.Authorization = headerValue;
+  } else {
+    clearSession();
+  }
+};
+
+const registerAuthInterceptors = () => {
+  if (authInterceptorsRegistered) return;
+
+  const handleUnauthorized = (error) => {
+    if (error?.response?.status === 401) {
+      clearSession();
+      if (window.location.pathname !== '/auth/login') {
+        window.location.assign('/auth/login');
+      }
+    }
+
+    return Promise.reject(error);
+  };
+
+  axios.interceptors.response.use((response) => response, handleUnauthorized);
+  baseAxios.interceptors.response.use((response) => response, handleUnauthorized);
+  authInterceptorsRegistered = true;
 };
 
 const sign = (payload, privateKey, header) => {
@@ -66,4 +126,4 @@ const verify = (token, privateKey) => {
   return payload;
 };
 
-export { isValidToken, setSession, sign, verify };
+export { ACCESS_TOKEN_KEY, USER_KEY, clearSession, getStoredUser, getUserFromToken, isValidToken, registerAuthInterceptors, setSession, sign, verify };

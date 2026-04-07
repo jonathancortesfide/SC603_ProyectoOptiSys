@@ -23,22 +23,27 @@ namespace Softlithe.ERP.DA.Monedas.ObtenerTodasLasMonedas
 		{
 			try
 			{
-				List<MonedaResponseDto> laListaDeMonedas = await (from monedas in _contextoBasedeDatos.Monedas
-														  select new MonedaResponseDto
-														  {
-															  idMoneda = 0,
-															  descripcion = monedas.descripcion,
-															  signo = monedas.signo,
-															  identificador = 0,
-															  numeroDeMoneda = monedas.numeroDeMoneda,
-															  url = monedas.url,
-															  activo = false
-														  }).ToListAsync();
+				List<MonedaResponseDto> laListaDeMonedas = await (
+					from ms in _contextoBasedeDatos.MonedasSucursal
+					join m in _contextoBasedeDatos.Monedas
+						on ms.numeroDeMoneda equals m.numeroDeMoneda
+					select new MonedaResponseDto
+					{
+						idMoneda = ms.idMoneda,
+						descripcion = m.descripcion,
+						signo = m.signo,
+						identificador = ms.identificador,
+						numeroDeMoneda = m.numeroDeMoneda,
+						url = m.url,
+						activo = ms.activo
+					}
+				).ToListAsync();
+
 				return laListaDeMonedas;
 			}
 			catch (Exception ex)
 			{
-				throw new Exception("Ocurrió un error al obtener las monedas: " + ex.Message + ". StackTrace: " + ex.StackTrace+ ". Mensaje Inner Exception: " + ex.InnerException?.Message);
+				throw new Exception("Ocurrió un error al obtener las monedas: " + ex.Message + ". StackTrace: " + ex.StackTrace + ". Mensaje Inner Exception: " + ex.InnerException?.Message);
 			}
 		}
 

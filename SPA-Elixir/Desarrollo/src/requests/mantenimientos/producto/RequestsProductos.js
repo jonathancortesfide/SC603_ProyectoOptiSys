@@ -1,14 +1,58 @@
 import axios from 'axios';
-import { apiObtenerProductos, apiAgregarProducto, apiEliminarProducto } from './DireccionesRequest';
+import { apiObtenerProductos, apiAgregarProducto, apiActualizarProducto, apiEliminarProducto } from './DireccionesRequest';
 import { ejemploListaProductos } from '../../../views/seguridad/ejemplosDatos';
+import { getSucursalIdentificador } from '../../../utils/sucursal';
 
 axios.interceptors.request.use((config) => {
-  config.headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+  const token = window.localStorage.getItem('accessToken');
+  config.headers = {
+    ...(config.headers || {}),
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
   return config;
 }, (error) => Promise.reject(error));
 
 let _cacheProductos = { data: null, ts: 0 };
 const _CACHE_TTL = 30 * 1000;
+const sucursalIdentificador = getSucursalIdentificador();
+
+const normalizarProducto = (producto) => ({
+  noProducto: producto?.noProducto ?? producto?.id ?? 0,
+  noEmpresa: producto?.noEmpresa ?? sucursalIdentificador,
+  tipoArticulo: producto?.tipoArticulo ?? '',
+  codigoInterno: producto?.codigoInterno ?? '',
+  codigoBarras: producto?.codigoBarras ?? '',
+  codigoAuxiliar: producto?.codigoAuxiliar ?? '',
+  nombre: producto?.nombre ?? '',
+  codigoCabys: producto?.codigoCabys ?? '',
+  unidadMedida: producto?.unidadMedida ?? '',
+  tipoImpuesto: producto?.tipoImpuesto ?? '',
+  porcentajeImpuesto: Number(producto?.porcentajeImpuesto ?? 0),
+  existencia: Number(producto?.existencia ?? 0),
+  activo: producto?.activo ?? producto?.esActivo ?? true,
+});
+
+const mapProductoToFrontend = (producto) => ({
+  noProducto: producto?.noProducto ?? 0,
+  id: producto?.noProducto ?? 0,
+  noEmpresa: producto?.noEmpresa ?? sucursalIdentificador,
+  tipoArticulo: producto?.tipoArticulo ?? '',
+  codigoInterno: producto?.codigoInterno ?? '',
+  codigoBarras: producto?.codigoBarras ?? '',
+  codigoAuxiliar: producto?.codigoAuxiliar ?? '',
+  nombre: producto?.nombre ?? '',
+  codigoCabys: producto?.codigoCabys ?? '',
+  unidadMedida: producto?.unidadMedida ?? '',
+  tipoImpuesto: producto?.tipoImpuesto ?? '',
+  porcentajeImpuesto: Number(producto?.porcentajeImpuesto ?? 0),
+  existencia: Number(producto?.existencia ?? 0),
+  activo: producto?.activo ?? true,
+  esActivo: producto?.activo ?? true,
+  fechaCreacion: producto?.fechaCreacion ?? null,
+  fechaModificacion: producto?.fechaModificacion ?? null,
+});
 
 const obtenerListaDeProductos = async () => {
   const now = Date.now();
@@ -17,8 +61,9 @@ const obtenerListaDeProductos = async () => {
   try {
     const res = await axios.get(apiObtenerProductos);
     if (res.status === 200) {
-      _cacheProductos = { data: res.data, ts: Date.now() };
-      return res.data;
+      const productos = Array.isArray(res.data) ? res.data.map(mapProductoToFrontend) : [];
+      _cacheProductos = { data: productos, ts: Date.now() };
+      return productos;
     }
     return [];
   } catch (err) {
@@ -30,11 +75,26 @@ const obtenerListaDeProductos = async () => {
 
 const AgregarProducto = async (producto) => {
   try {
-    const res = await axios.post(apiAgregarProducto, producto);
+    const res = await axios.post(apiAgregarProducto, normalizarProducto(producto));
     _cacheProductos = { data: null, ts: 0 };
     return res.data;
   } catch (err) {
     console.error('Error AgregarProducto', err);
+    return { EsCorrecto: false, Mensaje: 'Error' };
+  }
+};
+
+const actualizarProducto = async (id, producto) => {
+  try {
+    const payload = {
+      ...normalizarProducto(producto),
+      noProducto: id,
+    };
+    const res = await axios.put(`${apiActualizarProducto}${id}`, payload);
+    _cacheProductos = { data: null, ts: 0 };
+    return res.data;
+  } catch (err) {
+    console.error('Error actualizarProducto', err);
     return { EsCorrecto: false, Mensaje: 'Error' };
   }
 };
@@ -50,4 +110,4 @@ const eliminarProducto = async (id) => {
   }
 };
 
-export { obtenerListaDeProductos, AgregarProducto, eliminarProducto };
+export { obtenerListaDeProductos, AgregarProducto, actualizarProducto, eliminarProducto };

@@ -16,7 +16,7 @@ const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
 
   const mounted = useMounted();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleClick2 = (event) => {
@@ -29,7 +29,7 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate('/auth/login', { replace: true });
       if (mounted.current) {
         handleClose2();
       }
@@ -86,10 +86,10 @@ const Profile = () => {
               <Avatar src={ProfileImg} alt={ProfileImg} sx={{ width: 95, height: 95 }} />
               <Box>
                 <Typography variant="subtitle2" color="textPrimary" fontWeight={600}>
-                  Mathew Anderson
+                  {user?.nombreUsuario || 'Usuario autenticado'}
                 </Typography>
                 <Typography variant="subtitle2" color="textSecondary">
-                  Designer
+                  Sesión activa
                 </Typography>
                 <Typography
                   variant="subtitle2"
@@ -99,7 +99,7 @@ const Profile = () => {
                   gap={1}
                 >
                   <IconMail width={15} height={15} />
-                  info@modernize.com
+                  {user?.correo || 'Sin correo'}
                 </Typography>
               </Box>
             </Stack>
