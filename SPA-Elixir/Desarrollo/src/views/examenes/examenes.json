@@ -1,0 +1,129 @@
+[
+  {
+    "NoExamen": 21,
+    "NoPaciente": 1001,
+    "FechaExamen": "2024-08-10",
+    "Motivo": "Visión borrosa de lejos",
+    "CodigoProfesional": "OP-01",
+    "NombreProfesional": "Dra. María López",
+    "mostrarRxBase": true,
+    "mostrarRxActual": true,
+    "mostrarRxCerca": false,
+    "RxBase": {
+      "OD": { "Esfera": "-1.00", "Cilindro": "-0.50", "Eje": "180", "Observaciones": "Estable" },
+      "OI": { "Esfera": "-1.25", "Cilindro": "-0.75", "Eje": "175", "Observaciones": "" }
+    },
+    "RxActual": {
+      "OD": { "Esfera": "-1.25", "Cilindro": "-0.75", "Eje": "180", "Observaciones": "Leve aumento" },
+      "OI": { "Esfera": "-1.50", "Cilindro": "-1.00", "Eje": "170", "Observaciones": "" }
+    },
+    "DisenoDeLente": {
+      "tipoLente": "mono",
+      "material": { "id": "pc", "label": "Policarbonato" },
+      "aroSeleccionado": { "id": "aro-1", "sku": "AR-001", "name": "Aro Clásico - Negro", "price": 120 },
+      "laboratorioSeleccionado": { "id": "lab-1", "name": "Laboratorio A" },
+      "numeroOrden": "ORD-889",
+      "numeroPedido": "PED-552"
+    },
+    "CostoAro": 120,
+    "CostoLente": 100,
+    "CostoMaterial": 50,
+    "CostoExamen": 35,
+    "TratamientosCosto": 20,
+    "PrecioFinal": 325
+  },
+
+  {
+    "NoExamen": 22,
+    "NoPaciente": 1002,
+    "FechaExamen": "2024-09-01",
+    "Motivo": "Dolor ocular y fatiga visual",
+    "CodigoProfesional": "OP-02",
+    "NombreProfesional": "Dr. Carlos Méndez",
+    "mostrarRxBase": true,
+    "mostrarRxActual": true,
+    "mostrarRxCerca": true,
+    "RxBase": {
+      "OD": { "Esfera": "-0.75", "Cilindro": "-0.25", "Eje": "90", "Observaciones": "" },
+      "OI": { "Esfera": "-1.00", "Cilindro": "-0.50", "Eje": "95", "Observaciones": "" }
+    },
+    "RxActual": {
+      "OD": { "Esfera": "-1.00", "Cilindro": "-0.50", "Eje": "90", "Observaciones": "Aumento progresivo" },
+      "OI": { "Esfera": "-1.25", "Cilindro": "-0.75", "Eje": "95", "Observaciones": "" }
+    },
+    "DisenoDeLente": {
+      "tipoLente": "progresivo",
+      "material": { "id": "hi", "label": "Alto Índice" },
+      "aroSeleccionado": { "id": "aro-2", "sku": "AR-014", "name": "Aro Metálico - Plateado", "price": 150 },
+      "laboratorioSeleccionado": { "id": "lab-2", "name": "Laboratorio B" },
+      "numeroOrden": "ORD-910",
+      "numeroPedido": "PED-578"
+    },
+    "CostoAro": 150,
+    "CostoLente": 160,
+    "CostoMaterial": 80,
+    "CostoExamen": 40,
+    "TratamientosCosto": 30,
+    "PrecioFinal": 460
+  },
+
+  {
+    "NoExamen": 23,
+    "NoPaciente": 1001,
+    "FechaExamen": "2024-10-15",
+    "Motivo": "Control anual",
+    "CodigoProfesional": "OP-01",
+    "NombreProfesional": "Dra. María López",
+    "mostrarRxBase": false,
+    "mostrarRxActual": true,
+    "mostrarRxCerca": false,
+    "RxActual": {
+      "OD": { "Esfera": "-1.50", "Cilindro": "-0.75", "Eje": "180", "Observaciones": "" },
+      "OI": { "Esfera": "-1.75", "Cilindro": "-1.00", "Eje": "175", "Observaciones": "" }
+    },
+    "DisenoDeLente": {
+      "tipoLente": "bifocal",
+      "material": { "id": "cr", "label": "CR-39" },
+      "aroSeleccionado": { "id": "aro-3", "sku": "AR-020", "name": "Aro Deportivo", "price": 90 },
+      "laboratorioSeleccionado": { "id": "lab-1", "name": "Laboratorio A" },
+      "numeroOrden": "ORD-955",
+      "numeroPedido": "PED-601"
+    },
+    "CostoAro": 90,
+    "CostoLente": 140,
+    "CostoMaterial": 60,
+    "CostoExamen": 35,
+    "TratamientosCosto": 25,
+    "PrecioFinal": 350
+  },
+
+  {
+    "NoExamen": 24,
+    "NoPaciente": 1003,
+    "FechaExamen": "2024-11-05",
+    "Motivo": "Visión doble ocasional",
+    "CodigoProfesional": "OP-03",
+    "NombreProfesional": "Dra. Ana Rodríguez",
+    "mostrarRxBase": true,
+    "mostrarRxActual": false,
+    "mostrarRxCerca": false,
+    "RxBase": {
+      "OD": { "Esfera": "+0.50", "Cilindro": "-0.25", "Eje": "80", "Observaciones": "" },
+      "OI": { "Esfera": "+0.75", "Cilindro": "-0.50", "Eje": "85", "Observaciones": "" }
+    },
+    "DisenoDeLente": {
+      "tipoLente": "mono",
+      "material": { "id": "pc", "label": "Policarbonato" },
+      "aroSeleccionado": { "id": "aro-4", "sku": "AR-030", "name": "Aro Infantil", "price": 70 },
+      "laboratorioSeleccionado": { "id": "lab-3", "name": "Laboratorio C" },
+      "numeroOrden": "ORD-980",
+      "numeroPedido": "PED-640"
+    },
+    "CostoAro": 70,
+    "CostoLente": 80,
+    "CostoMaterial": 40,
+    "CostoExamen": 30,
+    "TratamientosCosto": 15,
+    "PrecioFinal": 235
+  }
+]

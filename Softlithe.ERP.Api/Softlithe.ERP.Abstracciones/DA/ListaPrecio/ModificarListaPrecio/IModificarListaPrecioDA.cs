@@ -1,0 +1,14 @@
+﻿using Softlithe.ERP.Abstracciones.Contenedores.ListaPrecio;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Softlithe.ERP.Abstracciones.DA.ListaPrecio.ModificarListaPrecio
+{
+    public interface IModificarListaPrecioDA
+    {
+        Task<int> ModificarListaPrecio(ListaPrecioDto laListaPrecio);
+    }
+}

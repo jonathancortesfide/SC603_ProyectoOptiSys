@@ -1,0 +1,14 @@
+using Softlithe.ERP.Abstracciones.Contenedores.Monedas;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Softlithe.ERP.Abstracciones.DA.Monedas.ModificarMoneda
+{
+	public interface IModificarMonedasDA
+	{
+		Task<int> ModificarMoneda(MonedaDto monedaDto);
+	}
+}
