@@ -34,7 +34,7 @@ namespace Softlithe.ERP.DA.Pacientes.ObtenerListaDePacientes
             nombre = pacientes.nombre,
             fechaNacimiento = pacientes.fecha_nacimiento,
             sexo = pacientes.sexo,
-            noPaisNacionalidad = pacientes.no_pais_nacionalidad,
+            nacionalidad = pacientes.nacionalidad,
             telefono1 = pacientes.telefono1,
             telefono2 = pacientes.telefono2,
             email1 = pacientes.email1,

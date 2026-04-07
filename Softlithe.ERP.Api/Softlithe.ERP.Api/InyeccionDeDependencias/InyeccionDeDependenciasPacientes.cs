@@ -9,15 +9,19 @@ using Softlithe.ERP.DA.Modelos;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.AgregarPaciente;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.BuscarPacientePorNombreOIdentificacion;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.ObtenerListaDePacientes;
+using Softlithe.ERP.Abstracciones.BW.Pacientes.ActualizarPaciente;
 using Softlithe.ERP.Abstracciones.DA.Pacientes.AgregarPaciente;
 using Softlithe.ERP.Abstracciones.DA.Pacientes.BuscarPacientePorNombreOIdentificacion;
 using Softlithe.ERP.Abstracciones.DA.Pacientes.ObtenerListaDePacientes;
+using Softlithe.ERP.Abstracciones.DA.Pacientes.ActualizarPaciente;
 using Softlithe.ERP.BW.Pacientes.AgregarPaciente;
 using Softlithe.ERP.BW.Pacientes.BuscarPacientePorNombreOIdentificacion;
 using Softlithe.ERP.BW.Pacientes.ObtenerListaDePacientes;
+using Softlithe.ERP.BW.Pacientes.ActualizarPaciente;
 using Softlithe.ERP.DA.Pacientes.AgregarPaciente;
 using Softlithe.ERP.DA.Pacientes.BuscarPacientePorNombreOIdentificacion;
 using Softlithe.ERP.DA.Pacientes.ObtenerListaDePacientes;
+using Softlithe.ERP.DA.Pacientes.ActualizarPaciente;
 
 namespace Softlithe.ERP.Api.Inyeccion
 {
@@ -32,6 +36,8 @@ namespace Softlithe.ERP.Api.Inyeccion
 			services.AddScoped<IAgregarPacienteBW, AgregarPacienteBW>();
 			services.AddScoped<IBuscarPacientePorNombreOIdentificacionDA, BuscarPacientePorNombreOIdentificacionDA>();
 			services.AddScoped<IBuscarPacientePorNombreOIdentificacionBW, BuscarPacientePorNombreOIdentificacionBW>();
+			services.AddScoped<IActualizarPacienteDA, ActualizarPacienteDA>();
+			services.AddScoped<IActualizarPacienteBW, ActualizarPacienteBW>();
 
 			//Inyeccion de PacienteClasificacion
 			services.AddScoped<Softlithe.ERP.Abstracciones.DA.Pacientes.ObtenerClasificacionesPorIdentificador.IObtenerClasificacionesPorIdentificadorDA, Softlithe.ERP.DA.Pacientes.ObtenerClasificacionesPorIdentificador.ObtenerClasificacionesPorIdentificadorDA>();

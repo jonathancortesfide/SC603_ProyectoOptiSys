@@ -118,7 +118,7 @@ CREATE TABLE Paciente (
     sexo                            CHAR(1)         NULL
                                         CONSTRAINT CHK_Paciente_Sexo
                                         CHECK (sexo IN ('M','F','O')),
-    no_pais_nacionalidad            INT             NULL,
+    nacionalidad           VARCHAR(30)     NULL,
     telefono1                       VARCHAR(30)     NULL,
     telefono2                       VARCHAR(30)     NULL,
     email1                          VARCHAR(150)    NULL,
@@ -130,8 +130,7 @@ CREATE TABLE Paciente (
     fecha_creacion                  DATETIME        NOT NULL DEFAULT GETDATE(),
     fecha_modificacion              DATETIME        NULL,
 
-    CONSTRAINT UQ_Paciente_Empresa_Identificacion UNIQUE (no_empresa, identificacion),
-    CONSTRAINT FK_Paciente_Pais FOREIGN KEY (no_pais_nacionalidad) REFERENCES Pais(no_pais)
+    CONSTRAINT UQ_Paciente_Empresa_Identificacion UNIQUE (no_empresa, identificacion)
 );
 GO
 

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { apiObtenerProductos, apiAgregarProducto, apiActualizarProducto, apiEliminarProducto } from './DireccionesRequest';
 import { ejemploListaProductos } from '../../../views/seguridad/ejemplosDatos';
+import { getSucursalIdentificador } from '../../../utils/sucursal';
 
 axios.interceptors.request.use((config) => {
   config.headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
@@ -9,10 +10,11 @@ axios.interceptors.request.use((config) => {
 
 let _cacheProductos = { data: null, ts: 0 };
 const _CACHE_TTL = 30 * 1000;
+const sucursalIdentificador = getSucursalIdentificador();
 
 const normalizarProducto = (producto) => ({
   noProducto: producto?.noProducto ?? producto?.id ?? 0,
-  noEmpresa: producto?.noEmpresa ?? 1,
+  noEmpresa: producto?.noEmpresa ?? sucursalIdentificador,
   tipoArticulo: producto?.tipoArticulo ?? '',
   codigoInterno: producto?.codigoInterno ?? '',
   codigoBarras: producto?.codigoBarras ?? '',
@@ -29,7 +31,7 @@ const normalizarProducto = (producto) => ({
 const mapProductoToFrontend = (producto) => ({
   noProducto: producto?.noProducto ?? 0,
   id: producto?.noProducto ?? 0,
-  noEmpresa: producto?.noEmpresa ?? 1,
+  noEmpresa: producto?.noEmpresa ?? sucursalIdentificador,
   tipoArticulo: producto?.tipoArticulo ?? '',
   codigoInterno: producto?.codigoInterno ?? '',
   codigoBarras: producto?.codigoBarras ?? '',
