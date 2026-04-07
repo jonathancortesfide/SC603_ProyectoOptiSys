@@ -1,12 +1,51 @@
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Softlithe.ERP.Api;
 using Softlithe.ERP.Api.Middleware;
 using Softlithe.ERP.DA.Modelos;
+using Softlithe.ERP.Abstracciones.DA.Autenticacion;
+using Softlithe.ERP.Abstracciones.BW.Autenticacion;
+using Softlithe.ERP.Abstracciones.Servicios;
+using Softlithe.ERP.DA.Autenticacion;
+using Softlithe.ERP.BW.Autenticacion;
+using Softlithe.ERP.BW;
+using System.Text;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
+
+// Add JWT configuration
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? jwtSettings["SecretKey"];
+var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? jwtSettings["Issuer"];
+var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? jwtSettings["Audience"];
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+});
+
+builder.Services.AddScoped<ITokenService>(sp => 
+    new Softlithe.ERP.BW.TokenService(secretKey, issuer, audience, int.Parse(jwtSettings["ExpirationMinutes"])));
+builder.Services.AddScoped<IAutenticacionDA, AutenticacionDA>();
+builder.Services.AddScoped<IAutenticacionBW, AutenticacionBW>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.InyectarDependencias();

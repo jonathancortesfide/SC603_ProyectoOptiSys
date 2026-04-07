@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.AgregarPaciente;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.BuscarPacientePorNombreOIdentificacion;
 using Softlithe.ERP.Abstracciones.BW.Pacientes.ObtenerListaDePacientes;
@@ -11,6 +12,7 @@ namespace Softlithe.ERP.Api.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	[Authorize]
 	public class PacientesController : ControllerBase
 	{
 

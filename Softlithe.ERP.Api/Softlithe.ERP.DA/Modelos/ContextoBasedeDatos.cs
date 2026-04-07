@@ -31,6 +31,7 @@ public partial class ContextoBasedeDatos : DbContext
     public virtual DbSet<EnfermedadSucursal> Enfermedades { get; set; }
     public virtual DbSet<PacienteClasificacion> PacienteClasificaciones { get; set; }
     public virtual DbSet<Grupo> Grupos { get; set; }
+    public virtual DbSet<Usuario> Usuarios { get; set; }
 
 
 

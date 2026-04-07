@@ -46,12 +46,12 @@ const Router = [
   {
     path: '/',
     element: (
-      //<AuthGuard>
+      <AuthGuard>
         <FullLayout />
-      //</AuthGuard>
+      </AuthGuard>
     ),
     children: [
-      { path: '/', element: <Navigate to="/sample-page" /> },
+      { path: '/', element: <Navigate to="/pacientes" /> },
       { path: '/sample-page', exact: true, element: <SamplePage /> },
       { path: '/pacientes', exact: true, element: <Pacientes /> },
       { path: '/crearexamen', exact: true, element: <ExamenDeLaVista /> },
@@ -77,9 +77,9 @@ const Router = [
     children: [
       { path: '/auth/login', element: <Login /> },
       { path: '/auth/callback', exact: true, element: <Callback /> },
-      { path: '/auth/login2', element: <Login2 /> },
-      { path: '/auth/register', element: <Register /> },
-      { path: '/auth/register2', element: <Register2 /> },
+      { path: '/auth/login2', element: <Navigate to="/auth/login" replace /> },
+      { path: '/auth/register', element: <Navigate to="/auth/login" replace /> },
+      { path: '/auth/register2', element: <Navigate to="/auth/login" replace /> },
     ],
   },
   {

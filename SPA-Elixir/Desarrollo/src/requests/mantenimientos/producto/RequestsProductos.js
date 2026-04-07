@@ -4,7 +4,13 @@ import { ejemploListaProductos } from '../../../views/seguridad/ejemplosDatos';
 import { getSucursalIdentificador } from '../../../utils/sucursal';
 
 axios.interceptors.request.use((config) => {
-  config.headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+  const token = window.localStorage.getItem('accessToken');
+  config.headers = {
+    ...(config.headers || {}),
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
   return config;
 }, (error) => Promise.reject(error));
 

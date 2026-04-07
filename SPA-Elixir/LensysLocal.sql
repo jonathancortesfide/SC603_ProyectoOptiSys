@@ -276,3 +276,22 @@ CREATE INDEX IX_Permiso_Modulo                      ON Permiso (no_modulo);
 CREATE INDEX IX_Rol_Empresa                         ON Rol (no_empresa);
 GO
 
+
+CREATE TABLE admin_user (
+    [no_usuario] INT PRIMARY KEY IDENTITY(1,1),
+    [nombre_usuario] NVARCHAR(100) NOT NULL UNIQUE,
+    [correo] NVARCHAR(100) NOT NULL UNIQUE,
+    [contraseña_hash] NVARCHAR(MAX) NOT NULL,
+    [es_activo] BIT NOT NULL DEFAULT 1,
+    [fecha_creacion] DATETIME NOT NULL DEFAULT GETDATE(),
+    [fecha_modificacion] DATETIME NULL
+)
+
+INSERT INTO [admin_user] ([nombre_usuario], [correo], [contraseña_hash], [es_activo], [fecha_creacion])
+VALUES (
+    'admin',
+    'admin@softlithe.com',
+    '$2a$10$8MjnEd3ic0cWr.83iJqpjOmGUGlPVvscwsdlXzT7NadWLZCsU07HC', -- "password123"
+    1,
+    GETDATE()
+);

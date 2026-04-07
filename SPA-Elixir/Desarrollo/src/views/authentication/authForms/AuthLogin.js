@@ -2,42 +2,35 @@ import React from 'react';
 import {
   Box,
   Typography,
-  FormGroup,
-  FormControlLabel,
   Button,
   Stack,
-  Divider,
   Alert,
 } from '@mui/material';
 import { Form, useFormik, FormikProvider } from 'formik';
 import * as Yup from 'yup';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import AuthSocialButtons from './AuthSocialButtons';
 import useAuth from 'src/guards/authGuard/UseAuth';
 import useMounted from 'src/guards/authGuard/UseMounted';
-import authServices from "../../../guards/oidc/AuthService";
-
-
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const mounted = useMounted();
   const { signin } = useAuth();
+  const navigate = useNavigate();
 
   const LoginSchema = Yup.object().shape({
-    email: Yup.string().email('Email is invalid').required('Email is required'),
+    nombreUsuario: Yup.string().required('El usuario es requerido'),
     password: Yup.string()
-      .min(6, 'Password must be at least 6 characters')
-      .required('Password is required'),
+      .min(6, 'La contraseña debe tener al menos 6 caracteres')
+      .required('La contraseña es requerida'),
   });
 
   const formik = useFormik({
     initialValues: {
-      email: 'demo@demo.com',
-      password: 'demo123',
+      nombreUsuario: 'admin',
+      password: 'password123',
       submit: null,
     },
 
@@ -45,17 +38,17 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
     onSubmit: async (values, { setErrors, setStatus, setSubmitting }) => {
       try {
-        //authServices.signinRedirect();
-        await signin(values.email, values.password, true);
+        await signin(values.nombreUsuario, values.password, true);
 
         if (mounted.current) {
           setStatus({ success: true });
-          setSubmitting(true);
+          setSubmitting(false);
+          navigate('/pacientes', { replace: true });
         }
       } catch (err) {
         if (mounted.current) {
           setStatus({ success: false });
-          setErrors({ submit: err.message });
+          setErrors({ submit: err?.message || 'No se pudo iniciar sesión.' });
           setSubmitting(false);
         }
       }
@@ -73,21 +66,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
       {subtext}
 
-      <AuthSocialButtons title="Sign in with" />
-      <Box mt={3}>
-        <Divider>
-          <Typography
-            component="span"
-            color="textSecondary"
-            variant="h6"
-            fontWeight="400"
-            position="relative"
-            px={2}
-          >
-            or sign in with
-          </Typography>
-        </Divider>
-      </Box>
       {errors.submit && (
         <Box mt={2}>
           <Alert severity="error">{errors.submit}</Alert>
@@ -97,18 +75,18 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
         <Form onSubmit={handleSubmit}>
           <Stack>
             <Box>
-              <CustomFormLabel htmlFor="email">Email Address</CustomFormLabel>
+              <CustomFormLabel htmlFor="nombreUsuario">Usuario</CustomFormLabel>
               <CustomTextField
-                id="email"
+                id="nombreUsuario"
                 variant="outlined"
                 fullWidth
-                {...getFieldProps('email')}
-                error={Boolean(touched.email && errors.email)}
-                helperText={touched.email && errors.email}
+                {...getFieldProps('nombreUsuario')}
+                error={Boolean(touched.nombreUsuario && errors.nombreUsuario)}
+                helperText={touched.nombreUsuario && errors.nombreUsuario}
               />
             </Box>
             <Box>
-              <CustomFormLabel htmlFor="password">Password</CustomFormLabel>
+              <CustomFormLabel htmlFor="password">Contraseña</CustomFormLabel>
               <CustomTextField
                 id="password"
                 type="password"
@@ -119,25 +97,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                 helperText={touched.password && errors.password}
               />
             </Box>
-            <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-              <FormGroup>
-                <FormControlLabel
-                  control={<CustomCheckbox defaultChecked />}
-                  label="Remeber this Device"
-                />
-              </FormGroup>
-              <Typography
-                component={Link}
-                to="/auth/reset-password"
-                fontWeight="500"
-                sx={{
-                  textDecoration: 'none',
-                  color: 'primary.main',
-                }}
-              >
-                Forgot Password ?
-              </Typography>
-            </Stack>
           </Stack>
           <Box>
             <Button
@@ -148,7 +107,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
               type="submit"
               disabled={isSubmitting}
             >
-              Sign In
+              Iniciar sesión
             </Button>
           </Box>
         </Form>
