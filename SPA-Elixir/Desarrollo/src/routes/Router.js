@@ -10,7 +10,6 @@ import GuestGuard from 'src/guards/authGuard/GuestGaurd';
 import Callback  from '../views/authentication/callback';
 
 /* ****Pages***** */
-const SamplePage = Loadable(lazy(() => import('../views/sample-page/SamplePage')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 /* ***Pacientes*** */
 const Pacientes = Loadable(lazy(() => import('../views/pacientes/PacientesUnificado')));
@@ -52,7 +51,6 @@ const Router = [
     ),
     children: [
       { path: '/', element: <Navigate to="/pacientes" /> },
-      { path: '/sample-page', exact: true, element: <SamplePage /> },
       { path: '/pacientes', exact: true, element: <Pacientes /> },
       { path: '/crearexamen', exact: true, element: <ExamenDeLaVista /> },
       { path: '/verexamenes', exact: true, element: <VerExamenesDeLaVista /> },

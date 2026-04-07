@@ -16,15 +16,6 @@ const Menuitems = [
     navlabel: true,
     subheader: 'Home',
   },
-
-  {
-    id: uniqueId(),
-    title: 'Sample Page',
-    icon: IconAperture,
-    href: '/sample-page',
-    chip: 'New',
-    chipColor: 'secondary',
-  },
   {
     navlabel: true,
     subheader: 'Other',

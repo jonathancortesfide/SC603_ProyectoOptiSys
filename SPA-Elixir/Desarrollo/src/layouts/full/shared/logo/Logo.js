@@ -4,7 +4,7 @@ import { ReactComponent as LogoDark } from 'src/assets/images/logos/dark-logo.sv
 import { ReactComponent as LogoDarkRTL } from 'src/assets/images/logos/dark-rtl-logo.svg';
 import { ReactComponent as LogoLight } from 'src/assets/images/logos/light-logo.svg';
 import { ReactComponent as LogoLightRTL } from 'src/assets/images/logos/light-logo-rtl.svg';
-import { styled } from '@mui/material';
+import { styled, Typography, Box } from '@mui/material';
 
 const Logo = () => {
   const customizer = useSelector((state) => state.customizer);
@@ -22,6 +22,7 @@ const Logo = () => {
         style={{
           display: 'flex',
           alignItems: 'center',
+          gap: '10px',
         }}
       >
         {customizer.activeMode === 'dark' ? (
@@ -29,6 +30,13 @@ const Logo = () => {
         ) : (
           <LogoDark />
         )}
+        {!customizer.isCollapse ? (
+          <Box>
+            <Typography variant="h5" fontWeight={700} color="textPrimary" lineHeight={1}>
+              LENSYS
+            </Typography>
+          </Box>
+        ) : null}
       </LinkStyled>
     );
   }
@@ -39,6 +47,7 @@ const Logo = () => {
       style={{
         display: 'flex',
         alignItems: 'center',
+        gap: '10px',
       }}
     >
       {customizer.activeMode === 'dark' ? (
@@ -46,6 +55,13 @@ const Logo = () => {
       ) : (
         <LogoLightRTL />
       )}
+      {!customizer.isCollapse ? (
+        <Box>
+          <Typography variant="h5" fontWeight={700} color="textPrimary" lineHeight={1}>
+            LENSYS
+          </Typography>
+        </Box>
+      ) : null}
     </LinkStyled>
   );
 };

@@ -45,7 +45,7 @@ const Login2 = () => {
                 subtitle={
                   <Stack direction="row" spacing={1} justifyContent="center" mt={3}>
                     <Typography color="textSecondary" variant="h6" fontWeight="500">
-                      New to Modernize?
+                      Nuevo en LENSYS?
                     </Typography>
                     <Typography
                       component={Link}
@@ -56,7 +56,7 @@ const Login2 = () => {
                         color: 'primary.main',
                       }}
                     >
-                      Create an account
+                      Crear una cuenta
                     </Typography>
                   </Stack>
                 }
