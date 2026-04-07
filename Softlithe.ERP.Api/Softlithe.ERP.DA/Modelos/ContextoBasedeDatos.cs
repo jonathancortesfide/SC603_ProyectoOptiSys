@@ -27,6 +27,7 @@ public partial class ContextoBasedeDatos : DbContext
     public virtual DbSet<Marca> Marcas { get; set; }
     public virtual DbSet<EnfermedadCatalogo> EnfermedadCatalogos { get; set; }
     public virtual DbSet<MonedaSucursal> MonedasSucursal { get; set; }
+    public virtual DbSet<Producto> Productos { get; set; }
     public virtual DbSet<EnfermedadSucursal> Enfermedades { get; set; }
     public virtual DbSet<PacienteClasificacion> PacienteClasificaciones { get; set; }
     public virtual DbSet<Grupo> Grupos { get; set; }

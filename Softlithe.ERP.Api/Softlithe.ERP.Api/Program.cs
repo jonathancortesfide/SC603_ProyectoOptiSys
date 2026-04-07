@@ -10,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.InyectarDependencias();
+// Productos CRUD DI registration
+builder.Services.AddScoped<Softlithe.ERP.Abstracciones.BW.Productos.IProductoBW, Softlithe.ERP.BW.Productos.ProductoBW>();
+builder.Services.AddScoped<Softlithe.ERP.Abstracciones.DA.Productos.IProductoDA, Softlithe.ERP.DA.Productos.ProductoDA>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,

@@ -7,7 +7,7 @@ import FormularioProducto from './FormularioProducto';
 import { obtenerListaDeProductos, eliminarProducto } from '../../requests/mantenimientos/producto/RequestsProductos';
 import { IconEdit, IconTrash, IconPlus } from '@tabler/icons';
 
-const columnasBusqueda = ['codigoInterno','nombre','tipoArticulo','codigoCabys','codigoAuxiliar','grupo','marca','esActivo','unidadMedida','existencia'];
+const columnasBusqueda = ['codigoInterno','nombre','tipoArticulo','codigoCabys','codigoAuxiliar','activo','unidadMedida','existencia'];
 
 const Productos = () => {
   const [productos, setProductos] = useState([]);
@@ -21,7 +21,7 @@ const Productos = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const getSearchableString = (p, col) => {
-    if (col === 'esActivo') return p && p.esActivo ? 'sí' : 'no';
+    if (col === 'activo') return p && p.activo ? 'sí' : 'no';
     const val = p ? p[col] : undefined;
     if (val === null || val === undefined) return '';
     if (typeof val === 'object') {
@@ -54,8 +54,8 @@ const Productos = () => {
 
   const handleEliminar = async (p) => {
     if (!window.confirm(`¿Eliminar ${p.nombre}?`)) return;
-    const res = await eliminarProducto(p.id);
-    if (res && res.EsCorrecto) setProductos(productos.filter(x => x.id !== p.id));
+    const res = await eliminarProducto(p.noProducto || p.id);
+    if (res && res.EsCorrecto) await cargarProductos();
     else setError('No se pudo eliminar el producto');
   };
 
@@ -82,8 +82,6 @@ const Productos = () => {
                 <TableCell>Tipo artículo</TableCell>
                 <TableCell>Código CABYS</TableCell>
                 <TableCell>Código auxiliar</TableCell>
-                <TableCell>Grupo</TableCell>
-                <TableCell>Marca</TableCell>
                 <TableCell>Activo</TableCell>
                 <TableCell>Unidad</TableCell>
                 <TableCell align="right">Existencia</TableCell>
@@ -93,15 +91,13 @@ const Productos = () => {
             <TableBody>
               {filteredProducts.length > 0 ? (
                 filteredProducts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(p => (
-                  <TableRow key={p.id} hover>
+                  <TableRow key={p.noProducto || p.id} hover>
                     <TableCell>{p.codigoInterno}</TableCell>
                     <TableCell>{p.nombre}</TableCell>
                     <TableCell>{p.tipoArticulo}</TableCell>
                     <TableCell>{p.codigoCabys}</TableCell>
                     <TableCell>{p.codigoAuxiliar}</TableCell>
-                    <TableCell>{p.grupo && (p.grupo.nombre ? p.grupo.nombre : p.grupo)}</TableCell>
-                    <TableCell>{p.marca && (p.marca.nombre ? p.marca.nombre : p.marca)}</TableCell>
-                    <TableCell>{p.esActivo ? 'Sí' : 'No'}</TableCell>
+                    <TableCell>{p.activo ? 'Sí' : 'No'}</TableCell>
                     <TableCell>{p.unidadMedida}</TableCell>
                     <TableCell align="right">{p.existencia}</TableCell>
                     <TableCell align="center">
@@ -113,7 +109,7 @@ const Productos = () => {
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={11} align="center">No hay productos</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} align="center">No hay productos</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

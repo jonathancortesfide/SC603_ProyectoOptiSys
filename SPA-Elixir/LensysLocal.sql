@@ -18,14 +18,9 @@ GO
 
 CREATE TABLE Moneda (
     no_moneda      INT PRIMARY KEY IDENTITY(1,1),
-    codigo_iso     VARCHAR(3)      NOT NULL UNIQUE,
     descripcion    NVARCHAR(100)   NOT NULL,
     signo          VARCHAR(5)      NOT NULL,
-    url            NVARCHAR(255)   NULL,
-    es_nacional    BIT             NOT NULL DEFAULT 0,
-    activo         BIT             NOT NULL DEFAULT 1,
-    fecha_creacion DATETIME        NOT NULL DEFAULT GETDATE(),
-    fecha_modificacion DATETIME    NULL
+    url            NVARCHAR(255)   NULL
 );
 GO
 
@@ -156,45 +151,16 @@ CREATE TABLE Producto (
     nombre                      NVARCHAR(255)   NOT NULL,
     codigo_cabys                VARCHAR(20)     NULL,
     unidad_medida               VARCHAR(30)     NULL,
-    no_grupo                    INT             NULL,
-    no_marca                    INT             NULL,
-    no_tipo_lente               INT             NULL,
     tipo_impuesto               VARCHAR(10)     NOT NULL
                                     CONSTRAINT CHK_Producto_TipoImpuesto
                                     CHECK (tipo_impuesto IN ('Exento','IVA','Otro')),
     porcentaje_impuesto         DECIMAL(6,2)    NOT NULL DEFAULT 0,
     existencia                  DECIMAL(14,4)   NOT NULL DEFAULT 0,
-    minimo                      DECIMAL(14,4)   NOT NULL DEFAULT 0,
-    es_perecedero               BIT             NOT NULL DEFAULT 0,
-    costo_promedio_ponderado    DECIMAL(18,4)   NOT NULL DEFAULT 0,
-    costo_ultima_compra         DECIMAL(18,4)   NOT NULL DEFAULT 0,
-    costo_final                 DECIMAL(18,4)   NOT NULL DEFAULT 0,
-    caracteristicas             NVARCHAR(MAX)   NULL,
-    foto                        NVARCHAR(MAX)   NULL,
     activo                      BIT             NOT NULL DEFAULT 1,
     fecha_creacion              DATETIME        NOT NULL DEFAULT GETDATE(),
     fecha_modificacion          DATETIME        NULL,
 
-    CONSTRAINT UQ_Producto_Empresa_Codigo UNIQUE (no_empresa, codigo_interno),
-    CONSTRAINT FK_Producto_Grupo FOREIGN KEY (no_grupo) REFERENCES GrupoProductos(no_grupo),
-    CONSTRAINT FK_Producto_Marca FOREIGN KEY (no_marca) REFERENCES Marca(no_marca),
-    CONSTRAINT FK_Producto_TipoLente FOREIGN KEY (no_tipo_lente) REFERENCES TipoLente(no_tipo)
-);
-GO
-
-CREATE TABLE ProductoListaPrecio (
-    no_producto_lista   INT             PRIMARY KEY IDENTITY(1,1),
-    no_producto         INT             NOT NULL,
-    no_lista            INT             NOT NULL,
-    utilidad            DECIMAL(6,2)    NOT NULL DEFAULT 0,
-    precio_neto         DECIMAL(18,4)   NOT NULL DEFAULT 0,
-    precio_cliente      DECIMAL(18,4)   NOT NULL DEFAULT 0,
-    fecha_creacion      DATETIME        NOT NULL DEFAULT GETDATE(),
-    fecha_modificacion  DATETIME        NULL,
-
-    CONSTRAINT UQ_ProductoListaPrecio UNIQUE (no_producto, no_lista),
-    CONSTRAINT FK_PLP_Producto FOREIGN KEY (no_producto) REFERENCES Producto(no_producto) ON DELETE CASCADE,
-    CONSTRAINT FK_PLP_Lista FOREIGN KEY (no_lista) REFERENCES ListaPrecio(no_lista)
+    CONSTRAINT UQ_Producto_Empresa_Codigo UNIQUE (no_empresa, codigo_interno)
 );
 GO
 
@@ -306,8 +272,8 @@ CREATE INDEX IX_Paciente_Empresa_Identificacion     ON Paciente (no_empresa, ide
 CREATE INDEX IX_Paciente_Empresa_Nombre             ON Paciente (no_empresa, nombre);
 CREATE INDEX IX_Producto_Empresa_CodigoInterno      ON Producto (no_empresa, codigo_interno);
 CREATE INDEX IX_Producto_Empresa_CodigoBarras       ON Producto (no_empresa, codigo_barras);
-CREATE INDEX IX_ProductoListaPrecio_Lista           ON ProductoListaPrecio (no_lista);
 CREATE INDEX IX_Usuario_Empresa_Login               ON Usuario (no_empresa, login);
 CREATE INDEX IX_Permiso_Modulo                      ON Permiso (no_modulo);
 CREATE INDEX IX_Rol_Empresa                         ON Rol (no_empresa);
 GO
+

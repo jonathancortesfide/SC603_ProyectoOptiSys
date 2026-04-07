@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Softlithe.ERP.DA.Modelos
@@ -6,6 +7,7 @@ namespace Softlithe.ERP.DA.Modelos
 [Table("Paciente")]
 public class Paciente
 {
+    [Key]
     [Column("no_paciente")]
     public int no_paciente { get; set; }
     [Column("no_empresa")]
