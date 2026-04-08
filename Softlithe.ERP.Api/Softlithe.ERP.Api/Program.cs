@@ -67,11 +67,11 @@ builder.Services.AddCors(options =>
 
 
 builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
-builder.Logging.AddEventLog(eventLogSettings =>
-{
-    eventLogSettings.SourceName = builder.Configuration.GetValue<string>("EventLog:SourceName");
-    eventLogSettings.LogName = builder.Configuration.GetValue<string>("EventLog:LogName");
-});
+//builder.Logging.AddEventLog(eventLogSettings =>
+//{
+//    eventLogSettings.SourceName = builder.Configuration.GetValue<string>("EventLog:SourceName");
+//    eventLogSettings.LogName = builder.Configuration.GetValue<string>("EventLog:LogName");
+//});
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 builder.Services.AddSwaggerGen();
