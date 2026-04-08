@@ -6,6 +6,12 @@ using Microsoft.IdentityModel.Tokens;
 using Softlithe.ERP.Api;
 using Softlithe.ERP.Api.Middleware;
 using Softlithe.ERP.DA.Modelos;
+using Softlithe.ERP.Abstracciones.DA.Autenticacion;
+using Softlithe.ERP.Abstracciones.BW.Autenticacion;
+using Softlithe.ERP.Abstracciones.Servicios;
+using Softlithe.ERP.DA.Autenticacion;
+using Softlithe.ERP.BW.Autenticacion;
+using Softlithe.ERP.BW;
 using System.Text;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -38,6 +44,17 @@ builder.Services.AddAuthentication(options =>
 });
 
 // ================= DEPENDENCY INJECTION =================
+builder.Services.AddScoped<ITokenService>(sp =>
+    new TokenService(
+        secretKey,
+        issuer,
+        audience,
+        int.Parse(jwtSettings["ExpirationMinutes"] ?? "60")
+    ));
+
+builder.Services.AddScoped<IAutenticacionDA, AutenticacionDA>();
+builder.Services.AddScoped<IAutenticacionBW, AutenticacionBW>();
+
 builder.Services.AddControllersWithViews();
 builder.Services.InyectarDependencias();
 
