@@ -79,8 +79,12 @@ builder.Logging.AddDebug();
 builder.Services.AddSwaggerGen();
 
 // ================= DATABASE =================
+var connectionString = builder.Configuration.GetConnectionString("DataBase");
+
+Console.WriteLine($"DB STRING: {connectionString}");
+
 builder.Services.AddDbContext<ContextoBasedeDatos>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DataBase"))
+    options.UseSqlServer(connectionString)
 );
 
 // ================= HTTP CLIENT =================
