@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { IconEdit, IconTrash, IconLock, IconPlus } from '@tabler/icons';
 import ParentCard from '../../../components/shared/ParentCard';
+import FeedbackDialog from '../../../components/shared/FeedbackDialog';
 import FormularioUsuario from './FormularioUsuario';
 import CambiarContrasena from './CambiarContrasena';
 import { obtenerListaDeUsuarios, eliminarUsuario } from '../../../requests/usuarios/RequestsUsuarios';
@@ -38,6 +39,7 @@ const ListadoUsuarios = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [feedback, setFeedback] = useState({ open: false, severity: 'info', title: '', message: '' });
 
     useEffect(() => {
         cargarUsuarios();
@@ -141,6 +143,13 @@ const ListadoUsuarios = () => {
                     {error}
                 </Alert>
             )}
+            <FeedbackDialog
+                open={feedback.open}
+                onClose={() => setFeedback((prev) => ({ ...prev, open: false }))}
+                severity={feedback.severity}
+                title={feedback.title}
+                message={feedback.message}
+            />
 
             <Stack spacing={2} sx={{ mb: 2 }}>
                 <Stack direction="row" spacing={2} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -277,7 +286,12 @@ const ListadoUsuarios = () => {
                     onCancel={handleCerrarCambioContrasena}
                     onSuccess={() => {
                         handleCerrarCambioContrasena();
-                        alert('Contraseña cambiada correctamente');
+                        setFeedback({
+                            open: true,
+                            severity: 'success',
+                            title: 'Contraseña actualizada',
+                            message: 'Contraseña cambiada correctamente',
+                        });
                     }}
                 />
             </Dialog>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Softlithe.ERP.DA.Modelos
@@ -6,11 +7,12 @@ namespace Softlithe.ERP.DA.Modelos
 [Table("Paciente")]
 public class Paciente
 {
+    [Key]
     [Column("no_paciente")]
     public int no_paciente { get; set; }
     [Column("no_empresa")]
     public int no_empresa { get; set; }
-    [Column("numero_de_paciente")]
+    [NotMapped]
     public string numero_de_paciente { get; set; } = string.Empty;
     [Column("tipo_identificacion")]
     public string tipo_identificacion { get; set; } = string.Empty;
@@ -22,8 +24,8 @@ public class Paciente
     public DateTime? fecha_nacimiento { get; set; }
     [Column("sexo")]
     public string? sexo { get; set; }
-    [Column("no_pais_nacionalidad")]
-    public int? no_pais_nacionalidad { get; set; }
+    [Column("nacionalidad")]
+    public string? nacionalidad { get; set; }
     [Column("telefono1")]
     public string? telefono1 { get; set; }
     [Column("telefono2")]

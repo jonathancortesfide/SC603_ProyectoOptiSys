@@ -1,11 +1,8 @@
 import { styled, Container, Box, useTheme } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { Outlet } from 'react-router-dom';
-import Header from './vertical/header/Header';
 import Sidebar from './vertical/sidebar/Sidebar';
 import Customizer from './shared/customizer/Customizer';
-import Navigation from './horizontal/navbar/Navigation';
-import HorizontalHeader from './horizontal/header/Header';
 
 const MainWrapper = styled('div')(() => ({
   display: 'flex',
@@ -47,21 +44,16 @@ const FullLayout = () => {
           }),
         }}
       >
-        {/* ------------------------------------------- */}
-        {/* Header */}
-        {/* ------------------------------------------- */}
-        {customizer.isHorizontal ? <HorizontalHeader /> : <Header />}
-        {/* PageContent */}
-        {customizer.isHorizontal ? <Navigation /> : ''}
         <Container
           sx={{
             maxWidth: customizer.isLayout === 'boxed' ? 'lg' : '100%!important',
+            pt: 3,
           }}
         >
           {/* ------------------------------------------- */}
           {/* PageContent */}
           {/* ------------------------------------------- */}
-          <Box sx={{ minHeight: 'calc(100vh - 170px)' }}>
+          <Box sx={{ minHeight: 'calc(100vh - 84px)' }}>
             <Outlet />
           </Box>
           {/* ------------------------------------------- */}

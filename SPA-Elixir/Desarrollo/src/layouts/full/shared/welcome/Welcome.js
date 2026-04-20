@@ -37,7 +37,7 @@ const Welcome = () => {
           variant="filled"
           sx={{ width: '100%', color: 'white' }}
         >
-          <AlertTitle>Welcome To Modernize</AlertTitle>
+          <AlertTitle>Bienvenido a LENSYS</AlertTitle>
           Easy to customize the Template!!!
         </Alert>
       </Snackbar>

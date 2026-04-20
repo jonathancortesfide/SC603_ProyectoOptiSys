@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, TextField, Button, Checkbox, FormControlLabel, MenuItem, Accordion, AccordionSummary, AccordionDetails, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, InputAdornment, IconButton } from '@mui/material';
-import { IconChevronDown, IconSearch } from '@tabler/icons';
-import { AgregarProducto } from '../../requests/mantenimientos/producto/RequestsProductos';
-import { obtenerListaDeTipoLentes } from '../../requests/mantenimientos/TipoLente/RequestsTipoLente';
+import { Box, Grid, TextField, Button, Checkbox, FormControlLabel, MenuItem, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
+import { IconChevronDown } from '@tabler/icons';
+import { AgregarProducto, actualizarProducto } from '../../requests/mantenimientos/producto/RequestsProductos';
 
 const tiposArticulo = [ 'Material', 'Servicio', 'Servicio-Externo' ];
 const tiposImpuesto = [ 'Exento', 'IVA', 'Otro' ];
-const listasPreciosBase = [
-  { id: 'lp-001', nombre: 'General', utilidad: 0, precioNeto: 0, precioCliente: 0 },
-  { id: 'lp-002', nombre: 'Mayoreo', utilidad: 0, precioNeto: 0, precioCliente: 0 },
-  { id: 'lp-003', nombre: 'Preferencial', utilidad: 0, precioNeto: 0, precioCliente: 0 },
-];
 
 const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
   const [form, setForm] = useState({
@@ -24,44 +18,15 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
     codigoCabys: '',
     esActivo: true,
     unidadMedida: '',
-    grupo: '',
-    marca: '',
-    tipoLente: '',
     existencia: 0,
-    caracteristicas: '',
-    foto: '',
-    minimo: 0,
-    esPerecedero: false,
-    costoPromedioPonderado: 0,
-    costoUltimaCompra: 0,
-    costoFinal: 0,
-    listasPrecios: [],
   });
-
-  const [tiposLente, setTiposLente] = useState([]);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (producto) {
-      setForm((p) => ({ ...p, ...producto }));
-    } else {
-      setForm((p) => ({ ...p, listasPrecios: p.listasPrecios?.length ? p.listasPrecios : listasPreciosBase }));
+      setForm((p) => ({ ...p, ...producto, esActivo: producto.esActivo ?? producto.activo ?? true }));
     }
-    cargarTiposLente();
   }, [producto]);
-
-  const cargarTiposLente = async () => {
-    const data = await obtenerListaDeTipoLentes();
-    if (data && Array.isArray(data) && data.length > 0) {
-      setTiposLente(data.filter(t => t.activo).map(t => ({ value: t.no_tipo, label: t.descripcion })));
-    } else {
-      setTiposLente([
-        { value: 'Monofocal', label: 'Monofocal' },
-        { value: 'Bifocal', label: 'Bifocal' },
-        { value: 'Progresivo', label: 'Progresivo' },
-        { value: 'Otro', label: 'Otro' }
-      ]);
-    }
-  };
 
   const handleChange = (key) => (e) => {
     const value = e?.target?.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -69,30 +34,12 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  const [errors, setErrors] = useState({});
-
   const validate = () => {
     const e = {};
     if (!form.codigoInterno || !String(form.codigoInterno).trim()) e.codigoInterno = 'Código interno es obligatorio';
     if (!form.nombre || !String(form.nombre).trim()) e.nombre = 'Nombre es obligatorio';
     if (isNaN(Number(form.porcentajeImpuesto)) || Number(form.porcentajeImpuesto) < 0) e.porcentajeImpuesto = 'Porcentaje inválido';
     if (isNaN(Number(form.existencia)) || Number(form.existencia) < 0) e.existencia = 'Existencia inválida';
-    if (isNaN(Number(form.minimo)) || Number(form.minimo) < 0) e.minimo = 'Mínimo inválido';
-    ['costoPromedioPonderado','costoUltimaCompra','costoFinal'].forEach(k => {
-      if (form[k] !== '' && (isNaN(Number(form[k])) || Number(form[k]) < 0)) e[k] = 'Valor inválido';
-    });
-
-    if (Array.isArray(form.listasPrecios)) {
-      const listasErr = {};
-      form.listasPrecios.forEach((lp, idx) => {
-        const rowErr = {};
-        if (!lp.nombre || !String(lp.nombre).trim()) rowErr.nombre = 'Nombre es obligatorio';
-        if (isNaN(Number(lp.utilidad)) || Number(lp.utilidad) < 0) rowErr.utilidad = 'Utilidad inválida';
-        if (isNaN(Number(lp.precioNeto)) || Number(lp.precioNeto) < 0) rowErr.precioNeto = 'Precio neto inválido';
-        if (Object.keys(rowErr).length) listasErr[idx] = rowErr;
-      });
-      if (Object.keys(listasErr).length) e.listasPrecios = listasErr;
-    }
 
     return e;
   };
@@ -101,45 +48,14 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
 
-    const payload = { ...form };
+    const payload = { ...form, noProducto: form.noProducto || producto?.noProducto || 0 };
     try {
-      const res = await AgregarProducto(payload);
+      const res = modoEdicion
+        ? await actualizarProducto(payload.noProducto, payload)
+        : await AgregarProducto({ ...payload, noProducto: 0 });
       if (res && res.EsCorrecto !== false) { onGuardar && onGuardar(); }
       else setErrors({ submit: res?.Mensaje || 'Error al guardar producto' });
     } catch (err) { console.error(err); setErrors({ submit: 'Error al guardar' }); }
-  };
-
-  const handleListaChange = (idx, key) => (e) => {
-    const value = e?.target?.type === 'number' ? (e.target.value === '' ? '' : parseFloat(e.target.value)) : e.target.value;
-    setForm(s => {
-      const listas = [...(s.listasPrecios || [])];
-      listas[idx] = { ...listas[idx], [key]: value };
-      const impuestoFactor = 1 + (Number(s.porcentajeImpuesto) || 0) / 100;
-      listas[idx].precioCliente = Number(listas[idx].precioNeto || 0) * impuestoFactor;
-      return { ...s, listasPrecios: listas };
-    });
-    setErrors(err => {
-      if (!err.listasPrecios) return err;
-      const copy = { ...err };
-      if (copy.listasPrecios && copy.listasPrecios[idx]) {
-        const row = { ...copy.listasPrecios };
-        delete row[idx];
-        copy.listasPrecios = Object.keys(row).length ? row : undefined;
-      }
-      return copy;
-    });
-  };
-
-  // Photo upload
-  const handleFotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setForm(s => ({ ...s, foto: reader.result }));
-      setErrors(err => ({ ...err, foto: undefined }));
-    };
-    reader.readAsDataURL(file);
   };
 
   return (
@@ -171,123 +87,17 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
             <Grid item xs={12} sm={4}><TextField label="Código barras" fullWidth size="small" value={form.codigoBarras} onChange={handleChange('codigoBarras')} /></Grid>
             <Grid item xs={12} sm={4}><TextField label="Código auxiliar" fullWidth size="small" value={form.codigoAuxiliar} onChange={handleChange('codigoAuxiliar')} /></Grid>
             <Grid item xs={12} sm={4}><TextField label="Unidad de medida" fullWidth size="small" value={form.unidadMedida} onChange={handleChange('unidadMedida')} /></Grid>
-
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Grupo"
-                fullWidth
-                size="small"
-                value={form.grupo}
-                onChange={handleChange('grupo')}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton size="small" aria-label="buscar grupo">
-                        <IconSearch size={18} />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Marca"
-                fullWidth
-                size="small"
-                value={form.marca}
-                onChange={handleChange('marca')}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton size="small" aria-label="buscar marca">
-                        <IconSearch size={18} />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
             <Grid item xs={12} sm={4}><FormControlLabel control={<Checkbox checked={form.esActivo} onChange={handleChange('esActivo')} />} label="Es activo" /></Grid>
             <Grid item xs={12} sm={4}><TextField label="Existencia" type="number" fullWidth size="small" value={form.existencia} onChange={handleChange('existencia')} /></Grid>
           </Grid>
         </AccordionDetails>
       </Accordion>
 
-      <Accordion>
-        <AccordionSummary expandIcon={<IconChevronDown />}>
-          <Typography variant="subtitle1" fontWeight={600}>Información adicional</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={2}>
-            {form.tipoArticulo === 'Material' && (
-              <Grid item xs={12} sm={4}>
-                <TextField select label="Tipo de lente" fullWidth size="small" value={form.tipoLente} onChange={handleChange('tipoLente')}>
-                  {tiposLente.map(t => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
-                </TextField>
-              </Grid>
-            )}
-            <Grid item xs={12}><TextField label="Características adicionales" fullWidth size="small" multiline rows={2} value={form.caracteristicas} onChange={handleChange('caracteristicas')} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Mínimo" type="number" fullWidth size="small" value={form.minimo} onChange={handleChange('minimo')} error={!!errors.minimo} helperText={errors.minimo} /></Grid>
-            <Grid item xs={12} sm={4}><FormControlLabel control={<Checkbox checked={form.esPerecedero} onChange={handleChange('esPerecedero')} />} label="Es perecedero" /></Grid>
-            <Grid item xs={12} sm={4}>
-              <Button variant="outlined" component="label">Subir foto<input hidden accept="image/*" type="file" onChange={handleFotoChange} /></Button>
-              {form.foto && <Box component="img" src={form.foto} alt="Preview" sx={{ maxWidth: 120, display: 'block', mt: 1 }} />}
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
-
-      <Accordion>
-        <AccordionSummary expandIcon={<IconChevronDown />}>
-          <Typography variant="subtitle1" fontWeight={600}>Costos y precios de venta</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}><TextField label="Costo promedio ponderado" type="number" fullWidth size="small" value={form.costoPromedioPonderado} onChange={handleChange('costoPromedioPonderado')} error={!!errors.costoPromedioPonderado} helperText={errors.costoPromedioPonderado} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Costo última compra" type="number" fullWidth size="small" value={form.costoUltimaCompra} onChange={handleChange('costoUltimaCompra')} error={!!errors.costoUltimaCompra} helperText={errors.costoUltimaCompra} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Costo final" type="number" fullWidth size="small" value={form.costoFinal} onChange={handleChange('costoFinal')} error={!!errors.costoFinal} helperText={errors.costoFinal} /></Grid>
-            <Grid item xs={12}>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Nombre de la lista de precios</TableCell>
-                      <TableCell>Utilidad</TableCell>
-                      <TableCell>Precio neto (sin impuesto)</TableCell>
-                      <TableCell>Precio al cliente</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(form.listasPrecios || []).length > 0 ? (
-                      (form.listasPrecios || []).map((lp, idx) => (
-                        <TableRow key={lp.id || idx}>
-                          <TableCell>
-                            <TextField size="small" fullWidth value={lp.nombre} InputProps={{ readOnly: true }} />
-                          </TableCell>
-                          <TableCell>
-                            <TextField size="small" type="number" value={lp.utilidad} onChange={handleListaChange(idx, 'utilidad')} />
-                          </TableCell>
-                          <TableCell>
-                            <TextField size="small" type="number" value={lp.precioNeto} onChange={handleListaChange(idx, 'precioNeto')} />
-                          </TableCell>
-                          <TableCell>
-                            {lp.precioCliente?.toFixed ? lp.precioCliente.toFixed(2) : lp.precioCliente}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center">No hay listas de precios</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
+      {errors.submit && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          {errors.submit}
+        </Typography>
+      )}
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
         <Button variant="outlined" onClick={onCancel}>Cancelar</Button>

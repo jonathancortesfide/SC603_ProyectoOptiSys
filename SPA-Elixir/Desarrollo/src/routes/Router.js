@@ -10,7 +10,6 @@ import GuestGuard from 'src/guards/authGuard/GuestGaurd';
 import Callback  from '../views/authentication/callback';
 
 /* ****Pages***** */
-const SamplePage = Loadable(lazy(() => import('../views/sample-page/SamplePage')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 /* ***Pacientes*** */
 const Pacientes = Loadable(lazy(() => import('../views/pacientes/PacientesUnificado')));
@@ -46,13 +45,12 @@ const Router = [
   {
     path: '/',
     element: (
-      //<AuthGuard>
+      <AuthGuard>
         <FullLayout />
-      //</AuthGuard>
+      </AuthGuard>
     ),
     children: [
-      { path: '/', element: <Navigate to="/sample-page" /> },
-      { path: '/sample-page', exact: true, element: <SamplePage /> },
+      { path: '/', element: <Navigate to="/pacientes" /> },
       { path: '/pacientes', exact: true, element: <Pacientes /> },
       { path: '/crearexamen', exact: true, element: <ExamenDeLaVista /> },
       { path: '/verexamenes', exact: true, element: <VerExamenesDeLaVista /> },
@@ -77,9 +75,9 @@ const Router = [
     children: [
       { path: '/auth/login', element: <Login /> },
       { path: '/auth/callback', exact: true, element: <Callback /> },
-      { path: '/auth/login2', element: <Login2 /> },
-      { path: '/auth/register', element: <Register /> },
-      { path: '/auth/register2', element: <Register2 /> },
+      { path: '/auth/login2', element: <Navigate to="/auth/login" replace /> },
+      { path: '/auth/register', element: <Navigate to="/auth/login" replace /> },
+      { path: '/auth/register2', element: <Navigate to="/auth/login" replace /> },
     ],
   },
   {

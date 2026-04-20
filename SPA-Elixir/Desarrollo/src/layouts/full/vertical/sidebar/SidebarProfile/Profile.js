@@ -3,12 +3,23 @@ import { Box, Avatar, Typography, IconButton, Tooltip, useMediaQuery } from '@mu
 import { useSelector } from 'react-redux';
 import img1 from 'src/assets/images/profile/user-1.jpg';
 import { IconPower } from '@tabler/icons';
-import {Link} from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import useAuth from 'src/guards/authGuard/UseAuth';
 
 export const Profile = () => {
   const customizer = useSelector((state) => state.customizer);
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/auth/login', { replace: true });
+    }
+  };
   
   return (
     <Box
@@ -22,12 +33,12 @@ export const Profile = () => {
           <Avatar alt="Remy Sharp" src={img1} />
 
           <Box>
-            <Typography variant="h6"  color="textPrimary">Mathew</Typography>
-            <Typography variant="caption" color="textSecondary">Designer</Typography>
+            <Typography variant="h6" color="textPrimary">{user?.nombreUsuario || 'Usuario'}</Typography>
+            <Typography variant="caption" color="textSecondary">Sesión activa</Typography>
           </Box>
           <Box sx={{ ml: 'auto' }}>
             <Tooltip title="Logout" placement="top">
-              <IconButton color="primary" component={Link} to="/auth/login" aria-label="logout" size="small">
+              <IconButton color="primary" onClick={handleLogout} aria-label="logout" size="small">
                 <IconPower size="20" />
               </IconButton>
             </Tooltip>

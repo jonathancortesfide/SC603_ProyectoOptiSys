@@ -1,23 +1,13 @@
 import { uniqueId } from 'lodash';
 
 import {
-  IconAward,
   IconBoxMultiple,
-  IconPoint,
-  IconBan,
-  IconStar,
-  IconMoodSmile,
   IconAperture,
   IconSettings,
-  IconShield,
-  IconShieldCheck,
-  IconKey
-  , IconCurrencyDollar, IconTag
-  , IconUserCheck,
-  IconUserSearch,
+  IconCurrencyDollar,
+  IconTag,
+  IconUserCheck,
   IconUsers,
-  IconBarcode,
-  IconBoxMultiple1,
   IconPackage
 } from '@tabler/icons';
 
@@ -25,15 +15,6 @@ const Menuitems = [
   {
     navlabel: true,
     subheader: 'Home',
-  },
-
-  {
-    id: uniqueId(),
-    title: 'Sample Page',
-    icon: IconAperture,
-    href: '/sample-page',
-    chip: 'New',
-    chipColor: 'secondary',
   },
   {
     navlabel: true,
@@ -50,19 +31,6 @@ const Menuitems = [
     title: 'Productos',
     icon: IconPackage,
     href: '/productos',
-  },
-  {
-    id: uniqueId(),
-    title: 'Examenes',
-    icon: IconStar, 
-    href: '/verexamenes',
-  }, 
-  
-  {
-    id: uniqueId(),
-    title: 'Seguridad',
-    icon: IconKey,
-    href: '/seguridad',
   },
   {
     id: uniqueId(),

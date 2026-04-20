@@ -13,9 +13,13 @@ import {
 import { ejemploListaRoles, ejemploListaPermisos, responseCrearRol, responseActualizarRol, responseEliminarRol, responseAsignarRol, responseDesvincularRol, ejemploRolesDelUsuario } from '../../views/seguridad/ejemplosDatos';
 
 axios.interceptors.request.use(async (config) => {
+    const token = window.localStorage.getItem('accessToken');
+
     config.headers = {
+        ...(config.headers || {}),
         "Content-Type": "application/json",
-        Accept: "application/json"
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
     return config
 }, function (error) {

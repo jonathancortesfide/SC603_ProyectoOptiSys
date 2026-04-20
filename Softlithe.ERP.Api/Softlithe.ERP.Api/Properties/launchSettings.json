@@ -4,7 +4,10 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "JWT_SECRET_KEY": "K4#jL9$mX2&vQ7!sN0%oB5^wT1|eJ3*yZ6@cH8-fD=G+i2K3L4M5N6O7P8Q9R0S",
+        "JWT_ISSUER": "SoftlitheERP",
+        "JWT_AUDIENCE": "SoftlitheERPApp"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7159;http://localhost:5159"

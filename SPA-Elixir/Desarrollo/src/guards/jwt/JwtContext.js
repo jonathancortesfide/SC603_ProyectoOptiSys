@@ -1,31 +1,25 @@
 import { createContext, useEffect, useReducer } from 'react';
 
 // utils
-import axios from 'src/utils/axios';
-import { isValidToken, setSession } from './Jwt';
-import {apiLogin, apiRegistroUsuario, apiObtenerTokenOauth} from '../../components/apiConstantes';
+import axios from 'axios';
+import {
+  ACCESS_TOKEN_KEY,
+  clearSession,
+  getStoredUser,
+  getUserFromToken,
+  isValidToken,
+  registerAuthInterceptors,
+  setSession,
+} from './Jwt';
+import { apiAutenticacionLogin } from '../../components/apiConstantes';
 
 // ----------------------------------------------------------------------
 
-export const obtenerTokenOAuth = async (username, password) => {
-  const params = new URLSearchParams();
-  params.append('client_id', 'js');
-  params.append('grant_type', 'password');
-  params.append('scope', 'openid profile scope2');
-  params.append('username', username);
-  params.append('password', password);
-  const response = await axios.post(apiObtenerTokenOauth, params);
-  const { accessTokens } = response.data.access_token;
-  const user = "";
-  const accessToken = response.data.access_token;
-  setSession(accessToken);
-  dispatch({
-    type: 'LOGIN',
-    payload: {
-      user,
-    },
-  });
-};
+const normalizarRespuestaAuth = (data) => ({
+  esCorrecto: data?.esCorrecto ?? data?.EsCorrecto ?? false,
+  mensaje: data?.mensaje ?? data?.Mensaje ?? 'No se pudo iniciar sesión.',
+  data: data?.data ?? data?.Data ?? null,
+});
 
 const initialState = {
   isAuthenticated: false,
@@ -75,24 +69,23 @@ const reducer = (state, action) =>
 const AuthContext = createContext({
   ...initialState,
   platform: 'JWT',
-  signup: () => Promise.resolve(),
   signin: () => Promise.resolve(),
-  logout: () => Promise.resolve()
+  logout: () => Promise.resolve(),
 });
 
 function  AuthProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
+    registerAuthInterceptors();
+
     const initialize = async () => {
       try {
-        const accessToken = window.localStorage.getItem('accessToken');
+        const accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY);
 
         if (accessToken && isValidToken(accessToken)) {
-          setSession(accessToken);
-
-          const response = await axios.get('/api/account/my-account');
-          const { user } = response.data;
+          const user = getStoredUser() || getUserFromToken(accessToken);
+          setSession(accessToken, user);
 
           dispatch({
             type: 'INITIALIZE',
@@ -102,6 +95,7 @@ function  AuthProvider({ children }) {
             },
           });
         } else {
+          clearSession();
           dispatch({
             type: 'INITIALIZE',
             payload: {
@@ -125,42 +119,33 @@ function  AuthProvider({ children }) {
     initialize();
   }, []);
 
-  const signin = async (email, password, rememberMe) => {
-    const params = new URLSearchParams();
-  params.append('client_id', 'js');
-  params.append('grant_type', 'password');
-  params.append('scope', 'openid profile scope2');
-  params.append('username', email);
-  params.append('password', password);
-    const response = await axios.post(apiObtenerTokenOauth, params);
-    const { accessTokens } = response.data.access_token;
-    const user = '';
-    const accessToken = response.data.access_token;
-    setSession(accessToken);
+  const signin = async (nombreUsuario, password) => {
+    const response = await axios.post(apiAutenticacionLogin, {
+      nombreUsuario,
+      contraseña: password,
+    });
+
+    const resultado = normalizarRespuestaAuth(response.data);
+    if (!resultado.esCorrecto || !resultado.data?.token) {
+      throw new Error(resultado.mensaje || 'Usuario o contraseña incorrectos.');
+    }
+
+    const user = {
+      noUsuario: resultado.data.noUsuario,
+      nombreUsuario: resultado.data.nombreUsuario,
+      correo: resultado.data.correo,
+    };
+
+    const accessToken = resultado.data.token;
+    setSession(accessToken, user);
     dispatch({
       type: 'LOGIN',
       payload: {
         user,
       },
     });
-  };
 
-  const signup = async (email, password, firstName, lastName) => {
-    const response = await axios.post(apiRegistroUsuario, {
-      email,
-      password,
-      firstName,
-      lastName,
-    });
-    const { accessToken, user } = response.data;
-
-    window.localStorage.setItem('accessToken', accessToken);
-    dispatch({
-      type: 'REGISTER',
-      payload: {
-        user,
-      },
-    });
+    return resultado;
   };
 
   const logout = async () => {
@@ -175,7 +160,6 @@ function  AuthProvider({ children }) {
         method: 'jwt',
         signin,
         logout,
-        signup
       }}
     >
       {children}

@@ -1,10 +1,6 @@
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { ReactComponent as LogoDark } from 'src/assets/images/logos/dark-logo.svg';
-import { ReactComponent as LogoDarkRTL } from 'src/assets/images/logos/dark-rtl-logo.svg';
-import { ReactComponent as LogoLight } from 'src/assets/images/logos/light-logo.svg';
-import { ReactComponent as LogoLightRTL } from 'src/assets/images/logos/light-logo-rtl.svg';
-import { styled } from '@mui/material';
+import { styled, Box } from '@mui/material';
 
 const Logo = () => {
   const customizer = useSelector((state) => state.customizer);
@@ -12,40 +8,30 @@ const Logo = () => {
     height: customizer.TopbarHeight,
     width: customizer.isCollapse ? '40px' : '180px',
     overflow: 'hidden',
-    display: 'block',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: customizer.isCollapse ? 'center' : 'flex-start',
   }));
-
-  if (customizer.activeDir === 'ltr') {
-    return (
-      <LinkStyled
-        to="/"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        {customizer.activeMode === 'dark' ? (
-          <LogoLight />
-        ) : (
-          <LogoDark />
-        )}
-      </LinkStyled>
-    );
-  }
 
   return (
     <LinkStyled
       to="/"
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        padding: customizer.isCollapse ? '8px 0 0 0' : '24px 0 0 28px',
       }}
     >
-      {customizer.activeMode === 'dark' ? (
-        <LogoDarkRTL />
-      ) : (
-        <LogoLightRTL />
-      )}
+      <Box
+        component="img"
+        src="/lensys_logo.png"
+        alt="Lensys"
+        sx={{
+          width: customizer.isCollapse ? 32 : 150,
+          maxWidth: '100%',
+          height: 'auto',
+          objectFit: 'contain',
+          display: 'block',
+        }}
+      />
     </LinkStyled>
   );
 };

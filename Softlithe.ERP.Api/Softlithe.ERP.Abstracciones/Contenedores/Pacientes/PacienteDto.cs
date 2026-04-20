@@ -17,7 +17,7 @@ public class PacienteDto
     public string nombre { get; set; } = string.Empty;
     public DateTime? fechaNacimiento { get; set; }
     public string? sexo { get; set; }
-    public int? noPaisNacionalidad { get; set; }
+    public string? nacionalidad { get; set; }
     public string? telefono1 { get; set; }
     public string? telefono2 { get; set; }
     public string? email1 { get; set; }
