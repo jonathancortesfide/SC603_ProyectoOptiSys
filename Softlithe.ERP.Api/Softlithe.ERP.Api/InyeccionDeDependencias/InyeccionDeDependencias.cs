@@ -9,12 +9,12 @@ namespace Softlithe.ERP.Api
 			//Inyeccion de dependencias generales
 			InyeccionDeDependenciasGenerales.InyectarDependencias(services);
 			InyeccionDeDependenciasPacientes.InyectarDependencias(services);
+			InyeccionDeDependenciasProductos.InyectarDependencias(services);
 			InyeccionDeDependenciasExamenes.InyectarDependencias(services);
 			InyeccionDependenciasMonedas.InyectarDependencias(services);
 			InyeccionDependenciasGrupos.InyectarDependencias(services);
             InyeccionDeDependenciasTipoLente.InyectarDependencias(services);
             InyeccionDeDependenciaListaPrecio.InyectarDependenciasListaPrecio(services);
-
 
             return services;
         }
