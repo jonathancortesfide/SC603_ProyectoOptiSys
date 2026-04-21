@@ -11,5 +11,6 @@ namespace Softlithe.ERP.Abstracciones.BW.Productos
         Task<int> Crear(ProductoDto producto);
         Task<bool> Actualizar(ProductoDto producto);
         Task<bool> Eliminar(int id);
+        Task<bool> CambiarEstado(int id, bool activo);
     }
 }

@@ -18,5 +18,6 @@ namespace Softlithe.ERP.BW.Productos
         public Task<int> Crear(ProductoDto producto) => _productoDA.Crear(producto);
         public Task<bool> Actualizar(ProductoDto producto) => _productoDA.Actualizar(producto);
         public Task<bool> Eliminar(int id) => _productoDA.Eliminar(id);
+        public Task<bool> CambiarEstado(int id, bool activo) => _productoDA.CambiarEstado(id, activo);
     }
 }
