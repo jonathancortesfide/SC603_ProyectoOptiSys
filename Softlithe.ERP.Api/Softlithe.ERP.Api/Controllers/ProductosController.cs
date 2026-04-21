@@ -7,7 +7,6 @@ namespace Softlithe.ERP.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class ProductosController : ControllerBase
     {
         private readonly IProductoBW _productoBW;
@@ -63,6 +62,15 @@ namespace Softlithe.ERP.Api.Controllers
         {
             var ok = await _productoBW.Eliminar(id);
             return Ok(new { EsCorrecto = ok, Mensaje = ok ? "Producto eliminado correctamente." : "No se encontró el producto." });
+        }
+
+        [HttpPut("{id}/estado/{activo}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CambiarEstadoProducto(int id, bool activo)
+        {
+            var ok = await _productoBW.CambiarEstado(id, activo);
+            return Ok(new { EsCorrecto = ok, Mensaje = ok ? $"Producto {(activo ? "activado" : "desactivado")} correctamente." : "No se encontró el producto." });
         }
     }
 }

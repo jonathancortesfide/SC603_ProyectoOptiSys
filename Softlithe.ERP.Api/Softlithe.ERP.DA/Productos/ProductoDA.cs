@@ -116,5 +116,15 @@ namespace Softlithe.ERP.DA.Productos
             await _contexto.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> CambiarEstado(int id, bool activo)
+        {
+            var p = await _contexto.Productos.FindAsync(id);
+            if (p == null) return false;
+            p.activo = activo;
+            p.fechaModificacion = DateTime.Now;
+            await _contexto.SaveChangesAsync();
+            return true;
+        }
     }
 }
