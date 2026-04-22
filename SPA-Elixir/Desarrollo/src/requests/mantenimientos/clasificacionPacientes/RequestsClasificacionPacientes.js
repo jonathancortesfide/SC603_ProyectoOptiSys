@@ -1,10 +1,9 @@
 import axios from 'axios';
 import {
-    apiClasificacionesPacientes,
-    apiClasificacionPacientePorId,
+    apiClasificacionesPacientesPorEmpresa,
     apiCrearClasificacionPaciente,
     apiActualizarClasificacionPaciente,
-    apiEliminarClasificacionPaciente,
+    apiCambiarEstadoClasificacionPaciente,
 } from './DireccionesRequest';
 
 axios.interceptors.request.use(async (config) => {
@@ -25,8 +24,10 @@ axios.interceptors.response.use(async (response) => response, function (error) {
     return Promise.reject(error);
 });
 
-const obtenerListaDeClasificacionesPacientes = async () => {
-    const urlApi = `${apiClasificacionesPacientes}`;
+const respuestaError = (mensaje) => ({ esCorrecto: false, mensaje });
+
+const obtenerListaDeClasificacionesPacientes = async (noEmpresa) => {
+    const urlApi = `${apiClasificacionesPacientesPorEmpresa}${noEmpresa}`;
     try {
         return axios.get(urlApi)
             .then(respuesta => {
@@ -35,53 +36,38 @@ const obtenerListaDeClasificacionesPacientes = async () => {
             .catch(e => {
                 console.log('Error al obtener lista de clasificaciones de pacientes: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return [
-                        { id: 'cp-001', descripcion: 'Prioritario' },
-                        { id: 'cp-002', descripcion: 'Control' },
-                        { id: 'cp-003', descripcion: 'Seguimiento' }
-                    ];
+                    return {
+                        esCorrecto: true,
+                        mensaje: '',
+                        laListaDeClasificaciones: [
+                            { no_clasificacion: 1, descripcion: 'Prioritario', no_empresa: Number(noEmpresa), activo: true },
+                            { no_clasificacion: 2, descripcion: 'Control', no_empresa: Number(noEmpresa), activo: true },
+                            { no_clasificacion: 3, descripcion: 'Seguimiento', no_empresa: Number(noEmpresa), activo: false }
+                        ]
+                    };
                 }
-                return [];
+                return respuestaError('No se pudo obtener la lista de clasificaciones de pacientes');
             });
     } catch (error) {
         console.log('Error en obtenerListaDeClasificacionesPacientes: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return [
-                { id: 'cp-001', descripcion: 'Prioritario' },
-                { id: 'cp-002', descripcion: 'Control' },
-                { id: 'cp-003', descripcion: 'Seguimiento' }
-            ];
+            return {
+                esCorrecto: true,
+                mensaje: '',
+                laListaDeClasificaciones: [
+                    { no_clasificacion: 1, descripcion: 'Prioritario', no_empresa: Number(noEmpresa), activo: true },
+                    { no_clasificacion: 2, descripcion: 'Control', no_empresa: Number(noEmpresa), activo: true },
+                    { no_clasificacion: 3, descripcion: 'Seguimiento', no_empresa: Number(noEmpresa), activo: false }
+                ]
+            };
         }
-        return [];
-    }
-};
-
-const obtenerClasificacionPacientePorId = async (id) => {
-    const urlApi = `${apiClasificacionPacientePorId}${id}`;
-    try {
-        return axios.get(urlApi)
-            .then(respuesta => {
-                if (respuesta.status === 200) return respuesta.data;
-            })
-            .catch(e => {
-                console.log('Error al obtener clasificación de pacientes: ' + e);
-                if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { id: 'cp-001', descripcion: 'Prioritario' };
-                }
-                return null;
-            });
-    } catch (error) {
-        console.log('Error en obtenerClasificacionPacientePorId: ' + error);
-        if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { id: 'cp-001', descripcion: 'Prioritario' };
-        }
-        return null;
+        return respuestaError('No se pudo obtener la lista de clasificaciones de pacientes');
     }
 };
 
 const crearClasificacionPaciente = async (clasificacion) => {
     const urlApi = `${apiCrearClasificacionPaciente}`;
-    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false, Data: null };
+    let dataRespuesta = respuestaError('Hubo un problema al crear la clasificación');
     try {
         return axios.post(urlApi, clasificacion)
             .then(respuesta => {
@@ -90,62 +76,62 @@ const crearClasificacionPaciente = async (clasificacion) => {
             .catch(e => {
                 console.log('Error al crear clasificación de pacientes: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { Mensaje: 'Clasificación creada (mock)', EsCorrecto: true, Data: { ...clasificacion, id: 'cp-mock-' + Date.now() } };
+                    return { esCorrecto: true, mensaje: 'Clasificación creada (mock)' };
                 }
                 return dataRespuesta;
             });
     } catch (error) {
         console.log('Error en crearClasificacionPaciente: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { Mensaje: 'Clasificación creada (mock)', EsCorrecto: true, Data: { ...clasificacion, id: 'cp-mock-' + Date.now() } };
+            return { esCorrecto: true, mensaje: 'Clasificación creada (mock)' };
         }
         return dataRespuesta;
     }
 };
 
-const actualizarClasificacionPaciente = async (id, clasificacion) => {
-    const urlApi = `${apiActualizarClasificacionPaciente}${id}`;
-    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false, Data: null };
+const actualizarClasificacionPaciente = async (clasificacion) => {
+    const urlApi = `${apiActualizarClasificacionPaciente}`;
+    let dataRespuesta = respuestaError('Hubo un problema al actualizar la clasificación');
     try {
-        return axios.put(urlApi, clasificacion)
+        return axios.post(urlApi, clasificacion)
             .then(respuesta => {
                 if (respuesta.status === 200) return respuesta.data;
             })
             .catch(e => {
                 console.log('Error al actualizar clasificación de pacientes: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { Mensaje: 'Clasificación actualizada (mock)', EsCorrecto: true, Data: { id, ...clasificacion } };
+                    return { esCorrecto: true, mensaje: 'Clasificación actualizada (mock)' };
                 }
                 return dataRespuesta;
             });
     } catch (error) {
         console.log('Error en actualizarClasificacionPaciente: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { Mensaje: 'Clasificación actualizada (mock)', EsCorrecto: true, Data: { id, ...clasificacion } };
+            return { esCorrecto: true, mensaje: 'Clasificación actualizada (mock)' };
         }
         return dataRespuesta;
     }
 };
 
-const eliminarClasificacionPaciente = async (id) => {
-    const urlApi = `${apiEliminarClasificacionPaciente}${id}`;
-    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false };
+const cambiarEstadoClasificacionPaciente = async (id, activo, usuario) => {
+    const urlApi = `${apiCambiarEstadoClasificacionPaciente}${id}/estado`;
+    let dataRespuesta = respuestaError('Hubo un problema al cambiar el estado de la clasificación');
     try {
-        return axios.delete(urlApi)
+        return axios.post(urlApi, { activo, usuario })
             .then(respuesta => {
                 if (respuesta.status === 200) return respuesta.data;
             })
             .catch(e => {
-                console.log('Error al eliminar clasificación de pacientes: ' + e);
+                console.log('Error al cambiar estado de clasificación de pacientes: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { Mensaje: 'Clasificación eliminada (mock)', EsCorrecto: true };
+                    return { esCorrecto: true, mensaje: 'Estado actualizado (mock)' };
                 }
                 return dataRespuesta;
             });
     } catch (error) {
-        console.log('Error en eliminarClasificacionPaciente: ' + error);
+        console.log('Error en cambiarEstadoClasificacionPaciente: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { Mensaje: 'Clasificación eliminada (mock)', EsCorrecto: true };
+            return { esCorrecto: true, mensaje: 'Estado actualizado (mock)' };
         }
         return dataRespuesta;
     }
@@ -153,8 +139,7 @@ const eliminarClasificacionPaciente = async (id) => {
 
 export {
     obtenerListaDeClasificacionesPacientes,
-    obtenerClasificacionPacientePorId,
     crearClasificacionPaciente,
     actualizarClasificacionPaciente,
-    eliminarClasificacionPaciente
+    cambiarEstadoClasificacionPaciente
 };

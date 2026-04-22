@@ -5,7 +5,9 @@ import {
   IconSettings,
   IconCurrencyDollar,
   IconUsers,
-  IconPackage
+  IconPackage,
+  IconListDetails,
+  IconCategory
 } from '@tabler/icons';
 
 const Menuitems = [
@@ -46,6 +48,18 @@ const Menuitems = [
         title: 'Tipo de lente',
         icon: IconAperture,
         href: '/mantenimientos/tipo-lente',
+      },
+      {
+        id: uniqueId(),
+        title: 'Clasificación de pacientes',
+        icon: IconListDetails,
+        href: '/mantenimientos/clasificacion-pacientes',
+      },
+      {
+        id: uniqueId(),
+        title: 'Grupos de productos',
+        icon: IconCategory,
+        href: '/mantenimientos/grupos-productos',
       },
     ],
   },
