@@ -14,9 +14,9 @@ namespace Softlithe.ERP.BW.Pacientes.CambiarEstadoClasificacion
             _da = da;
         }
 
-        public async Task<ModeloValidacion> CambiarEstado(int no_clasificacion, int identificador, string usuario, bool activo)
+        public async Task<ModeloValidacion> CambiarEstado(int no_clasificacion, string usuario, bool activo)
         {
-            return await _da.CambiarEstado(no_clasificacion, identificador, usuario, activo);
+            return await _da.CambiarEstado(no_clasificacion, usuario, activo);
         }
     }
 }

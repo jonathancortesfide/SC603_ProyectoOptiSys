@@ -31,10 +31,11 @@ namespace Softlithe.ERP.Api.Controllers
         }
 
         // GET: api/PacienteClasificacion/ObtenerPorIdentificador/7
-        [HttpGet("ObtenerPorIdentificador/{identificador}")]
-        public async Task<PacienteClasificacionConModeloDeValidacion> ObtenerPorIdentificador(int identificador)
+        [HttpGet("ObtenerPorIdentificador/{no_empresa}")]
+        [HttpGet("ObtenerPorEmpresa/{no_empresa}")]
+        public async Task<PacienteClasificacionConModeloDeValidacion> ObtenerPorIdentificador(int no_empresa)
         {
-            return await _obtenerBW.ObtenerPorIdentificador(identificador);
+            return await _obtenerBW.ObtenerPorIdentificador(no_empresa);
         }
 
         [HttpPost("AgregarClasificacion")]
@@ -52,9 +53,7 @@ namespace Softlithe.ERP.Api.Controllers
         [HttpPost("{no_clasificacion}/estado")]
         public async Task<ModeloValidacion> CambiarEstado(int no_clasificacion, [FromBody] PacienteClasificacionEstadoDto dto)
         {
-            // Body contains identificador, usuario and activo.
-            int identificador = dto.identificador;
-            return await _cambiarEstadoBW.CambiarEstado(no_clasificacion, identificador, dto.usuario, dto.activo);
+            return await _cambiarEstadoBW.CambiarEstado(no_clasificacion, dto.usuario, dto.activo);
         }
     }
 }

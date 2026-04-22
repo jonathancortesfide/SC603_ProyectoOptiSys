@@ -18,19 +18,19 @@ namespace Softlithe.ERP.DA.Pacientes.ObtenerClasificacionesPorIdentificador
             _contextoBasedeDatos = contextoBasedeDatos;
         }
 
-        public async Task<List<PacienteClasificacionDto>> ObtenerPorIdentificador(int identificador)
+        public async Task<List<PacienteClasificacionDto>> ObtenerPorIdentificador(int no_empresa)
         {
             try
             {
                 var query = _contextoBasedeDatos.PacienteClasificaciones.AsQueryable();
 
-                query = query.Where(x => x.identificador == identificador);
+                query = query.Where(x => x.no_empresa == no_empresa);
 
                 var lista = await query.Select(x => new PacienteClasificacionDto
                 {
                     no_clasificacion = x.no_clasificacion,
                     descripcion = x.descripcion,
-                    identificador = x.identificador,
+                    no_empresa = x.no_empresa,
                     activo = x.activo
                 }).ToListAsync();
 

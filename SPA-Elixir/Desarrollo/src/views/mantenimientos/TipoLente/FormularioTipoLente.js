@@ -17,11 +17,13 @@ import {
   actualizarTipoLente,
   obtenerTipoLentePorId
 } from '../../../requests/mantenimientos/TipoLente/RequestsTipoLente';
+import { getSucursalIdentificador } from '../../../utils/sucursal';
 
 const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa }) => {
+  const noEmpresaPorDefecto = String(noEmpresa ?? getSucursalIdentificador() ?? '').trim();
   const [formData, setFormData] = useState({
     descripcion: '',
-    no_empresa: noEmpresa || '',
+    no_empresa: noEmpresaPorDefecto,
     usuario: ''
   });
   const [error, setError] = useState(null);
@@ -36,7 +38,7 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa
             if (data) {
               setFormData({
                 descripcion: data.descripcion || '',
-                no_empresa: data.no_empresa || noEmpresa || '',
+                no_empresa: data.no_empresa || noEmpresaPorDefecto,
                 usuario: data.usuario || ''
               });
             }
@@ -46,20 +48,20 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa
         } else {
           setFormData({
             descripcion: tipo.descripcion || '',
-            no_empresa: tipo.no_empresa || noEmpresa || '',
+            no_empresa: tipo.no_empresa || noEmpresaPorDefecto,
             usuario: tipo.usuario || ''
           });
         }
       } else {
         setFormData({
           descripcion: '',
-          no_empresa: noEmpresa || '',
+          no_empresa: noEmpresaPorDefecto,
           usuario: ''
         });
       }
     };
     cargar();
-  }, [tipo, modoEdicion, noEmpresa]);
+  }, [tipo, modoEdicion, noEmpresaPorDefecto]);
 
   const handleSubmit = async () => {
     setError(null);
@@ -139,10 +141,9 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa
               label="No. Empresa"
               type="number"
               value={formData.no_empresa}
-              onChange={handleChange}
               fullWidth
               required
-              disabled={modoEdicion || loading}
+              disabled
             />
             <TextField
               name="usuario"

@@ -5,6 +5,6 @@ namespace Softlithe.ERP.Abstracciones.BW.Pacientes.CambiarEstadoClasificacion
 {
     public interface ICambiarEstadoClasificacionBW
     {
-        Task<ModeloValidacion> CambiarEstado(int no_clasificacion, int identificador, string usuario, bool activo);
+        Task<ModeloValidacion> CambiarEstado(int no_clasificacion, string usuario, bool activo);
     }
 }

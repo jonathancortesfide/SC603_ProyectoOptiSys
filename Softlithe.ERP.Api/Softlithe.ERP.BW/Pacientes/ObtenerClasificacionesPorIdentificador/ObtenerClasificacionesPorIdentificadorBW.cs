@@ -14,12 +14,12 @@ namespace Softlithe.ERP.BW.Pacientes.ObtenerClasificacionesPorIdentificador
             _da = da;
         }
 
-        public async Task<PacienteClasificacionConModeloDeValidacion> ObtenerPorIdentificador(int identificador)
+        public async Task<PacienteClasificacionConModeloDeValidacion> ObtenerPorIdentificador(int no_empresa)
         {
             var resultado = new PacienteClasificacionConModeloDeValidacion() { Mensaje = string.Empty };
             try
             {
-                var lista = await _da.ObtenerPorIdentificador(identificador);
+                var lista = await _da.ObtenerPorIdentificador(no_empresa);
                 resultado.laListaDeClasificaciones = lista;
                 resultado.EsCorrecto = true;
                 resultado.Mensaje = "Consulta realizada correctamente";

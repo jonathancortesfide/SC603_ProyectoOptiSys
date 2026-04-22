@@ -22,13 +22,13 @@ namespace Softlithe.ERP.DA.Pacientes.CambiarEstadoClasificacion
             _agregarEventoBitacoraDA = agregarEventoBitacoraDA;
         }
 
-        public async Task<ModeloValidacion> CambiarEstado(int no_clasificacion, int identificador, string usuario, bool activo)
+        public async Task<ModeloValidacion> CambiarEstado(int no_clasificacion, string usuario, bool activo)
         {
             ModeloValidacion resultado = new ModeloValidacion() { Mensaje = string.Empty };
             await using IDbContextTransaction transaction = await _contextoBasedeDatos.Database.BeginTransactionAsync();
             try
             {
-                var entidad = _contextoBasedeDatos.PacienteClasificaciones.FirstOrDefault(x => x.no_clasificacion == no_clasificacion && x.identificador == identificador);
+                var entidad = _contextoBasedeDatos.PacienteClasificaciones.FirstOrDefault(x => x.no_clasificacion == no_clasificacion);
                 if (entidad == null)
                 {
                     resultado.EsCorrecto = false;
@@ -51,7 +51,7 @@ namespace Softlithe.ERP.DA.Pacientes.CambiarEstadoClasificacion
                     BitacoraDto bit = new BitacoraDto
                     {
                         idBitacora = Guid.NewGuid(),
-                        identificador = identificador,
+                        identificador = entidad.no_empresa,
                         usuario = usuario,
                         descripcionDelEvento = descripcionEvento,
                         fechaDeRegistro = DateTime.Now,

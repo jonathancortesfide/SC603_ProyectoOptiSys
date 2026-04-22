@@ -26,9 +26,11 @@ import {
   obtenerTipoLente,
   modificarEstadoTipoLente
 } from '../../../requests/mantenimientos/TipoLente/RequestsTipoLente';
+import { getSucursalIdentificador } from '../../../utils/sucursal';
 
 const TipoLente = () => {
-  const [noEmpresa, setNoEmpresa] = useState('');
+  const noEmpresaPorDefecto = String(getSucursalIdentificador() ?? '').trim();
+  const [noEmpresa] = useState(noEmpresaPorDefecto);
   const [tipos, setTipos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,15 +44,20 @@ const TipoLente = () => {
 
   const tiposFiltrados = soloActivos ? tipos.filter(t => t.activo === true) : tipos;
 
-  const handleBuscar = async () => {
-    if (!noEmpresa.trim()) {
-      setError('El no_empresa es obligatorio');
+  const handleBuscar = async (empresa = noEmpresa) => {
+    const empresaActual = String(empresa ?? '').trim();
+
+    if (!empresaActual) {
+      setError('No se encontro VITE_SUCURSAL_IDENTIFICADOR para cargar los tipos de lente');
+      setTipos([]);
+      setNoResults(false);
       return;
     }
+
     setError(null);
     setLoading(true);
     try {
-      const data = await obtenerTipoLente(noEmpresa.trim());
+      const data = await obtenerTipoLente(empresaActual);
       if (data && Array.isArray(data)) {
         setTipos(data);
         setNoResults(data.length === 0);
@@ -66,6 +73,10 @@ const TipoLente = () => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    handleBuscar(noEmpresaPorDefecto);
+  }, [noEmpresaPorDefecto]);
 
   const handleOpenDialog = () => {
     setModoEdicion(false);
@@ -132,19 +143,12 @@ const TipoLente = () => {
         <Box>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-              <TextField
-                placeholder="Ingrese no_empresa..."
-                size="small"
-                sx={{ width: 300 }}
-                value={noEmpresa}
-                onChange={(e) => setNoEmpresa(e.target.value)}
-              />
               <Button
                 variant="contained"
                 onClick={handleBuscar}
                 disabled={loading}
               >
-                Buscar
+                Recargar
               </Button>
               <Button
                 variant="contained"

@@ -7,7 +7,7 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Pacientes
     {
         public int no_clasificacion { get; set; }
         public string descripcion { get; set; } = string.Empty;
-        public int identificador { get; set; }
+        public int no_empresa { get; set; }
         public bool activo { get; set; }
         [Required]
         public string usuario { get; set; } = string.Empty;
@@ -17,7 +17,7 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Pacientes
     public class PacienteClasificacionCrearDto
     {
         public string descripcion { get; set; } = string.Empty;
-        public int identificador { get; set; }
+        public int no_empresa { get; set; }
         public bool activo { get; set; }
         [Required]
         public string usuario { get; set; } = string.Empty;
@@ -26,8 +26,6 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Pacientes
     // DTO para cambiar estado: body debe contener usuario y activo
     public class PacienteClasificacionEstadoDto
     {
-        [Required]
-        public int identificador { get; set; }
         public bool activo { get; set; }
         public string usuario { get; set; } = string.Empty;
     }

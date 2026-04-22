@@ -6,6 +6,6 @@ namespace Softlithe.ERP.Abstracciones.BW.Pacientes.ObtenerClasificacionesPorIden
 {
     public interface IObtenerClasificacionesPorIdentificadorBW
     {
-        Task<PacienteClasificacionConModeloDeValidacion> ObtenerPorIdentificador(int identificador);
+        Task<PacienteClasificacionConModeloDeValidacion> ObtenerPorIdentificador(int no_empresa);
     }
 }

@@ -6,6 +6,6 @@ namespace Softlithe.ERP.Abstracciones.DA.Pacientes.ObtenerClasificacionesPorIden
 {
     public interface IObtenerClasificacionesPorIdentificadorDA
     {
-        Task<List<PacienteClasificacionDto>> ObtenerPorIdentificador(int identificador);
+        Task<List<PacienteClasificacionDto>> ObtenerPorIdentificador(int no_empresa);
     }
 }
