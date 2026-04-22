@@ -30,7 +30,7 @@ namespace Softlithe.ERP.DA.Pacientes.ModificarClasificacion
             await using IDbContextTransaction transaction = await _contextoBasedeDatos.Database.BeginTransactionAsync();
             try
             {
-                var entidad = _contextoBasedeDatos.PacienteClasificaciones.FirstOrDefault(x => x.no_clasificacion == dto.no_clasificacion && x.identificador == dto.identificador);
+                var entidad = _contextoBasedeDatos.PacienteClasificaciones.FirstOrDefault(x => x.no_clasificacion == dto.no_clasificacion);
                 if (entidad == null)
                 {
                     resultado.EsCorrecto = false;
@@ -55,7 +55,7 @@ namespace Softlithe.ERP.DA.Pacientes.ModificarClasificacion
                     BitacoraDto bit = new BitacoraDto
                     {
                         idBitacora = Guid.NewGuid(),
-                        identificador = dto.identificador,
+                        identificador = entidad.no_empresa,
                         usuario = dto.usuario,
                         descripcionDelEvento = descripcionEvento,
                         fechaDeRegistro = DateTime.Now,

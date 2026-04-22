@@ -32,7 +32,7 @@ namespace Softlithe.ERP.DA.Pacientes.AgregarClasificacion
                 var entidad = new PacienteClasificacion
                 {
                     descripcion = dto.descripcion,
-                    identificador = dto.identificador,
+                    no_empresa = dto.no_empresa,
                     activo = dto.activo
                 };
 
@@ -51,7 +51,7 @@ namespace Softlithe.ERP.DA.Pacientes.AgregarClasificacion
                     BitacoraDto bit = new BitacoraDto
                     {
                         idBitacora = Guid.NewGuid(),
-                        identificador = dto.identificador,
+                        identificador = dto.no_empresa,
                         usuario = dto.usuario,
                         descripcionDelEvento = descripcionEvento,
                         fechaDeRegistro = DateTime.Now,

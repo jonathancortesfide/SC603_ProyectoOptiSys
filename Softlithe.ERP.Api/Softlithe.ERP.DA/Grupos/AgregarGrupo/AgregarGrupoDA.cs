@@ -33,7 +33,8 @@ namespace Softlithe.ERP.DA.Grupos.AgregarGrupo
                 {
                     Descripcion = dto.Descripcion,
                     no_empresa = dto.no_empresa,
-                    activo = dto.activo
+                    activo = dto.activo,
+                    fecha_creacion = DateTime.Now
                 };
 
                 await _contextoBasedeDatos.Set<Grupo>().AddAsync(entidad);
