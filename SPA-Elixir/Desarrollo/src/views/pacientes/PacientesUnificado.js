@@ -19,12 +19,17 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParendCard';
-import { obtenerListaDePacientes, AgregarPaciente, ModificarPaciente } from '../../requests/pacientes/RequestsPacientes';
+import { obtenerListaDePacientes, AgregarPaciente, ModificarPaciente, ModificarEstadoPaciente } from '../../requests/pacientes/RequestsPacientes';
 import InformacionBasica from './tabs/InformacionBasica';
 
 const BCrumb = [{ title: 'Gestión de Pacientes' }];
@@ -43,6 +48,7 @@ const PacientesUnificado = () => {
   const [expandedAccordions, setExpandedAccordions] = useState({
     'informacion-basica': true,
   });
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
 
   useEffect(() => {
     cargarPacientes();
@@ -55,7 +61,8 @@ const PacientesUnificado = () => {
       const data = await obtenerListaDePacientes();
       setListaDePacientes(data || []);
       if (data && data.length > 0) {
-        setPacienteSeleccionado(data[0]);
+        const primerActivo = data.find((p) => p.activo);
+        setPacienteSeleccionado(primerActivo || null);
       }
     } catch (err) {
       setError('No se pudieron cargar los pacientes');
@@ -64,6 +71,7 @@ const PacientesUnificado = () => {
   };
 
   const pacientesFiltrados = listaDePacientes.filter((p) => {
+    if (!p.activo) return false;
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -141,6 +149,35 @@ const PacientesUnificado = () => {
     alert(`Abrir examen para ${pacienteSeleccionado.nombre}`);
   };
 
+  const handleEliminarPaciente = () => {
+    setConfirmarEliminar(true);
+  };
+
+  const handleConfirmarEliminar = async () => {
+    setConfirmarEliminar(false);
+    const noPaciente = pacienteSeleccionado?.noPaciente || pacienteSeleccionado?.numeroDePaciente;
+    if (!noPaciente) return;
+
+    const identificador = pacienteSeleccionado?.identificador ?? pacienteSeleccionado?.Identificador;
+
+    setGuardando(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const resultado = await ModificarEstadoPaciente(noPaciente, false, identificador);
+      if (resultado?.esCorrecto) {
+        setSuccessMsg(resultado.mensaje || 'Paciente eliminado correctamente');
+        await cargarPacientes();
+      } else {
+        setError(resultado?.mensaje || 'Error al eliminar el paciente');
+      }
+    } catch {
+      setError('Error al eliminar el paciente');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   const handleOpenAcciones = (event) => {
     setAnchorElAcciones(event.currentTarget);
   };
@@ -162,6 +199,9 @@ const PacientesUnificado = () => {
         break;
       case 'abrir_examen':
         handleAbrirExamen();
+        break;
+      case 'eliminar_paciente':
+        handleEliminarPaciente();
         break;
       default:
         break;
@@ -402,6 +442,10 @@ const PacientesUnificado = () => {
                     <MenuItem onClick={() => handleAccion('agregar_factura')}>Agregar Factura</MenuItem>
                     <MenuItem onClick={() => handleAccion('agregar_recibo_nota')}>Agregar Recibo o Nota</MenuItem>
                     <MenuItem onClick={() => handleAccion('abrir_examen')}>Abrir Examen</MenuItem>
+                    <Divider />
+                    <MenuItem onClick={() => handleAccion('eliminar_paciente')} sx={{ color: 'error.main' }}>
+                      Eliminar Paciente
+                    </MenuItem>
                   </Menu>
                 </>
               ) : (
@@ -415,6 +459,21 @@ const PacientesUnificado = () => {
           </Grid>
         </Grid>
       </ParentCard>
+
+      <Dialog open={confirmarEliminar} onClose={() => setConfirmarEliminar(false)}>
+        <DialogTitle>Eliminar Paciente</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Está seguro de que desea eliminar al paciente <strong>{pacienteSeleccionado?.nombre}</strong>? Esta acción lo marcará como inactivo en el sistema.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmarEliminar(false)}>Cancelar</Button>
+          <Button onClick={handleConfirmarEliminar} color="error" variant="contained" disabled={guardando}>
+            {guardando ? 'Eliminando...' : 'Eliminar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

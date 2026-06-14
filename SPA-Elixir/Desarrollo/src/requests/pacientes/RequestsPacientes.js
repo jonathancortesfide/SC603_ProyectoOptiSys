@@ -88,11 +88,11 @@ const ModificarPaciente = async (form, noPaciente) => {
     }
 };
 
-const ModificarEstadoPaciente = async (noPaciente, esActivo) => {
+const ModificarEstadoPaciente = async (noPaciente, esActivo, identificador) => {
     try {
         const respuesta = await axios.post(apiModificarEstadoPaciente, {
             noPaciente,
-            identificador: getSucursalIdentificador(),
+            identificador: identificador ?? getSucursalIdentificador(),
             esActivo,
             usuario: getCurrentUsername(),
         });
