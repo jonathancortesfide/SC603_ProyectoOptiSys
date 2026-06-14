@@ -18,19 +18,19 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Pacientes
         [Required(ErrorMessage = MensajeDePacienteDto.NombrePacienteRequerido)]
         public string Nombre { get; set; } = string.Empty;
 
-        public string Direccion { get; set; } = string.Empty;
+        public string? Direccion { get; set; }
 
         public DateTime? FechaNacimiento { get; set; }
 
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
 
-        public string Email2 { get; set; } = string.Empty;
+        public string? Email2 { get; set; }
 
-        public string Telefono1 { get; set; } = string.Empty;
+        public string? Telefono1 { get; set; }
 
-        public string Telefono2 { get; set; } = string.Empty;
+        public string? Telefono2 { get; set; }
 
-        public string Sexo { get; set; } = string.Empty;
+        public string? Sexo { get; set; }
 
         public int? Plazo { get; set; }
 
@@ -42,18 +42,18 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Pacientes
 
         public DateTime? FechaRegistro { get; set; }
 
-        public string NombreContactoEmergencia { get; set; } = string.Empty;
+        public string? NombreContactoEmergencia { get; set; }
 
-        public string TelefonoContactoEmergencia { get; set; } = string.Empty;
+        public string? TelefonoContactoEmergencia { get; set; }
 
         public bool? EsEmpadronado { get; set; }
 
-        public string CodigoActividad { get; set; } = string.Empty;
+        public string? CodigoActividad { get; set; }
 
         /// <summary>
         /// Descripción desde ActividadEconomicaHacienda.nombre_actividad (consultas con JOIN).
         /// </summary>
-        public string NombreActividadEconomica { get; set; } = string.Empty;
+        public string? NombreActividadEconomica { get; set; }
 
         [Required(ErrorMessage = MensajesGeneralesDelSistemaDto.UsuarioRequerido)]
         public string Usuario { get; set; } = string.Empty;

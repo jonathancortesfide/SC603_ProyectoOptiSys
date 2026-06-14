@@ -99,12 +99,12 @@ namespace Softlithe.ERP.DA.Pacientes
                 parametros.Add("@EsEmpadronado", pacienteDto.EsEmpadronado);
                 parametros.Add("@CodigoActividad", string.IsNullOrWhiteSpace(pacienteDto.CodigoActividad) ? null : pacienteDto.CodigoActividad);
 
-                var resultado = await conexion.ExecuteAsync(
+                await conexion.ExecuteAsync(
                     "sp_Paciente_Insertar",
                     parametros,
                     commandType: CommandType.StoredProcedure);
 
-                return resultado;
+                return 1;
             }
             catch (Exception ex)
             {
@@ -139,12 +139,12 @@ namespace Softlithe.ERP.DA.Pacientes
                 parametros.Add("@EsEmpadronado", pacienteDto.EsEmpadronado);
                 parametros.Add("@CodigoActividad", string.IsNullOrWhiteSpace(pacienteDto.CodigoActividad) ? null : pacienteDto.CodigoActividad);
 
-                var resultado = await conexion.ExecuteAsync(
+                await conexion.ExecuteAsync(
                     "sp_Paciente_Actualizar",
                     parametros,
                     commandType: CommandType.StoredProcedure);
 
-                return resultado;
+                return 1;
             }
             catch (Exception ex)
             {

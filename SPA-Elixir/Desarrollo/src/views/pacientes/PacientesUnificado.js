@@ -24,11 +24,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParendCard';
-import { obtenerListaDePacientes } from '../../requests/pacientes/RequestsPacientes';
+import { obtenerListaDePacientes, AgregarPaciente, ModificarPaciente } from '../../requests/pacientes/RequestsPacientes';
 import InformacionBasica from './tabs/InformacionBasica';
-import CuentasTab from './tabs/CuentasTab';
-import InformacionAdicional from './tabs/InformacionAdicional';
-import InformacionFacturacion from './tabs/InformacionFacturacion';
 
 const BCrumb = [{ title: 'Gestión de Pacientes' }];
 
@@ -41,11 +38,10 @@ const PacientesUnificado = () => {
   const [modoCreacion, setModoCreacion] = useState(false);
   const [anchorElAcciones, setAnchorElAcciones] = useState(null);
   const [guardando, setGuardando] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(null);
+  const [formDataPaciente, setFormDataPaciente] = useState(null);
   const [expandedAccordions, setExpandedAccordions] = useState({
     'informacion-basica': true,
-    'cuentas': false,
-    'informacion-adicional': false,
-    'informacion-facturacion': false,
   });
 
   useEffect(() => {
@@ -83,9 +79,6 @@ const PacientesUnificado = () => {
     setModoCreacion(false);
     setExpandedAccordions({
       'informacion-basica': true,
-      'cuentas': false,
-      'informacion-adicional': false,
-      'informacion-facturacion': false,
     });
   };
 
@@ -101,9 +94,6 @@ const PacientesUnificado = () => {
     setModoCreacion(true);
     setExpandedAccordions({
       'informacion-basica': true,
-      'cuentas': false,
-      'informacion-adicional': false,
-      'informacion-facturacion': false,
     });
   };
 
@@ -116,9 +106,6 @@ const PacientesUnificado = () => {
     }
     setExpandedAccordions({
       'informacion-basica': true,
-      'cuentas': false,
-      'informacion-adicional': false,
-      'informacion-facturacion': false,
     });
   };
 
@@ -183,23 +170,85 @@ const PacientesUnificado = () => {
   };
 
   const handleGuardarCambios = async () => {
-    if (!pacienteSeleccionado) return;
-    
-    setGuardando(true);
-    try {
-      // Aquí se debe llamar al API para guardar todos los cambios del paciente
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simular guardado
-      
-      if (modoCreacion) {
-        alert('Paciente creado correctamente');
-        setModoCreacion(false);
-      } else {
-        alert('Cambios guardados correctamente');
+    if (!formDataPaciente || guardando) return;
+
+    const nombre = formDataPaciente.nombre?.trim();
+    const nombreComercial = formDataPaciente.nombreComercial?.trim();
+    const cedula = formDataPaciente.identificacion?.trim();
+    const email = formDataPaciente.email1?.trim();
+    const telefono = formDataPaciente.telefono1?.trim();
+    const fechaNacimiento = formDataPaciente.fechaNacimiento?.trim();
+    const sexo = formDataPaciente.sexo?.trim();
+    const tipoId = formDataPaciente.tipoIdentificacion?.trim();
+
+    // Validar email
+    const isValidEmail = (email) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    // Validaciones requeridas
+    if (!tipoId) {
+      setError('Tipo de Identificación es obligatorio');
+      return;
+    }
+    if (!cedula) {
+      setError('Identificación es obligatoria');
+      return;
+    }
+    if (!fechaNacimiento) {
+      setError('Fecha de Nacimiento es obligatoria');
+      return;
+    }
+    if (!sexo) {
+      setError('Sexo es obligatorio');
+      return;
+    }
+    if (!telefono) {
+      setError('Teléfono principal es obligatorio');
+      return;
+    }
+    if (!email) {
+      setError('Email principal es obligatorio');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError('Email principal inválido (debe tener formato: usuario@dominio.com)');
+      return;
+    }
+    if (tipoId === 'juridica') {
+      if (!nombreComercial) {
+        setError('Nombre Comercial es obligatorio para cédula jurídica');
+        return;
       }
-      
-      await cargarPacientes();
+    } else {
+      if (!nombre) {
+        setError('Nombre es obligatorio');
+        return;
+      }
+    }
+
+    setGuardando(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      let resultado;
+      if (modoCreacion) {
+        resultado = await AgregarPaciente(formDataPaciente);
+      } else {
+        const noPaciente = pacienteSeleccionado?.noPaciente || pacienteSeleccionado?.numeroDePaciente || 0;
+        resultado = await ModificarPaciente(formDataPaciente, noPaciente);
+      }
+
+      if (resultado?.esCorrecto) {
+        setSuccessMsg(resultado.mensaje || (modoCreacion ? 'Paciente creado correctamente' : 'Cambios guardados correctamente'));
+        setModoCreacion(false);
+        await cargarPacientes();
+      } else {
+        setError(resultado?.mensaje || 'Error al guardar');
+      }
     } catch (err) {
-      alert(modoCreacion ? 'Error al crear el paciente' : 'Error al guardar los cambios');
+      setError(modoCreacion ? 'Error al crear el paciente' : 'Error al guardar los cambios');
     } finally {
       setGuardando(false);
     }
@@ -228,7 +277,8 @@ const PacientesUnificado = () => {
   return (
     <PageContainer title="Gestión de Pacientes" description="Gestión de pacientes">
       <ParentCard title="">
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+        {successMsg && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMsg(null)}>{successMsg}</Alert>}
 
         <Grid container spacing={2}>
           {/* Panel izquierdo - Listado de pacientes */}
@@ -256,14 +306,14 @@ const PacientesUnificado = () => {
               <List sx={{ flex: 1, overflow: 'auto' }}>
                 {pacientesFiltrados.length > 0 ? (
                   pacientesFiltrados.map((paciente) => (
-                    <ListItem key={paciente.id || paciente.numeroDePaciente} disablePadding>
+                    <ListItem key={paciente.noPaciente || paciente.numeroDePaciente} disablePadding>
                       <ListItemButton
-                        selected={pacienteSeleccionado?.id === paciente.id}
+                        selected={pacienteSeleccionado?.noPaciente === paciente.noPaciente}
                         onClick={() => handleSeleccionarPaciente(paciente)}
                       >
                         <ListItemText
                           primary={paciente.nombre}
-                          secondary={paciente.cedula || paciente.identificacion}
+                          secondary={paciente.cedula}
                         />
                       </ListItemButton>
                     </ListItem>
@@ -319,52 +369,12 @@ const PacientesUnificado = () => {
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                        <InformacionBasica paciente={pacienteSeleccionado} onUpdate={cargarPacientes} hideGuardarButton={true} />
-                      </AccordionDetails>
-                    </Accordion>
-
-                    {/* Cuentas - Accordion */}
-                    <Accordion 
-                      expanded={expandedAccordions['cuentas']} 
-                      onChange={handleAccordionChange('cuentas')}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          Cuentas
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <CuentasTab paciente={pacienteSeleccionado} onUpdate={cargarPacientes} hideGuardarButton={true} />
-                      </AccordionDetails>
-                    </Accordion>
-
-                    {/* Información Adicional - Accordion */}
-                    <Accordion 
-                      expanded={expandedAccordions['informacion-adicional']} 
-                      onChange={handleAccordionChange('informacion-adicional')}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          Información Adicional
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <InformacionAdicional paciente={pacienteSeleccionado} onUpdate={cargarPacientes} hideGuardarButton={true} />
-                      </AccordionDetails>
-                    </Accordion>
-
-                    {/* Información de Facturación - Accordion */}
-                    <Accordion 
-                      expanded={expandedAccordions['informacion-facturacion']} 
-                      onChange={handleAccordionChange('informacion-facturacion')}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          Información de Facturación
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <InformacionFacturacion paciente={pacienteSeleccionado} onUpdate={cargarPacientes} />
+                        <InformacionBasica
+                          paciente={pacienteSeleccionado}
+                          onUpdate={cargarPacientes}
+                          hideGuardarButton={true}
+                          onFormChange={setFormDataPaciente}
+                        />
                       </AccordionDetails>
                     </Accordion>
                   </Box>

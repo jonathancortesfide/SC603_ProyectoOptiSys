@@ -21,8 +21,6 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
     password: Yup.string()
       .min(6, 'Password must be at least 6 characters')
       .required('Password is required'),
-
-    acceptTerms: Yup.bool().oneOf([true], 'Accept Terms & Conditions is required'),
   });
 
   const formik = useFormik({

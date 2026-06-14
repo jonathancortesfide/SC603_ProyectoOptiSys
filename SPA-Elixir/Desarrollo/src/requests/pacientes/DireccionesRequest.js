@@ -1,8 +1,7 @@
 const apiBase = import.meta.env.VITE_ApiBase;
 
-//Constantes globales de uso de la aplicacion
-
-export const apiObtenerPacientes  = `${apiBase}/Pacientes?`;
-export const apiBuscarPacientes  = `${apiBase}/Pacientes/BuscarPacientePorNombreOIdentificacion?`;
-export const apiAgregarPacientes  = `${apiBase}/Pacientes/AgregarPaciente`;
-export const apiObtenerCuentasPaciente = `${apiBase}/Pacientes/Cuentas?pacienteId=`;
+export const apiObtenerPacientes         = `${apiBase}/Paciente/ObtenerPaciente`;
+export const apiObtenerPacientePorId     = `${apiBase}/Paciente/ObtenerPacientePorId`;
+export const apiAgregarPacientes         = `${apiBase}/Paciente/AgregarPaciente`;
+export const apiModificarPacientes       = `${apiBase}/Paciente/ModificarPaciente`;
+export const apiModificarEstadoPaciente  = `${apiBase}/Paciente/ModificarEstadoPaciente`;

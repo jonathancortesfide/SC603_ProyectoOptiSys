@@ -40,5 +40,13 @@ public class Usuario
     [Column("activo")]
     public bool Activo { get; set; }
 
+    /// <summary>
+    /// Hash PBKDF2-SHA256 de la contraseña para autenticación JWT local.
+    /// Requiere: ALTER TABLE Usuario ADD password_hash NVARCHAR(256) NULL;
+    /// </summary>
+    [Column("password_hash")]
+    [MaxLength(256)]
+    public string? PasswordHash { get; set; }
+
     public virtual ICollection<UsuarioEmpresaSucursal> UsuarioEmpresaSucursales { get; set; } = new List<UsuarioEmpresaSucursal>();
 }
