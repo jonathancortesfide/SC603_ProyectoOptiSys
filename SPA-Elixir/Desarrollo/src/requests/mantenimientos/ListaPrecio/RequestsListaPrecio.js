@@ -1,22 +1,18 @@
 import axios from 'axios';
+import { getSucursalIdentificador } from '../../../utils/sucursal';
 import {
   apiListasPrecios,
   apiListaPrecioPorId,
   apiCrearListaPrecio,
   apiActualizarListaPrecio,
-  apiEliminarListaPrecio,
-  apiListasPreciosPorMoneda,
+  apiListasPreciosPorDescripcion,
   apiModificarEstadoListaPrecio
 } from './DireccionesRequest';
 
 axios.interceptors.request.use(async (config) => {
-  const token = window.localStorage.getItem('accessToken');
-
   config.headers = {
-    ...(config.headers || {}),
     'Content-Type': 'application/json',
-    Accept: 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
+    Accept: 'application/json'
   };
   return config;
 }, function (error) {
@@ -92,67 +88,55 @@ const crearListaPrecio = async (datos) => {
   }
 };
 
-const actualizarListaPrecio = async (id, lista) => {
-  const urlApi = `${apiActualizarListaPrecio}${id}`;
+const actualizarListaPrecio = async (datos) => {
+  const urlApi = `${apiActualizarListaPrecio}`;
   const dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false, Data: null };
+  console.log('URL API Actualizar:', urlApi);
+  console.log('Datos a enviar:', datos);
   try {
-    return axios.put(urlApi, lista)
+    return axios.put(urlApi, datos)
       .then(res => { if (res.status === 200) return res.data; })
       .catch(e => {
         console.log('Error al actualizar lista de precio: ' + e);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-          return { Mensaje: 'Lista de precio actualizada (mock)', EsCorrecto: true, Data: { id, ...lista } };
+          return { Mensaje: 'Lista de precio actualizada (mock)', EsCorrecto: true, Data: datos };
         }
         return dataRespuesta;
       });
   } catch (error) {
     console.log('Error en actualizarListaPrecio: ' + error);
     if (import.meta.env.VITE_USE_MOCK === 'true') {
-      return { Mensaje: 'Lista de precio actualizada (mock)', EsCorrecto: true, Data: { id, ...lista } };
+      return { Mensaje: 'Lista de precio actualizada (mock)', EsCorrecto: true, Data: datos };
     }
     return dataRespuesta;
   }
 };
 
-const eliminarListaPrecio = async (id) => {
-  const urlApi = `${apiEliminarListaPrecio}${id}`;
-  const dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false };
-  try {
-    return axios.delete(urlApi)
-      .then(res => { if (res.status === 200) return res.data; })
-      .catch(e => {
-        console.log('Error al eliminar lista de precio: ' + e);
-        if (import.meta.env.VITE_USE_MOCK === 'true') {
-          return { Mensaje: 'Lista de precio eliminada (mock)', EsCorrecto: true };
-        }
-        return dataRespuesta;
-      });
-  } catch (error) {
-    console.log('Error en eliminarListaPrecio: ' + error);
-    if (import.meta.env.VITE_USE_MOCK === 'true') {
-      return { Mensaje: 'Lista de precio eliminada (mock)', EsCorrecto: true };
-    }
-    return dataRespuesta;
-  }
-};
+const obtenerListasPreciosPorDescripcion = async (descripcion, identificador) => {
+  const id = identificador ?? getSucursalIdentificador();
 
-const obtenerListasPreciosPorMoneda = async (idMoneda) => {
-  const urlApi = `${apiListasPreciosPorMoneda}${idMoneda}`;
+  const urlApi = `${apiListasPreciosPorDescripcion}${encodeURIComponent(descripcion)}&identificador=${id}`;
+
   console.log('URL API:', urlApi);
+
   try {
-    const response = await axios.post(urlApi);
+    const response = await axios.get(urlApi); 
+
     console.log('Respuesta API:', response);
+
     if (response.status === 200 && response.data && response.data.esCorrecto) {
       console.log('Datos:', response.data.laListaDePrecios);
       return response.data.laListaDePrecios || [];
     }
+
     return [];
   } catch (e) {
-    console.log('Error al obtener listas de precios por moneda:', e);
+    console.log('Error al obtener listas de precios por descripción:', e);
     console.log('Error response:', e.response);
     return [];
   }
 };
+
 
 const modificarEstadoListaPrecio = async (id, estado) => {
   const urlApi = `${apiModificarEstadoListaPrecio}${id}/${estado}`;
@@ -171,12 +155,12 @@ const modificarEstadoListaPrecio = async (id, estado) => {
   }
 };
 
+
 export {
   obtenerListaDeListasPrecios,
   obtenerListaPrecioPorId,
   crearListaPrecio,
   actualizarListaPrecio,
-  eliminarListaPrecio,
-  obtenerListasPreciosPorMoneda,
+  obtenerListasPreciosPorDescripcion,
   modificarEstadoListaPrecio
 };

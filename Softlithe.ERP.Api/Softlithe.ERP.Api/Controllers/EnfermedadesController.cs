@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.AgregarEnfermedad;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.AgregarEnfermedadCatalogo;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.AgregarEnfermedadConCatalogo;
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.CambiarEstado;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerEnfermedadCatalogo;
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerEnfermedadPorIdentificador;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerEnfermedadTipo;
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerTodasLasEnfermedades;
 using Softlithe.ERP.Abstracciones.Contenedores;
 using Softlithe.ERP.Abstracciones.Contenedores.Enfermedades;
@@ -17,13 +21,29 @@ namespace Softlithe.ERP.Api.Controllers
 		private readonly IObtenerEnfermedadPorIdentificadorBW _obtenerEnfermedadPorIdentificadorBW;
 		private readonly IAgregarEnfermedadBW _agregarEnfermedadBW;
 		private readonly ICambiarEstadoEnfermedadBW _cambiarEstadoEnfermedadBW;
+		private readonly IObtenerEnfermedadCatalogoBW _obtenerEnfermedadCatalogoBW;
+		private readonly IAgregarEnfermedadCatalogoBW _agregarEnfermedadCatalogoBW;
+		private readonly IAgregarEnfermedadConCatalogoBW _agregarEnfermedadConCatalogoBW;
+		private readonly IObtenerEnfermedadTipoBW _obtenerEnfermedadTipoBW;
 
-		public EnfermedadesController(IObtenerTodasLasEnfermedadesBW obtenerTodasLasEnfermedades, IObtenerEnfermedadPorIdentificadorBW obtenerEnfermedadPorIdentificadorBW, IAgregarEnfermedadBW agregarEnfermedadBW, ICambiarEstadoEnfermedadBW cambiarEstadoEnfermedadBW)
+		public EnfermedadesController(
+			IObtenerTodasLasEnfermedadesBW obtenerTodasLasEnfermedades, 
+			IObtenerEnfermedadPorIdentificadorBW obtenerEnfermedadPorIdentificadorBW, 
+			IAgregarEnfermedadBW agregarEnfermedadBW, 
+			ICambiarEstadoEnfermedadBW cambiarEstadoEnfermedadBW,
+			IObtenerEnfermedadCatalogoBW obtenerEnfermedadCatalogoBW,
+			IAgregarEnfermedadCatalogoBW agregarEnfermedadCatalogoBW,
+			IAgregarEnfermedadConCatalogoBW agregarEnfermedadConCatalogoBW,
+			IObtenerEnfermedadTipoBW obtenerEnfermedadTipoBW)
 		{
 			_obtenerTodasLasEnfermedades = obtenerTodasLasEnfermedades;
 			_obtenerEnfermedadPorIdentificadorBW = obtenerEnfermedadPorIdentificadorBW;
 			_agregarEnfermedadBW = agregarEnfermedadBW;
 			_cambiarEstadoEnfermedadBW = cambiarEstadoEnfermedadBW;
+			_obtenerEnfermedadCatalogoBW = obtenerEnfermedadCatalogoBW;
+			_agregarEnfermedadCatalogoBW = agregarEnfermedadCatalogoBW;
+			_agregarEnfermedadConCatalogoBW = agregarEnfermedadConCatalogoBW;
+			_obtenerEnfermedadTipoBW = obtenerEnfermedadTipoBW;
 		}
 
 		// GET: api/Enfermedades
@@ -107,6 +127,79 @@ namespace Softlithe.ERP.Api.Controllers
 		{
 			ModeloValidacion resultadoModeloValidacion = await _cambiarEstadoEnfermedadBW.CambiarEstado(numeroEnfermedad, cambiarEstadoEnfermedadDto);
 			return resultadoModeloValidacion;
+		}
+
+		// GET: api/Enfermedades/Catalogo
+		/// <summary>
+		/// Obtiene el catálogo completo de enfermedades disponibles en el sistema.
+		/// </summary>
+		/// <remarks>
+		/// Retorna todas las enfermedades registradas en el catálogo junto con su tipo.
+		/// Útil para poblar dropdowns o selects en la interfaz.
+		/// </remarks>
+		/// <returns>Una lista de <see cref="EnfermedadCatalogoResponseDto"/> con todas las enfermedades del catálogo.</returns>
+		/// <response code="200">Operación exitosa. Retorna el catálogo de enfermedades.</response>
+		/// <response code="500">Error interno del servidor.</response>
+		[HttpGet("Catalogo")]
+		public async Task<List<EnfermedadCatalogoResponseDto>> ObtenerCatalogo()
+		{
+			return await _obtenerEnfermedadCatalogoBW.ObtenerCatalogo();
+		}
+
+		// POST: api/Enfermedades/Catalogo
+		/// <summary>
+		/// Crea una nueva enfermedad en el catálogo del sistema.
+		/// </summary>
+		/// <remarks>
+		/// Esta operación permite agregar una nueva enfermedad al catálogo central.
+		/// Solo se crea en el catálogo, no se asigna aún a ninguna sucursal.
+		/// Use el endpoint de AgregarEnfermedadConCatalogo para asignarla a una sucursal.
+		/// </remarks>
+		/// <param name="enfermedadCatalogoDto">Objeto con descripción, tipo de enfermedad y usuario.</param>
+		/// <returns>Un objeto <see cref="ModeloValidacion"/> con el resultado de la operación.</returns>
+		/// <response code="200">Operación exitosa. La enfermedad ha sido agregada al catálogo.</response>
+		/// <response code="500">Error interno del servidor.</response>
+		[HttpPost("Catalogo")]
+		public async Task<ModeloValidacion> AgregarEnfermedadCatalogo([FromBody] AgregarEnfermedadCatalogoDto enfermedadCatalogoDto)
+		{
+			return await _agregarEnfermedadCatalogoBW.AgregarEnfermedadCatalogo(enfermedadCatalogoDto);
+		}
+
+		// POST: api/Enfermedades/AgregarConCatalogo
+		/// <summary>
+		/// Agrega una enfermedad a una sucursal. Si la enfermedad no existe en el catálogo, la crea primero.
+		/// </summary>
+		/// <remarks>
+		/// Este endpoint permite que una sucursal agregue una enfermedad de dos formas:
+		/// 1. Proporcionando un idEnfermedad existente (asignación simple).
+		/// 2. Proporcionando descripcion y noTipo (crea la enfermedad en el catálogo y la asigna).
+		/// 
+		/// Si ya existe una enfermedad con la misma descripción, se reutiliza.
+		/// </remarks>
+		/// <param name="enfermedadConCatalogoDto">Objeto con idEnfermedad (opcional), descripcion, noTipo, identificador y usuario.</param>
+		/// <returns>Un objeto <see cref="ModeloValidacion"/> con el resultado de la operación.</returns>
+		/// <response code="200">Operación exitosa. La enfermedad ha sido asignada a la sucursal.</response>
+		/// <response code="500">Error interno del servidor.</response>
+		[HttpPost("AgregarConCatalogo")]
+		public async Task<ModeloValidacion> AgregarEnfermedadConCatalogo([FromBody] AgregarEnfermedadConCatalogoDto enfermedadConCatalogoDto)
+		{
+			return await _agregarEnfermedadConCatalogoBW.AgregarEnfermedadConCatalogo(enfermedadConCatalogoDto);
+		}
+
+		// GET: api/Enfermedades/Tipos
+		/// <summary>
+		/// Obtiene todos los tipos de enfermedad disponibles en el sistema.
+		/// </summary>
+		/// <remarks>
+		/// Útil para poblar dropdowns al registrar una enfermedad en el catálogo.
+		/// </remarks>
+		/// <returns>Una lista de <see cref="EnfermedadTipoDto"/> con todos los tipos de enfermedad.</returns>
+		/// <response code="200">Operación exitosa. Retorna los tipos de enfermedad.</response>
+		/// <response code="500">Error interno del servidor.</response>
+		[HttpGet("Tipos")]
+		public async Task<List<EnfermedadTipoDto>> ObtenerTipos()
+		{
+			return await _obtenerEnfermedadTipoBW.ObtenerTipos();
 		}
 	}
 }

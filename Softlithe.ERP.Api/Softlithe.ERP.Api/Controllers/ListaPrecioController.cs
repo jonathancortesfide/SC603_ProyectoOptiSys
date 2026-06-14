@@ -2,6 +2,7 @@
 using Softlithe.ERP.Abstracciones.BW.ListaPrecio.AgregarListaPrecio;
 using Softlithe.ERP.Abstracciones.BW.ListaPrecio.ModificarEstadoListaPrecio;
 using Softlithe.ERP.Abstracciones.BW.ListaPrecio.ModificarListaPrecio;
+using Softlithe.ERP.Abstracciones.BW.ListaPrecio.ObetenerListaPrecioPorID;
 using Softlithe.ERP.Abstracciones.Contenedores;
 using Softlithe.ERP.Abstracciones.Contenedores.ListaPrecio;
 using Softlithe.ERP.Abstracciones.Contenedores.TipoLente;
@@ -35,23 +36,27 @@ namespace Softlithe.ERP.Api.Controllers
 
         // POST: api/ListaPrecio/Obtener
         /// <summary>
-        /// Obtiene las listas de precio asociadas a una moneda.
+        /// Obtiene las listas de precio según la descripción y el identificador.
         /// </summary>
         /// <remarks>
-        /// Devuelve las listas de precio registradas en el sistema según el identificador de la moneda.
+        /// Devuelve las listas de precio registradas en el sistema que coincidan con la descripción proporcionada
+        /// y el identificador de sucursal/moneda.
+        /// La búsqueda es insensible a mayúsculas y minúsculas.
         /// </remarks>
-        /// <param name="id_moneda">Identificador de la moneda asociada a la lista de precios.</param>
+        /// <param name="descripcion">Descripción de la lista de precios a buscar.</param>
+        /// <param name="identificador">Identificador de la sucursal o contexto de moneda.</param>
         /// <returns>
         /// Un objeto <see cref="ListaPrecioConModeloDeValidacion"/> que contiene la lista de precios
         /// y el estado de la validación de la operación.
         /// </returns>
         /// <response code="200">Operación exitosa. Retorna las listas de precio.</response>
         /// <response code="500">Error interno del servidor.</response>
-        [HttpPost("Obtener")]
-        public async Task<ListaPrecioConModeloDeValidacion> Obtener(int id_moneda)
+        [HttpGet("Obtener")]
+        public async Task<ListaPrecioConModeloDeValidacion> Obtener(
+    [FromQuery] string? descripcion,
+    [FromQuery] int identificador)
         {
-            // Obtener el resultado completo del método, que ya es ListaPrecioConModeloDeValidacion
-            var resultado = await _obtenerListaPrecioPorId.Obtener(id_moneda);
+            var resultado = await _obtenerListaPrecioPorId.Obtener(descripcion, identificador);
             return resultado;
         }
 

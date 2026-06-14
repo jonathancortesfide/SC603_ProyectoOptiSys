@@ -9,6 +9,6 @@ namespace Softlithe.ERP.Abstracciones.DA.TipoLente.ObtenerTipoLentePorId
 {
     public interface IObtenerTipoLentesPorIdAD
     {
-        Task<List<TipoLenteDto>> Obtener(int id_tipo_lente);
+        Task<List<TipoLenteDto>> Obtener(string descripcion, int identificador);
     }
 }

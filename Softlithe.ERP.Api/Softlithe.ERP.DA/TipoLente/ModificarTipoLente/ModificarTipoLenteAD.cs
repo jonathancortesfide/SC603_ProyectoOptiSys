@@ -22,23 +22,29 @@ namespace Softlithe.ERP.DA.TipoLente.ModificarTipoLente
 
         public async Task<int> ModificarTipoLente(TipoLenteDto elTipoLente)
         {
-
             if (elTipoLente == null) throw new ArgumentNullException(nameof(elTipoLente));
+            
             await using IDbContextTransaction transaction = await _contextoBasedeDatos.Database.BeginTransactionAsync();
 
             try
             {
-
                 TipoLenteAD? TipoLenteExistente = await _contextoBasedeDatos.TipoLente.FindAsync(elTipoLente.no_tipo);
                 if (TipoLenteExistente == null)
                 {
+                    await transaction.RollbackAsync();
                     return 0; // No se encontró el tipo de lente a modificar
                 }
+                
                 // Actualizar las propiedades del tipo de lente existente con los valores del DTO
                 TipoLenteExistente.Descripcion = elTipoLente.descripcion;
-                TipoLenteExistente.Activo = elTipoLente.Activo; // Actualizar el estado si es necesario
+                TipoLenteExistente.Activo = elTipoLente.Activo;
+                
                 _contextoBasedeDatos.TipoLente.Update(TipoLenteExistente);
                 int resultadoRegistro = await _contextoBasedeDatos.SaveChangesAsync();
+                
+                // Confirmar la transacción
+                await transaction.CommitAsync();
+                
                 return resultadoRegistro; // Retorna el número de registros afectados
             }
             catch (DbUpdateException dbEx)

@@ -1,8 +1,7 @@
 const apiBase = import.meta.env.VITE_ApiBase;
 
-const apiObtenerProductos = `${apiBase}/Productos/`;
-const apiAgregarProducto = `${apiBase}/Productos/`;
-const apiActualizarProducto = `${apiBase}/Productos/`;
-const apiEliminarProducto = `${apiBase}/Productos/`;
+const apiObtenerProductos = `${apiBase}/productos/`;
+const apiAgregarProducto = `${apiBase}/productos/`;
+const apiEliminarProducto = `${apiBase}/productos/`;
 
-export { apiObtenerProductos, apiAgregarProducto, apiActualizarProducto, apiEliminarProducto };
+export { apiObtenerProductos, apiAgregarProducto, apiEliminarProducto };

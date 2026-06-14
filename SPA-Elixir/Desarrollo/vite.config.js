@@ -7,6 +7,7 @@ import svgr from '@svgr/rollup';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
+    /** Origen del backend (sin ruta /index.html): el proxy reenvía /api → {apiHost}/api */
     const apiHost = env.VITE_API_HOST || 'https://localhost:7159';
 
     return {

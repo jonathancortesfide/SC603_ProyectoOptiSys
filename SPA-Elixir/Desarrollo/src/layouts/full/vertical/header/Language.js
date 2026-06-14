@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar, IconButton, Menu, MenuItem, Typography } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { setLanguage } from 'src/store/customizer/CustomizerSlice';
+import FlagEs from 'src/assets/images/flag/icon-flag-es.svg';
 import FlagEn from 'src/assets/images/flag/icon-flag-en.svg';
 import FlagFr from 'src/assets/images/flag/icon-flag-fr.svg';
 import FlagCn from 'src/assets/images/flag/icon-flag-cn.svg';
@@ -12,9 +13,14 @@ import { useEffect } from 'react';
 
 const Languages = [
   {
-    flagname: 'English (UK)',
+    flagname: 'Español (Spanish)',
+    icon: FlagEs,
+    value: 'es',
+  },
+  {
+    flagname: 'English (US)',
     icon: FlagEn,
-    value: 'en',
+    value: 'en-US',
   },
   {
     flagname: '中国人 (Chinese)',
@@ -26,7 +32,6 @@ const Languages = [
     icon: FlagFr,
     value: 'fr',
   },
-
   {
     flagname: 'عربي (Arabic)',
     icon: FlagSa,

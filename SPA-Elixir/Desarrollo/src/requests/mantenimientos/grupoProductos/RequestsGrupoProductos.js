@@ -1,19 +1,16 @@
 import axios from 'axios';
 import {
-    apiGruposProductosPorEmpresa,
+    apiGruposProductos,
+    apiGrupoProductoPorId,
     apiCrearGrupoProducto,
     apiActualizarGrupoProducto,
-    apiCambiarEstadoGrupoProducto,
+    apiEliminarGrupoProducto,
 } from './DireccionesRequest';
 
 axios.interceptors.request.use(async (config) => {
-    const token = window.localStorage.getItem('accessToken');
-
     config.headers = {
-        ...(config.headers || {}),
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
     return config;
 }, function (error) {
@@ -24,10 +21,8 @@ axios.interceptors.response.use(async (response) => response, function (error) {
     return Promise.reject(error);
 });
 
-const respuestaError = (mensaje) => ({ esCorrecto: false, mensaje });
-
-const obtenerListaDeGruposProductos = async (noEmpresa) => {
-    const urlApi = `${apiGruposProductosPorEmpresa}${noEmpresa}`;
+const obtenerListaDeGruposProductos = async () => {
+    const urlApi = `${apiGruposProductos}`;
     try {
         return axios.get(urlApi)
             .then(respuesta => {
@@ -36,38 +31,53 @@ const obtenerListaDeGruposProductos = async (noEmpresa) => {
             .catch(e => {
                 console.log('Error al obtener lista de grupos de productos: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return {
-                        esCorrecto: true,
-                        mensaje: '',
-                        laListaDeGrupos: [
-                            { no_grupo: 1, descripcion: 'Lentes', no_empresa: Number(noEmpresa), activo: true },
-                            { no_grupo: 2, descripcion: 'Accesorios', no_empresa: Number(noEmpresa), activo: true },
-                            { no_grupo: 3, descripcion: 'Armazones', no_empresa: Number(noEmpresa), activo: false }
-                        ]
-                    };
+                    return [
+                        { id: 'gp-001', descripcion: 'Lentes' },
+                        { id: 'gp-002', descripcion: 'Accesorios' },
+                        { id: 'gp-003', descripcion: 'Armazones' }
+                    ];
                 }
-                return respuestaError('No se pudo obtener la lista de grupos de productos');
+                return [];
             });
     } catch (error) {
         console.log('Error en obtenerListaDeGruposProductos: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return {
-                esCorrecto: true,
-                mensaje: '',
-                laListaDeGrupos: [
-                    { no_grupo: 1, descripcion: 'Lentes', no_empresa: Number(noEmpresa), activo: true },
-                    { no_grupo: 2, descripcion: 'Accesorios', no_empresa: Number(noEmpresa), activo: true },
-                    { no_grupo: 3, descripcion: 'Armazones', no_empresa: Number(noEmpresa), activo: false }
-                ]
-            };
+            return [
+                { id: 'gp-001', descripcion: 'Lentes' },
+                { id: 'gp-002', descripcion: 'Accesorios' },
+                { id: 'gp-003', descripcion: 'Armazones' }
+            ];
         }
-        return respuestaError('No se pudo obtener la lista de grupos de productos');
+        return [];
+    }
+};
+
+const obtenerGrupoProductoPorId = async (id) => {
+    const urlApi = `${apiGrupoProductoPorId}${id}`;
+    try {
+        return axios.get(urlApi)
+            .then(respuesta => {
+                if (respuesta.status === 200) return respuesta.data;
+            })
+            .catch(e => {
+                console.log('Error al obtener grupo de productos: ' + e);
+                if (import.meta.env.VITE_USE_MOCK === 'true') {
+                    return { id: 'gp-001', descripcion: 'Lentes' };
+                }
+                return null;
+            });
+    } catch (error) {
+        console.log('Error en obtenerGrupoProductoPorId: ' + error);
+        if (import.meta.env.VITE_USE_MOCK === 'true') {
+            return { id: 'gp-001', descripcion: 'Lentes' };
+        }
+        return null;
     }
 };
 
 const crearGrupoProducto = async (grupo) => {
     const urlApi = `${apiCrearGrupoProducto}`;
-    let dataRespuesta = respuestaError('Hubo un problema al crear el grupo');
+    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false, Data: null };
     try {
         return axios.post(urlApi, grupo)
             .then(respuesta => {
@@ -76,62 +86,62 @@ const crearGrupoProducto = async (grupo) => {
             .catch(e => {
                 console.log('Error al crear grupo de productos: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { esCorrecto: true, mensaje: 'Grupo creado (mock)' };
+                    return { Mensaje: 'Grupo creado (mock)', EsCorrecto: true, Data: { ...grupo, id: 'gp-mock-' + Date.now() } };
                 }
                 return dataRespuesta;
             });
     } catch (error) {
         console.log('Error en crearGrupoProducto: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { esCorrecto: true, mensaje: 'Grupo creado (mock)' };
+            return { Mensaje: 'Grupo creado (mock)', EsCorrecto: true, Data: { ...grupo, id: 'gp-mock-' + Date.now() } };
         }
         return dataRespuesta;
     }
 };
 
-const actualizarGrupoProducto = async (grupo) => {
-    const urlApi = `${apiActualizarGrupoProducto}`;
-    let dataRespuesta = respuestaError('Hubo un problema al actualizar el grupo');
+const actualizarGrupoProducto = async (id, grupo) => {
+    const urlApi = `${apiActualizarGrupoProducto}${id}`;
+    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false, Data: null };
     try {
-        return axios.post(urlApi, grupo)
+        return axios.put(urlApi, grupo)
             .then(respuesta => {
                 if (respuesta.status === 200) return respuesta.data;
             })
             .catch(e => {
                 console.log('Error al actualizar grupo de productos: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { esCorrecto: true, mensaje: 'Grupo actualizado (mock)' };
+                    return { Mensaje: 'Grupo actualizado (mock)', EsCorrecto: true, Data: { id, ...grupo } };
                 }
                 return dataRespuesta;
             });
     } catch (error) {
         console.log('Error en actualizarGrupoProducto: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { esCorrecto: true, mensaje: 'Grupo actualizado (mock)' };
+            return { Mensaje: 'Grupo actualizado (mock)', EsCorrecto: true, Data: { id, ...grupo } };
         }
         return dataRespuesta;
     }
 };
 
-const cambiarEstadoGrupoProducto = async (id, activo, usuario) => {
-    const urlApi = `${apiCambiarEstadoGrupoProducto}${id}/estado`;
-    let dataRespuesta = respuestaError('Hubo un problema al cambiar el estado del grupo');
+const eliminarGrupoProducto = async (id) => {
+    const urlApi = `${apiEliminarGrupoProducto}${id}`;
+    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false };
     try {
-        return axios.post(urlApi, { activo, usuario })
+        return axios.delete(urlApi)
             .then(respuesta => {
                 if (respuesta.status === 200) return respuesta.data;
             })
             .catch(e => {
-                console.log('Error al cambiar estado de grupo de productos: ' + e);
+                console.log('Error al eliminar grupo de productos: ' + e);
                 if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { esCorrecto: true, mensaje: 'Estado actualizado (mock)' };
+                    return { Mensaje: 'Grupo eliminado (mock)', EsCorrecto: true };
                 }
                 return dataRespuesta;
             });
     } catch (error) {
-        console.log('Error en cambiarEstadoGrupoProducto: ' + error);
+        console.log('Error en eliminarGrupoProducto: ' + error);
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { esCorrecto: true, mensaje: 'Estado actualizado (mock)' };
+            return { Mensaje: 'Grupo eliminado (mock)', EsCorrecto: true };
         }
         return dataRespuesta;
     }
@@ -139,7 +149,8 @@ const cambiarEstadoGrupoProducto = async (id, activo, usuario) => {
 
 export {
     obtenerListaDeGruposProductos,
+    obtenerGrupoProductoPorId,
     crearGrupoProducto,
     actualizarGrupoProducto,
-    cambiarEstadoGrupoProducto
+    eliminarGrupoProducto
 };

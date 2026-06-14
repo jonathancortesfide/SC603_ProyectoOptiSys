@@ -45,7 +45,7 @@ const Login2 = () => {
                 subtitle={
                   <Stack direction="row" spacing={1} justifyContent="center" mt={3}>
                     <Typography color="textSecondary" variant="h6" fontWeight="500">
-                      Nuevo en LENSYS?
+                      New to Softlithe?
                     </Typography>
                     <Typography
                       component={Link}
@@ -56,7 +56,7 @@ const Login2 = () => {
                         color: 'primary.main',
                       }}
                     >
-                      Crear una cuenta
+                      Create an account
                     </Typography>
                   </Stack>
                 }

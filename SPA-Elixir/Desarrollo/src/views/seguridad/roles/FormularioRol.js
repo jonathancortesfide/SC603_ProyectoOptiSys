@@ -11,12 +11,18 @@ import {
     FormControlLabel,
     Checkbox,
     Typography,
+    Collapse,
 } from '@mui/material';
-import { TreeView, TreeItem } from '@mui/lab';
-import { IconChevronDown, IconChevronRight } from '@tabler/icons';
+import { IconChevronDown, IconChevronUp } from '@tabler/icons';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
-import { crearRol, actualizarRol, obtenerPermisos } from '../../../requests/roles/RequestsRoles';
+import {
+    crearRol,
+    actualizarRol,
+    obtenerModulos,
+    obtenerPermisos,
+    obtenerPermisosDelRol,
+} from '../../../requests/roles/RequestsRoles';
 
 const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -27,32 +33,73 @@ const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
 
     const [permisos, setPermisos] = useState([]);
     const [permisosSeleccionados, setPermisosSeleccionados] = useState(new Set());
+    const [cargandoPermisos, setCargandoPermisos] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [expandedNodes, setExpandedNodes] = useState([]);
 
     useEffect(() => {
-        cargarPermisos();
-        if (modoEdicion && rol) {
-            setFormData({
-                nombre: rol.nombre || '',
-                descripcion: rol.descripcion || '',
-                permisos: rol.permisos || []
-            });
-            if (rol.permisos) {
-                setPermisosSeleccionados(new Set(rol.permisos.map(p => p.id)));
+        const inicializarFormulario = async () => {
+            setCargandoPermisos(true);
+            await cargarPermisos();
+
+            if (modoEdicion && rol) {
+                setFormData({
+                    nombre: rol.nombre || '',
+                    descripcion: rol.descripcion || '',
+                    permisos: [],
+                });
+
+                const permisosDelRol = await obtenerPermisosDelRol(rol.id);
+                setPermisosSeleccionados(
+                    new Set(
+                        permisosDelRol
+                            .filter((permiso) => permiso.esActivo)
+                            .map((permiso) => permiso.id)
+                    )
+                );
+            } else {
+                setFormData({
+                    nombre: '',
+                    descripcion: '',
+                    permisos: [],
+                });
+                setPermisosSeleccionados(new Set());
             }
-        }
+
+            setCargandoPermisos(false);
+        };
+
+        inicializarFormulario();
     }, [rol, modoEdicion]);
 
     const cargarPermisos = async () => {
-        const data = await obtenerPermisos();
-        if (data && data.length > 0) {
-            setPermisos(data);
-            // Expandir todos los módulos por defecto
-            const modulos = data.map(p => `modulo-${p.moduloId}`);
-            setExpandedNodes(modulos);
-        }
+        const [permisosData, modulosData] = await Promise.all([
+            obtenerPermisos(),
+            obtenerModulos(),
+        ]);
+
+        const permisosDisponibles = Array.isArray(permisosData) ? permisosData.filter((p) => p.esActivo) : [];
+
+        // Build idModulo -> { seccionId, seccionNombre } map
+        const moduloSeccionMap = new Map(
+            (Array.isArray(modulosData) ? modulosData : []).map((m) => [
+                m.idModulo ?? m.id,
+                { seccionId: m.idSeccion ?? 0, seccionNombre: m.nombreSeccion ?? 'Sin Sección' },
+            ])
+        );
+
+        // Enrich permisos with section info
+        const permisosEnriquecidos = permisosDisponibles.map((p) => {
+            const seccionInfo = moduloSeccionMap.get(p.moduloId) ?? { seccionId: 0, seccionNombre: 'Sin Sección' };
+            return { ...p, seccionId: seccionInfo.seccionId, seccionNombre: seccionInfo.seccionNombre };
+        });
+
+        setPermisos(permisosEnriquecidos);
+
+        const seccionNodes = [...new Set(permisosEnriquecidos.map((p) => `seccion-${p.seccionId}`))];
+        const moduloNodes = [...new Set(permisosEnriquecidos.map((p) => `modulo-${p.moduloId}`))];
+        setExpandedNodes([]);
     };
 
     const handleChange = (e) => {
@@ -90,13 +137,36 @@ const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
         setPermisosSeleccionados(newSet);
     };
 
+    const handleToggleSeccion = (seccionId) => {
+        const permisosDeSeccion = permisos.filter(p => p.seccionId === seccionId);
+        const todosSeleccionados = permisosDeSeccion.every(p => permisosSeleccionados.has(p.id));
+
+        const newSet = new Set(permisosSeleccionados);
+        if (todosSeleccionados) {
+            permisosDeSeccion.forEach(p => newSet.delete(p.id));
+        } else {
+            permisosDeSeccion.forEach(p => newSet.add(p.id));
+        }
+        setPermisosSeleccionados(newSet);
+    };
+
     const handleToggleNode = (nodeId) => {
         setExpandedNodes(prev => {
-            if (prev.includes(nodeId)) {
-                return prev.filter(id => id !== nodeId);
-            } else {
-                return [...prev, nodeId];
+            const isOpen = prev.includes(nodeId);
+
+            if (nodeId.startsWith('seccion-')) {
+                const seccionId = Number(nodeId.replace('seccion-', ''));
+                const seccion = seccionesAgrupadas[seccionId];
+                const moduloIds = seccion ? Object.keys(seccion.modulos).map(id => `modulo-${id}`) : [];
+
+                if (isOpen) {
+                    return prev.filter(id => id !== nodeId && !moduloIds.includes(id));
+                } else {
+                    return [...prev.filter(id => !moduloIds.includes(id)), nodeId, ...moduloIds];
+                }
             }
+
+            return isOpen ? prev.filter(id => id !== nodeId) : [...prev, nodeId];
         });
     };
 
@@ -132,10 +202,10 @@ const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
                 resultado = await crearRol(dataGuardar);
             }
 
-            if (resultado.EsCorrecto) {
+            if (resultado.esCorrecto) {
                 onGuardar();
             } else {
-                setError(resultado.Mensaje || 'Error al guardar el rol');
+                setError(resultado.mensaje || 'Error al guardar el rol');
             }
         } catch (err) {
             setError('Error al procesar la solicitud');
@@ -144,22 +214,35 @@ const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
         }
     };
 
-    // Agrupar permisos por módulo
-    const permisosAgrupados = {};
-    permisos.forEach(permiso => {
-        if (!permisosAgrupados[permiso.moduloNombre]) {
-            permisosAgrupados[permiso.moduloNombre] = [];
+    // Agrupar permisos por sección > módulo
+    const seccionesAgrupadas = {};
+    permisos.forEach((permiso) => {
+        const seccionId = permiso.seccionId ?? 0;
+        const seccionNombre = permiso.seccionNombre ?? 'Sin Sección';
+        const moduloId = permiso.moduloId;
+        const moduloNombre = permiso.moduloNombre;
+
+        if (!seccionesAgrupadas[seccionId]) {
+            seccionesAgrupadas[seccionId] = { nombre: seccionNombre, modulos: {} };
         }
-        permisosAgrupados[permiso.moduloNombre].push(permiso);
+        if (!seccionesAgrupadas[seccionId].modulos[moduloId]) {
+            seccionesAgrupadas[seccionId].modulos[moduloId] = { nombre: moduloNombre, permisos: [] };
+        }
+        seccionesAgrupadas[seccionId].modulos[moduloId].permisos.push(permiso);
     });
 
     return (
         <>
             <DialogTitle>
-                {modoEdicion ? 'Editar Rol' : 'Crear Nuevo Rol'}
+                {modoEdicion ? 'Gestionar permisos del rol' : 'Crear nuevo rol'}
             </DialogTitle>
             <DialogContent sx={{ pt: 2, maxHeight: '70vh', overflow: 'auto' }}>
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {modoEdicion && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        La API actual permite administrar los permisos del rol, pero no editar su nombre o descripción.
+                    </Alert>
+                )}
 
                 <Stack spacing={2}>
                     <Box>
@@ -170,6 +253,7 @@ const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
                             value={formData.nombre}
                             onChange={handleChange}
                             placeholder="Ingrese el nombre del rol"
+                            disabled={modoEdicion}
                             fullWidth
                         />
                     </Box>
@@ -182,6 +266,7 @@ const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
                             value={formData.descripcion}
                             onChange={handleChange}
                             placeholder="Ingrese la descripción del rol"
+                            disabled={modoEdicion}
                             fullWidth
                             multiline
                             rows={2}
@@ -193,61 +278,128 @@ const FormularioRol = ({ rol, modoEdicion, onGuardar, onCancel }) => {
                             Opciones de Sistema *
                         </Typography>
 
-                        {Object.entries(permisosAgrupados).map(([moduloNombre, permisosDelModulo]) => {
-                            const moduloId = permisosDelModulo[0]?.moduloId;
-                            const nodeId = `modulo-${moduloId}`;
-                            const todosSeleccionados = permisosDelModulo.every(p => permisosSeleccionados.has(p.id));
+                        {cargandoPermisos ? (
+                            <Box display="flex" justifyContent="center" py={3}>
+                                <CircularProgress size={24} />
+                            </Box>
+                        ) : Object.keys(seccionesAgrupadas).length === 0 ? (
+                            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                                No hay permisos configurados en el sistema. Primero cree Secciones, Módulos y Permisos.
+                            </Typography>
+                        ) : (
+                            Object.entries(seccionesAgrupadas).map(([seccionId, seccion]) => {
+                                const seccionIdNum = Number(seccionId);
+                                const permisosDeSeccion = permisos.filter(p => p.seccionId === seccionIdNum);
+                                const todosSeccionSeleccionados = permisosDeSeccion.every(p => permisosSeleccionados.has(p.id));
+                                const algunoSeccionSeleccionado = permisosDeSeccion.some(p => permisosSeleccionados.has(p.id));
+                                const seccionExpandida = expandedNodes.includes(`seccion-${seccionIdNum}`);
 
-                            return (
-                                <Box key={moduloId} sx={{ mb: 2 }}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={todosSeleccionados}
-                                                indeterminate={
-                                                    permisosDelModulo.some(p => permisosSeleccionados.has(p.id)) &&
-                                                    !todosSeleccionados
-                                                }
-                                                onChange={() => handleToggleModulo(moduloId)}
-                                            />
-                                        }
-                                        label={
-                                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                                {moduloNombre}
-                                            </Typography>
-                                        }
-                                    />
-                                    
-                                    <Box sx={{ pl: 4, borderLeft: '2px solid #e0e0e0' }}>
-                                        {permisosDelModulo.map(permiso => (
+                                return (
+                                    <Box key={seccionId} sx={{ mb: 2 }}>
+                                        {/* Nivel 1: Sección */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <FormControlLabel
-                                                key={permiso.id}
                                                 control={
                                                     <Checkbox
-                                                        checked={permisosSeleccionados.has(permiso.id)}
-                                                        onChange={() => handleTogglePermiso(permiso.id)}
-                                                        size="small"
+                                                        checked={todosSeccionSeleccionados}
+                                                        indeterminate={algunoSeccionSeleccionado && !todosSeccionSeleccionados}
+                                                        onChange={() => handleToggleSeccion(seccionIdNum)}
                                                     />
                                                 }
                                                 label={
-                                                    <Box>
-                                                        <Typography variant="body2">
-                                                            {permiso.nombre}
-                                                        </Typography>
-                                                        {permiso.descripcion && (
-                                                            <Typography variant="caption" sx={{ color: '#999' }}>
-                                                                {permiso.descripcion}
-                                                            </Typography>
-                                                        )}
-                                                    </Box>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                                        {seccion.nombre}
+                                                    </Typography>
                                                 }
-                                                sx={{ mb: 1 }}
+                                                sx={{ flex: 1 }}
                                             />
-                                        ))}
+                                            <Box
+                                                sx={{ color: 'primary.main', cursor: 'pointer', mr: 1, display: 'flex', alignItems: 'center' }}
+                                                onClick={() => handleToggleNode(`seccion-${seccionIdNum}`)}
+                                            >
+                                                <Box sx={{ transition: 'transform 0.25s ease', transform: seccionExpandida ? 'rotate(180deg)' : 'rotate(0deg)', display: 'flex' }}>
+                                                    <IconChevronDown size={18} />
+                                                </Box>
+                                            </Box>
+                                        </Box>
+
+                                        <Collapse in={seccionExpandida} timeout={200}>
+                                            <Box sx={{ pl: 3, borderLeft: '3px solid', borderColor: 'primary.light' }}>
+                                                {Object.entries(seccion.modulos).map(([moduloId, modulo]) => {
+                                                    const moduloIdNum = Number(moduloId);
+                                                    const todosModuloSeleccionados = modulo.permisos.every(p => permisosSeleccionados.has(p.id));
+                                                    const algunoModuloSeleccionado = modulo.permisos.some(p => permisosSeleccionados.has(p.id));
+                                                    const moduloExpandido = expandedNodes.includes(`modulo-${moduloIdNum}`);
+
+                                                    return (
+                                                        <Box key={moduloId} sx={{ mb: 1 }}>
+                                                            {/* Nivel 2: Módulo */}
+                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                <FormControlLabel
+                                                                    control={
+                                                                        <Checkbox
+                                                                            checked={todosModuloSeleccionados}
+                                                                            indeterminate={algunoModuloSeleccionado && !todosModuloSeleccionados}
+                                                                            onChange={() => handleToggleModulo(moduloIdNum)}
+                                                                            size="small"
+                                                                        />
+                                                                    }
+                                                                    label={
+                                                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                                            {modulo.nombre}
+                                                                        </Typography>
+                                                                    }
+                                                                    sx={{ flex: 1 }}
+                                                                />
+                                                                <Box
+                                                                    sx={{ color: 'text.secondary', cursor: 'pointer', mr: 1, display: 'flex', alignItems: 'center' }}
+                                                                    onClick={() => handleToggleNode(`modulo-${moduloIdNum}`)}
+                                                                >
+                                                                    <Box sx={{ transition: 'transform 0.2s ease', transform: moduloExpandido ? 'rotate(180deg)' : 'rotate(0deg)', display: 'flex' }}>
+                                                                        <IconChevronDown size={16} />
+                                                                    </Box>
+                                                                </Box>
+                                                            </Box>
+
+                                                            <Collapse in={moduloExpandido} timeout={200}>
+                                                                <Box sx={{ pl: 4, borderLeft: '2px solid #e0e0e0' }}>
+                                                                    {/* Nivel 3: Permisos */}
+                                                                    {modulo.permisos.map((permiso) => (
+                                                                        <FormControlLabel
+                                                                            key={permiso.id}
+                                                                            control={
+                                                                                <Checkbox
+                                                                                    checked={permisosSeleccionados.has(permiso.id)}
+                                                                                    onChange={() => handleTogglePermiso(permiso.id)}
+                                                                                    size="small"
+                                                                                />
+                                                                            }
+                                                                            label={
+                                                                                <Box>
+                                                                                    <Typography variant="body2">
+                                                                                        {permiso.nombre}
+                                                                                    </Typography>
+                                                                                    {permiso.descripcion && (
+                                                                                        <Typography variant="caption" sx={{ color: '#999' }}>
+                                                                                            {permiso.descripcion}
+                                                                                        </Typography>
+                                                                                    )}
+                                                                                </Box>
+                                                                            }
+                                                                            sx={{ display: 'flex', mb: 0.5 }}
+                                                                        />
+                                                                    ))}
+                                                                </Box>
+                                                            </Collapse>
+                                                        </Box>
+                                                    );
+                                                })}
+                                            </Box>
+                                        </Collapse>
                                     </Box>
-                                </Box>
-                            );
-                        })}
+                                );
+                            })
+                        )}
                     </Box>
                 </Stack>
             </DialogContent>

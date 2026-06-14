@@ -20,10 +20,8 @@ import {
   Alert,
 } from '@mui/material';
 import { IconTrash, IconPlus } from '@tabler/icons';
-import { obtenerCuentasDePaciente } from '../../../requests/pacientes/RequestsPacientes';
-import { obtenerListaDeMonedas } from '../../../requests/mantenimientos/moneda/RequestsMonedas';
 
-const CuentasTab = ({ paciente, onUpdate, onChange, hideGuardarButton = false }) => {
+const CuentasTab = ({ paciente, onUpdate, hideGuardarButton = false }) => {
   const [cuentas, setCuentas] = useState([]);
   const [monedas, setMonedas] = useState([]);
   const [monedaNacional, setMonedaNacional] = useState('CRC');
@@ -33,55 +31,40 @@ const CuentasTab = ({ paciente, onUpdate, onChange, hideGuardarButton = false })
 
   useEffect(() => {
     cargarMonedas();
-  }, []);
-
-  useEffect(() => {
+    cargarParametroMonedaNacional();
     if (paciente) {
       cargarCuentasPaciente();
     }
-  }, [paciente?.numeroDePaciente, paciente?.id, monedaNacional]);
+  }, [paciente]);
 
   const cargarMonedas = async () => {
-    const data = await obtenerListaDeMonedas();
-    const lista = Array.isArray(data) ? data : (data?.laListaDeMonedas || []);
-    const monedasApi = lista.map((item) => ({
-      codigo: item.codigoIso || item.codigo_iso || item.codigo || item.moneda || item.descripcion,
-      nombre: item.descripcion || item.nombre || item.codigoIso || item.codigo,
-      esNacional: item.esNacional || item.es_nacional || false,
-    })).filter((item) => item.codigo);
+    // Mock - En producción llamar al API de tabla Moneda
+    setMonedas([
+      { codigo: 'CRC', nombre: 'Colones' },
+      { codigo: 'USD', nombre: 'Dólares' },
+      { codigo: 'EUR', nombre: 'Euros' },
+    ]);
+  };
 
-    if (monedasApi.length > 0) {
-      setMonedas(monedasApi);
-      const monedaDefault = monedasApi.find((item) => item.esNacional)?.codigo || monedasApi.find((item) => item.codigo === 'CRC')?.codigo || monedasApi[0].codigo;
-      setMonedaNacional(monedaDefault);
-      return;
-    }
-
-    setMonedas([]);
+  const cargarParametroMonedaNacional = async () => {
+    // Mock - En producción llamar al API de tabla Parametro
+    // WHERE no_parametro = 2 AND identificador = [identificador_sistema]
+    // El valor retornado es el código de moneda nacional
     setMonedaNacional('CRC');
   };
 
   const cargarCuentasPaciente = async () => {
-    if (paciente?.numeroDePaciente) {
-      const data = await obtenerCuentasDePaciente(paciente.numeroDePaciente);
-      if (Array.isArray(data) && data.length > 0) {
-        setCuentas(data);
-        onChange?.({ cuentas: data });
-        return;
-      }
-    }
-
-    if (paciente?.cuentas && paciente.cuentas.length > 0) {
+    // Mock - En producción llamar al API para obtener cuentas del paciente
+    if (paciente.cuentas && paciente.cuentas.length > 0) {
       setCuentas(paciente.cuentas);
     } else {
-      const cuentasIniciales = [
+      // Si es nuevo paciente, agregar automáticamente la moneda nacional
+      setCuentas([
         {
           moneda: monedaNacional,
           esNacional: true,
         },
-      ];
-      setCuentas(cuentasIniciales);
-      onChange?.({ cuentas: cuentasIniciales });
+      ]);
     }
   };
 
@@ -98,16 +81,14 @@ const CuentasTab = ({ paciente, onUpdate, onChange, hideGuardarButton = false })
       return;
     }
 
-    const nuevasCuentas = [
+    const saldo = parseFloat(nuevoSaldo) || 0;
+    setCuentas([
       ...cuentas,
       {
         moneda: nuevaMoneda,
         esNacional: false,
       },
-    ];
-
-    setCuentas(nuevasCuentas);
-    onChange?.({ cuentas: nuevasCuentas });
+    ]);
 
     setNuevaMoneda('');
     setSuccess('Cuenta agregada correctamente');
@@ -124,9 +105,7 @@ const CuentasTab = ({ paciente, onUpdate, onChange, hideGuardarButton = false })
       return;
     }
 
-    const nuevasCuentas = cuentas.filter((_, i) => i !== index);
-    setCuentas(nuevasCuentas);
-    onChange?.({ cuentas: nuevasCuentas });
+    setCuentas(cuentas.filter((_, i) => i !== index));
     setSuccess('Cuenta eliminada correctamente');
     setTimeout(() => setSuccess(''), 3000);
   };

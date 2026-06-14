@@ -1,13 +1,15 @@
 const apiBase = import.meta.env.VITE_ApiBase;
 
-const apiGruposProductosPorEmpresa = `${apiBase}/Grupo/ObtenerPorEmpresa/`;
-const apiCrearGrupoProducto = `${apiBase}/Grupo/AgregarGrupo`;
-const apiActualizarGrupoProducto = `${apiBase}/Grupo/ModificarGrupo`;
-const apiCambiarEstadoGrupoProducto = `${apiBase}/Grupo/`;
+const apiGruposProductos = `${apiBase}/gruposproductos/`;
+const apiGrupoProductoPorId = `${apiBase}/gruposproductos/`;
+const apiCrearGrupoProducto = `${apiBase}/gruposproductos/`;
+const apiActualizarGrupoProducto = `${apiBase}/gruposproductos/`;
+const apiEliminarGrupoProducto = `${apiBase}/gruposproductos/`;
 
 export {
-    apiGruposProductosPorEmpresa,
+    apiGruposProductos,
+    apiGrupoProductoPorId,
     apiCrearGrupoProducto,
     apiActualizarGrupoProducto,
-    apiCambiarEstadoGrupoProducto
+    apiEliminarGrupoProducto
 };

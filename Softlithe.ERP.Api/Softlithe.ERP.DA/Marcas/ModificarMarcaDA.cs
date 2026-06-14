@@ -25,7 +25,7 @@ namespace Softlithe.ERP.DA.Marcas
                 {
                     return 0;
                 }
-                marcaExistente.EsActivo = elMarca.EsActivo;
+                marcaExistente.Activo = elMarca.EsActivo;
                 marcaExistente.Descripcion = elMarca.Descripcion;
 
                 _contextoBasedeDatos.Marcas.Update(marcaExistente);

@@ -11,9 +11,8 @@ import {
   Autocomplete,
 } from '@mui/material';
 import { obtenerListaDeListasPrecios } from '../../../requests/mantenimientos/ListaPrecio/RequestsListaPrecio';
-import { obtenerListaDeClasificacionesPacientes } from '../../../requests/mantenimientos/clasificacionPacientes/RequestsClasificacionPacientes';
 
-const InformacionAdicional = ({ paciente, onUpdate, onChange, hideGuardarButton = false }) => {
+const InformacionAdicional = ({ paciente, onUpdate, hideGuardarButton = false }) => {
   const [form, setForm] = useState({
     listaPrecio: '',
     clasificacion: '',
@@ -31,29 +30,6 @@ const InformacionAdicional = ({ paciente, onUpdate, onChange, hideGuardarButton 
   const [listasPrecios, setListasPrecios] = useState([]);
   const [clasificaciones, setClasificaciones] = useState([]);
   const [success, setSuccess] = useState('');
-
-  const mapFormToPaciente = (nextForm) => ({
-    listaPrecio: nextForm.listaPrecio,
-    clasificacion: nextForm.clasificacion,
-    clienteActivo: nextForm.clienteActivo,
-    esActivo: nextForm.clienteActivo,
-    observaciones: nextForm.observaciones,
-    plazo: nextForm.plazo,
-    limiteCredito: nextForm.limiteCredito,
-    bloqueoFacturasCredito: nextForm.bloqueoFacturasCredito,
-    bloqueoFacturasContado: nextForm.bloqueoFacturasContado,
-    permitirFacturasSaldoVencido: nextForm.permitirFacturasSaldoVencido,
-    enviaCumpleanos: nextForm.enviaCumpleanos,
-    formatoFacturaEspecial: nextForm.formatoFacturaEspecial,
-  });
-
-  const updateForm = (changes) => {
-    setForm((prev) => {
-      const next = { ...prev, ...changes };
-      onChange?.(mapFormToPaciente(next));
-      return next;
-    });
-  };
 
   useEffect(() => {
     if (paciente) {
@@ -73,7 +49,7 @@ const InformacionAdicional = ({ paciente, onUpdate, onChange, hideGuardarButton 
     }
     cargarListasPrecios();
     cargarClasificaciones();
-  }, [paciente?.numeroDePaciente, paciente?.id]);
+  }, [paciente]);
 
   const cargarListasPrecios = async () => {
     const data = await obtenerListaDeListasPrecios();
@@ -90,18 +66,19 @@ const InformacionAdicional = ({ paciente, onUpdate, onChange, hideGuardarButton 
   };
 
   const cargarClasificaciones = async () => {
-    const data = await obtenerListaDeClasificacionesPacientes();
-    if (data && Array.isArray(data) && data.length > 0) {
-      setClasificaciones(data.map((item) => ({ id: item.id, nombre: item.nombre || item.descripcion })));
-      return;
-    }
-
-    setClasificaciones([]);
+    // Mock - En producción llamar al API de tabla ClasificacionCliente
+    setClasificaciones([
+      { id: 1, nombre: 'A+' },
+      { id: 2, nombre: 'A' },
+      { id: 3, nombre: 'B' },
+      { id: 4, nombre: 'C' },
+      { id: 5, nombre: 'D' },
+    ]);
   };
 
   const handleChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-    updateForm({ [field]: value });
+    setForm({ ...form, [field]: value });
   };
 
   const handleGuardar = async () => {
@@ -127,11 +104,11 @@ const InformacionAdicional = ({ paciente, onUpdate, onChange, hideGuardarButton 
             options={listasPrecios.map((lista) => lista.nombre)}
             value={form.listaPrecio || ''}
             onChange={(event, newValue) => {
-              updateForm({ listaPrecio: newValue || '' });
+              setForm({ ...form, listaPrecio: newValue || '' });
             }}
             inputValue={form.listaPrecio}
             onInputChange={(event, newInputValue) => {
-              updateForm({ listaPrecio: newInputValue });
+              setForm({ ...form, listaPrecio: newInputValue });
             }}
             renderInput={(params) => (
               <TextField
@@ -150,11 +127,11 @@ const InformacionAdicional = ({ paciente, onUpdate, onChange, hideGuardarButton 
             options={clasificaciones.map((clasificacion) => clasificacion.nombre)}
             value={form.clasificacion || ''}
             onChange={(event, newValue) => {
-              updateForm({ clasificacion: newValue || '' });
+              setForm({ ...form, clasificacion: newValue || '' });
             }}
             inputValue={form.clasificacion}
             onInputChange={(event, newInputValue) => {
-              updateForm({ clasificacion: newInputValue });
+              setForm({ ...form, clasificacion: newInputValue });
             }}
             renderInput={(params) => (
               <TextField

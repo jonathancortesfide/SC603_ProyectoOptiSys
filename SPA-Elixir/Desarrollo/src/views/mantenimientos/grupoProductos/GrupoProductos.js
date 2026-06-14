@@ -14,8 +14,7 @@ import {
     TextField,
     CircularProgress,
     Alert,
-    TablePagination,
-    Chip
+    TablePagination
 } from '@mui/material';
 import PageContainer from '../../../components/container/PageContainer';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -23,14 +22,11 @@ import ParentCard from '../../../components/shared/ParentCard';
 import FormularioGrupoProductos from './FormularioGrupoProductos';
 import {
     obtenerListaDeGruposProductos,
-    cambiarEstadoGrupoProducto
+    eliminarGrupoProducto
 } from '../../../requests/mantenimientos/grupoProductos/RequestsGrupoProductos';
-import { IconEdit, IconPlus, IconToggleLeft, IconToggleRight } from '@tabler/icons';
-import { getSucursalIdentificador } from '../../../utils/sucursal';
-import { getCurrentUsername } from '../../../utils/auth';
+import { IconEdit, IconTrash, IconPlus } from '@tabler/icons';
 
 const GrupoProductos = () => {
-    const noEmpresaPorDefecto = String(getSucursalIdentificador() ?? '').trim();
     const [grupos, setGrupos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -41,27 +37,16 @@ const GrupoProductos = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    useEffect(() => { cargarGrupos(); }, [noEmpresaPorDefecto]);
+    useEffect(() => { cargarGrupos(); }, []);
 
     const cargarGrupos = async () => {
-        if (!noEmpresaPorDefecto) {
-            setError('No se encontró la empresa para cargar los grupos');
-            setGrupos([]);
-            setLoading(false);
-            return;
-        }
-
         setLoading(true);
         setError(null);
-        const data = await obtenerListaDeGruposProductos(noEmpresaPorDefecto);
-        if (data && Array.isArray(data.laListaDeGrupos)) {
-            setGrupos(data.laListaDeGrupos);
-            if (data.esCorrecto === false) {
-                setError(data.mensaje || 'No se pudieron cargar los grupos de productos');
-            }
+        const data = await obtenerListaDeGruposProductos();
+        if (data && data.length >= 0) {
+            setGrupos(data);
         } else {
             setError('No se pudieron cargar los grupos de productos');
-            setGrupos([]);
         }
         setLoading(false);
     };
@@ -74,21 +59,13 @@ const GrupoProductos = () => {
     const handleCerrarFormulario = () => { setOpenDialog(false); setGrupoSeleccionado(null); setModoEdicion(false); };
     const handleGuardar = async () => { await cargarGrupos(); handleCerrarFormulario(); };
 
-    const handleCambiarEstado = async (grupo) => {
-        const nuevoEstado = !grupo.activo;
-        const accion = nuevoEstado ? 'activar' : 'desactivar';
-        if (!window.confirm(`¿Desea ${accion} ${grupo.descripcion}?`)) return;
-
-        const res = await cambiarEstadoGrupoProducto(
-            grupo.no_grupo,
-            nuevoEstado,
-            getCurrentUsername()
-        );
-
-        if (res && res.esCorrecto !== false) {
-            await cargarGrupos();
+    const handleEliminar = async (g) => {
+        if (!window.confirm(`¿Eliminar ${g.descripcion}?`)) return;
+        const res = await eliminarGrupoProducto(g.id);
+        if (res && res.EsCorrecto) {
+            setGrupos(grupos.filter(x => x.id !== g.id));
         } else {
-            setError(res?.mensaje || 'No se pudo cambiar el estado del grupo de productos');
+            setError('No se pudo eliminar el grupo de productos');
         }
     };
 
@@ -125,36 +102,21 @@ const GrupoProductos = () => {
                         <TableHead>
                             <TableRow>
                                 <TableCell>Descripción</TableCell>
-                                <TableCell align="center">Estado</TableCell>
                                 <TableCell align="center">Acciones</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {filtered.length > 0 ? (
                                 filtered.slice(start, start + rowsPerPage).map(g => (
-                                    <TableRow key={g.no_grupo} hover>
+                                    <TableRow key={g.id} hover>
                                         <TableCell>{g.descripcion}</TableCell>
-                                        <TableCell align="center">
-                                            <Chip
-                                                label={g.activo ? 'Activo' : 'Inactivo'}
-                                                color={g.activo ? 'success' : 'default'}
-                                                size="small"
-                                                variant={g.activo ? 'filled' : 'outlined'}
-                                            />
-                                        </TableCell>
                                         <TableCell align="center">
                                             <Stack direction="row" spacing={1} justifyContent="center">
                                                 <Button size="small" color="primary" onClick={() => handleAbrirFormulario(g)} startIcon={<IconEdit />}>
                                                     Editar
                                                 </Button>
-                                                <Button
-                                                    size="small"
-                                                    color={g.activo ? 'error' : 'success'}
-                                                    variant={g.activo ? 'outlined' : 'contained'}
-                                                    onClick={() => handleCambiarEstado(g)}
-                                                    startIcon={g.activo ? <IconToggleLeft /> : <IconToggleRight />}
-                                                >
-                                                    {g.activo ? 'Desactivar' : 'Activar'}
+                                                <Button size="small" color="error" onClick={() => handleEliminar(g)} startIcon={<IconTrash />}>
+                                                    Eliminar
                                                 </Button>
                                             </Stack>
                                         </TableCell>
@@ -162,7 +124,7 @@ const GrupoProductos = () => {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} align="center">No hay grupos</TableCell>
+                                    <TableCell colSpan={2} align="center">No hay grupos</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -185,7 +147,6 @@ const GrupoProductos = () => {
                         modoEdicion={modoEdicion}
                         onGuardar={handleGuardar}
                         onCancel={handleCerrarFormulario}
-                        noEmpresa={noEmpresaPorDefecto}
                     />
                 </Dialog>
             </ParentCard>

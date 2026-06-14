@@ -22,12 +22,12 @@ namespace Softlithe.ERP.BW.ListaPrecio.AgregarListaPrecio
         }
         public async Task<ModeloValidacion> Agregar(ListaPrecioDto listaPrecioDto)
         {
-            ModeloValidacion elModeloDeValidacion = ConvierteAModeloDeValidacion(false, "No se realizo ningun registro");
-            listaPrecioDto.Activo= true; // Establecer el estado como activo al agregar una nueva lista de precios sobre ecribiendo lo que le mande el api 
+            ModeloValidacion elModeloDeValidacion = ConvierteAModeloDeValidacion(false, "No se realizo ningun registro de lista de precio");
+            listaPrecioDto.Activo= true;  
             int cantidadDeDatosAgregados = await _agregarListaPrecioDA.Agregar(listaPrecioDto);
             if (cantidadDeDatosAgregados == 1)
             {
-                elModeloDeValidacion = ConvierteAModeloDeValidacion(true, "Registro exitoso");
+                elModeloDeValidacion = ConvierteAModeloDeValidacion(true, "Registro de la lista de precio de manera exitosa");
             }
             return elModeloDeValidacion;
         }

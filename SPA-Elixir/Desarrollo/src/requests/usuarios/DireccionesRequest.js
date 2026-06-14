@@ -1,19 +1,17 @@
 const apiBase = import.meta.env.VITE_ApiBase;
 
-const apiObtenerUsuarios = `${apiBase}/Usuarios/`;
-const apiObtenerUsuarioPorId = `${apiBase}/Usuarios/`;
-const apiCrearUsuario = `${apiBase}/Usuarios/`;
-const apiActualizarUsuario = `${apiBase}/Usuarios/`;
-const apiEliminarUsuario = `${apiBase}/Usuarios/`;
-const apiCambiarContrasena = `${apiBase}/Usuarios/cambiar-contrasena/`;
-const apiBuscarUsuarios = `${apiBase}/Usuarios/buscar?`;
+const apiObtenerUsuarios = `${apiBase}/Usuario/ObtenerUsuario`;
+const apiObtenerUsuarioPorId = `${apiBase}/Usuario/ObtenerUsuarioPorId`;
+const apiObtenerUsuarioPorCorreo = `${apiBase}/Usuario/ObtenerUsuarioPorCorreo`;
+const apiAgregarUsuario = `${apiBase}/Usuario/AgregarUsuario`;
+const apiModificarUsuario = `${apiBase}/Usuario/ModificarUsuario`;
+const apiModificarEstadoUsuario = `${apiBase}/Usuario/ModificarEstadoUsuario`;
 
 export {
     apiObtenerUsuarios,
     apiObtenerUsuarioPorId,
-    apiCrearUsuario,
-    apiActualizarUsuario,
-    apiEliminarUsuario,
-    apiCambiarContrasena,
-    apiBuscarUsuarios
+    apiObtenerUsuarioPorCorreo,
+    apiAgregarUsuario,
+    apiModificarUsuario,
+    apiModificarEstadoUsuario,
 };

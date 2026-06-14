@@ -4,9 +4,7 @@ import {
     DialogContent,
     DialogActions,
     Button,
-    TextField,
     FormControlLabel,
-    Checkbox,
     Box,
     Stack,
     Alert,
@@ -19,9 +17,8 @@ import { crearUsuario, actualizarUsuario } from '../../../requests/usuarios/Requ
 
 const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
     const [formData, setFormData] = useState({
-        login: '',
+        idIdentityServer: '',
         email: '',
-        contrasena: '',
         nombre: '',
         esDoctor: false,
         codigoProfesional: '',
@@ -33,13 +30,21 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [contrasenaConfirm, setContrasenaConfirm] = useState('');
 
     useEffect(() => {
         if (modoEdicion && usuario) {
             setFormData({
-                ...usuario,
-                contrasena: '', // No mostrar contraseña en edición
+                idIdentityServer: usuario.idIdentityServer || '',
+                email: usuario.email || '',
+                nombre: usuario.nombre || '',
+                esDoctor: usuario.esDoctor || false,
+                codigoProfesional: usuario.codigoProfesional || '',
+                telefono: usuario.telefono || '',
+                direccion: usuario.direccion || '',
+                fechaNacimiento: usuario.fechaNacimiento
+                    ? usuario.fechaNacimiento.substring(0, 10)
+                    : '',
+                esActivo: usuario.esActivo !== undefined ? usuario.esActivo : true,
             });
         }
     }, [usuario, modoEdicion]);
@@ -53,10 +58,6 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
     };
 
     const validarFormulario = () => {
-        if (!formData.login) {
-            setError('El login es requerido');
-            return false;
-        }
         if (!formData.email) {
             setError('El email es requerido');
             return false;
@@ -65,12 +66,8 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
             setError('El nombre es requerido');
             return false;
         }
-        if (!modoEdicion && !formData.contrasena) {
-            setError('La contraseña es requerida');
-            return false;
-        }
-        if (!modoEdicion && formData.contrasena !== contrasenaConfirm) {
-            setError('Las contraseñas no coinciden');
+        if (!formData.idIdentityServer) {
+            setError('El ID del proveedor de identidad es requerido');
             return false;
         }
         if (formData.esDoctor && !formData.codigoProfesional) {
@@ -91,17 +88,15 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
 
         try {
             if (modoEdicion) {
-                const dataActualizar = { ...formData };
-                delete dataActualizar.contrasena;
-                resultado = await actualizarUsuario(usuario.id, dataActualizar);
+                resultado = await actualizarUsuario(usuario.idUsuario, formData);
             } else {
                 resultado = await crearUsuario(formData);
             }
 
-            if (resultado.EsCorrecto) {
+            if (resultado.esCorrecto) {
                 onGuardar();
             } else {
-                setError(resultado.Mensaje || 'Error al guardar el usuario');
+                setError(resultado.mensaje || 'Error al guardar el usuario');
             }
         } catch (err) {
             setError('Error al procesar la solicitud');
@@ -120,13 +115,13 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
 
                 <Stack spacing={2}>
                     <Box>
-                        <CustomFormLabel htmlFor="login">Login Usuario *</CustomFormLabel>
+                        <CustomFormLabel htmlFor="idIdentityServer">ID Proveedor de Identidad *</CustomFormLabel>
                         <CustomTextField
-                            id="login"
-                            name="login"
-                            value={formData.login}
+                            id="idIdentityServer"
+                            name="idIdentityServer"
+                            value={formData.idIdentityServer}
                             onChange={handleChange}
-                            placeholder="Ingrese el login"
+                            placeholder="sub / ID del proveedor OIDC"
                             fullWidth
                             disabled={modoEdicion}
                         />
@@ -156,35 +151,6 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
                             fullWidth
                         />
                     </Box>
-
-                    {!modoEdicion && (
-                        <>
-                            <Box>
-                                <CustomFormLabel htmlFor="contrasena">Contraseña *</CustomFormLabel>
-                                <CustomTextField
-                                    id="contrasena"
-                                    name="contrasena"
-                                    type="password"
-                                    value={formData.contrasena}
-                                    onChange={handleChange}
-                                    placeholder="Ingrese la contraseña"
-                                    fullWidth
-                                />
-                            </Box>
-
-                            <Box>
-                                <CustomFormLabel htmlFor="contrasenaConfirm">Confirmar Contraseña *</CustomFormLabel>
-                                <CustomTextField
-                                    id="contrasenaConfirm"
-                                    type="password"
-                                    value={contrasenaConfirm}
-                                    onChange={(e) => setContrasenaConfirm(e.target.value)}
-                                    placeholder="Confirme la contraseña"
-                                    fullWidth
-                                />
-                            </Box>
-                        </>
-                    )}
 
                     <Box>
                         <FormControlLabel

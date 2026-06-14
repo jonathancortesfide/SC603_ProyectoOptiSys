@@ -5,7 +5,6 @@ import PageContainer from "../../components/container/PageContainer";
 import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
 import ParentCard from "../../components/shared/ParentCard";
 import { Snackbar, Alert } from "@mui/material";
-import { AgregarExamen } from "../../requests/examenes/RequestsExamenes";
 
 
 // Subcomponentes
@@ -16,28 +15,21 @@ import DetalleDeCosto from "./DetalleDeCosto";
 
 const steps = ["Datos Generales", "Graduación RX", "Diseño de Lente", "Detalle de Costo"];
 
-const formatDateForInput = (value) => {
-  const date = value ? new Date(value) : new Date();
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().split("T")[0];
-};
-
 
 const ExamenVista = () => {
-const [snackbar, setSnackbar] = useState({ open: false, severity: "success", message: "" });
-const [guardando, setGuardando] = useState(false);
+const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const [examen, setExamen] = useState({
     NoExamen: 23,// default para pruebas
     NoPaciente: 0,
-    FechaExamen: formatDateForInput(new Date()),
+    FechaExamen: new Date(),
     Motivo: "",
     TipoExamen: "",
     DpGeneral: "",
     MedioTransp: "",
     Fo: "",
     Pio: "",
-    UltimoExamen: formatDateForInput(new Date()),
+    UltimoExamen: new Date(),
     TratamientoAnterior: "",
     TipoPatologias: "",
     XmlGraduaciones: "",
@@ -56,27 +48,9 @@ const [guardando, setGuardando] = useState(false);
     setActiveStep((prev) => prev - 1);
   };
 
-  const handleFinish = async () => {
-    if (!examen.NoPaciente) {
-      setSnackbar({ open: true, severity: "error", message: "Seleccione un paciente antes de guardar" });
-      return;
-    }
-
-    setGuardando(true);
-    try {
-      const respuesta = await AgregarExamen(examen);
-      if (respuesta?.EsCorrecto) {
-        const nuevoNumero = respuesta?.Data?.NoExamen || examen.NoExamen;
-        setExamen((prev) => ({ ...prev, NoExamen: nuevoNumero }));
-        setSnackbar({ open: true, severity: "success", message: `Examen número ${nuevoNumero} guardado correctamente` });
-      } else {
-        setSnackbar({ open: true, severity: "error", message: respuesta?.Mensaje || "No se pudo guardar el examen" });
-      }
-    } catch (error) {
-      setSnackbar({ open: true, severity: "error", message: "Ocurrió un error al guardar el examen" });
-    } finally {
-      setGuardando(false);
-    }
+  const handleFinish = () => {
+  console.log("Examen completado:", examen);
+  setOpenSnackbar(true);
   };
 
   const renderStep = () => {
@@ -119,8 +93,8 @@ const [guardando, setGuardando] = useState(false);
             </Button>
 
             {activeStep === steps.length - 1 ? (
-              <Button variant="contained" color="success" onClick={handleFinish} disabled={guardando}>
-                {guardando ? "Guardando..." : "Guardar examen"}
+              <Button variant="contained" color="success" onClick={handleFinish}>
+                Guardar examen
               </Button>
             ) : (
               <Button variant="contained" color="primary" onClick={handleNext}>
@@ -132,17 +106,17 @@ const [guardando, setGuardando] = useState(false);
       </ParentCard>
 
       <Snackbar
-        open={snackbar.open}
+        open={openSnackbar}
         autoHideDuration={3000}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert
-          severity={snackbar.severity}
+          severity="success"
           variant="filled"
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          onClose={() => setOpenSnackbar(false)}
         >
-          {snackbar.message}
+          Examen número {examen.NoExamen} guardado correctamente
         </Alert>
       </Snackbar>
     </PageContainer>

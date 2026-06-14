@@ -23,7 +23,7 @@ namespace Softlithe.ERP.DA.Marcas
                                                          Descripcion = marca.Descripcion ?? string.Empty,
                                                          NoEmpresa = marca.NoEmpresa,
                                                          NoMarca = marca.NoMarca,
-                                                         EsActivo = marca.EsActivo
+                                                         EsActivo = marca.Activo
                                                      }).ToListAsync();
                 return lalistaMarca;
             }

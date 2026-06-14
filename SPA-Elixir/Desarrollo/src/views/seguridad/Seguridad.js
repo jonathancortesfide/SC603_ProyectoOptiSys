@@ -15,7 +15,7 @@ import Loadable from '../../layouts/full/shared/loadable/Loadable';
 
 const ListadoUsuarios = Loadable(lazy(() => import('./usuarios/ListadoUsuarios')));
 const ListadoRoles = Loadable(lazy(() => import('./roles/ListadoRoles')));
-const AsignarPermisos = Loadable(lazy(() => import('./permisos/AsignarPermisos')));
+const AsignarRoles = Loadable(lazy(() => import('./permisos/AsignarPermisos')));
 
 const TabPanel = (props) => {
     const { children, value, index, ...other } = props;
@@ -48,8 +48,6 @@ const Seguridad = () => {
                         <Alert severity="info">Modo MOCK activo — los datos vienen de <code>ejemplosDatos.js</code></Alert>
                     </Box>
                 )}
-                <Breadcrumb title="Seguridad" subtitle="Gestión de usuarios, roles y permisos" />
-
                 <ParentCard title="Gestión de Seguridad">
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                         <Tabs
@@ -60,7 +58,7 @@ const Seguridad = () => {
                         >
                             <Tab label="Usuarios" id="tab-0" aria-controls="tabpanel-0" />
                             <Tab label="Roles" id="tab-1" aria-controls="tabpanel-1" />
-                            <Tab label="Asignar Permisos" id="tab-2" aria-controls="tabpanel-2" />
+                            <Tab label="Asignar Roles" id="tab-2" aria-controls="tabpanel-2" />
                         </Tabs>
                     </Box>
 
@@ -73,7 +71,7 @@ const Seguridad = () => {
                     </TabPanel>
 
                     <TabPanel value={tabValue} index={2}>
-                        <AsignarPermisos />
+                        <AsignarRoles />
                     </TabPanel>
                 </ParentCard>
             </Container>

@@ -9,13 +9,9 @@ import {
 const axiosMonedas = axios.create();
 
 axiosMonedas.interceptors.request.use(async (config) => {
-    const token = window.localStorage.getItem('accessToken');
-
     config.headers = {
-        ...(config.headers || {}),
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
     return config;
 }, (error) => Promise.reject(error));
@@ -35,6 +31,71 @@ const obtenerListaDeMonedas = async () => {
         return { laListaDeMonedas: [], esCorrecto: false, mensaje: 'Respuesta inesperada' };
     } catch (e) {
         return { laListaDeMonedas: [], esCorrecto: false, mensaje: e?.response?.data?.mensaje ?? String(e) };
+    }
+};
+
+/** PK relación moneda–sucursal (valor que debe persistir en proveedor como NoMoneda / FK). */
+export const idMonedaDe = (m) => m?.idMoneda ?? m?.IdMoneda;
+
+/** Número de moneda catálogo (solo descriptivo / búsqueda; no es el id de relación). */
+export const numeroMonedaCatalogoDe = (m) => m?.numeroDeMoneda ?? m?.NumeroDeMoneda ?? m?.noMoneda ?? m?.NoMoneda;
+
+export const descripcionMonedaDe = (m) => m?.descripcion ?? m?.Descripcion ?? '';
+
+export const signoMonedaDe = (m) => m?.signo ?? m?.Signo ?? '';
+
+export const labelMonedaDe = (m) => {
+    if (!m) return '';
+    const s = signoMonedaDe(m);
+    const d = descripcionMonedaDe(m);
+    const n = numeroMonedaCatalogoDe(m);
+    const core = s && d ? `${s} — ${d}` : (d || s || String(n ?? ''));
+    return n !== undefined && n !== null ? `${core}` : core;
+};
+
+/**
+ * Lista desde respuesta (array o objeto con laListaDeMonedas / etc.).
+ */
+export const normalizarListaMonedas = (resp) => {
+    if (!resp) return [];
+    if (Array.isArray(resp)) return resp;
+    const keys = ['laListaDeMonedas', 'LaListaDeMonedas', 'monedas', 'datos', 'data', 'Data'];
+    for (let i = 0; i < keys.length; i += 1) {
+        const arr = resp[keys[i]];
+        if (Array.isArray(arr)) return arr;
+    }
+    return [];
+};
+
+const monedaEsActiva = (m) => {
+    if (m?.activo !== undefined) return !!m.activo;
+    if (m?.Activo !== undefined) return !!m.Activo;
+    if (m?.esActivo !== undefined) return !!m.esActivo;
+    if (m?.EsActivo !== undefined) return !!m.EsActivo;
+    return true;
+};
+
+/**
+ * GET /api/monedas?identificador=...
+ * Si el servidor usa otra ruta, reintenta con ObtenerMonedasPorIdentificador.
+ */
+const obtenerMonedasPorGetIdentificador = async (identificador) => {
+    try {
+        const respuesta = await axiosMonedas.get(apiMonedas, {
+            params: { identificador },
+        });
+        if (respuesta.status === 200) return respuesta.data;
+        return obtenerMonedasPorIdentificador(identificador);
+    } catch (e) {
+        const st = e?.response?.status;
+        if (st === 404 || st === 405) {
+            return obtenerMonedasPorIdentificador(identificador);
+        }
+        return {
+            laListaDeMonedas: [],
+            esCorrecto: false,
+            mensaje: e?.response?.data?.mensaje ?? String(e),
+        };
     }
 };
 
@@ -110,7 +171,11 @@ export {
     obtenerListaDeMonedas,
     obtenerMonedaPorId,
     obtenerMonedasPorIdentificador,
+    obtenerMonedasPorGetIdentificador,
     crearMoneda,
     cambiarEstadoMoneda,
 };
+
+/** Solo monedas marcadas activas (si el DTO trae el campo). */
+export const filtrarMonedasActivas = (lista) => lista.filter(monedaEsActiva);
 

@@ -69,10 +69,10 @@ const Register = () => (
       >
         <Box p={4}>
           <AuthRegister
-            title="Bienvenido a LENSYS"
+            title="Welcome to Softlithe"
             subtext={
               <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                Plataforma administrativa
+                Your Admin Dashboard
               </Typography>
             }
             subtitle={

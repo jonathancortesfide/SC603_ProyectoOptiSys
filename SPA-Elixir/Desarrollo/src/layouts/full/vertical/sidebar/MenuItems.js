@@ -1,19 +1,42 @@
 import { uniqueId } from 'lodash';
 
 import {
+  IconAward,
+  IconBoxMultiple,
+  IconPoint,
+  IconBan,
+  IconStar,
+  IconMoodSmile,
   IconAperture,
   IconSettings,
-  IconCurrencyDollar,
+  IconShield,
+  IconShieldCheck,
+  IconKey
+  , IconCurrencyDollar, IconTag
+  , IconHeartbeat
+  , IconUserCheck,
+  IconUserSearch,
   IconUsers,
+  IconBarcode,
+  IconBoxMultiple1,
   IconPackage,
-  IconListDetails,
-  IconCategory
+  IconBuildingStore,
+  IconFileInvoice,
 } from '@tabler/icons';
 
 const Menuitems = [
   {
     navlabel: true,
     subheader: 'Home',
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Sample Page',
+    icon: IconAperture,
+    href: '/sample-page',
+    chip: 'New',
+    chipColor: 'secondary',
   },
   {
     navlabel: true,
@@ -33,6 +56,25 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'Facturación',
+    icon: IconFileInvoice,
+    href: '/facturacion',
+  },
+  {
+    id: uniqueId(),
+    title: 'Examenes',
+    icon: IconStar, 
+    href: '/verexamenes',
+  }, 
+  
+  {
+    id: uniqueId(),
+    title: 'Seguridad',
+    icon: IconKey,
+    href: '/seguridad',
+  },
+  {
+    id: uniqueId(),
     title: 'Mantenimientos',
     icon: IconSettings,
     href: '/mantenimientos',
@@ -45,20 +87,44 @@ const Menuitems = [
       },
       {
         id: uniqueId(),
+        title: 'Proveedores',
+        icon: IconBuildingStore,
+        href: '/mantenimientos/proveedor',
+      },
+      {
+        id: uniqueId(),
+        title: 'Enfermedades',
+        icon: IconHeartbeat,
+        href: '/mantenimientos/enfermedades',
+      },
+      {
+        id: uniqueId(),
+        title: 'Marcas',
+        icon: IconTag,
+        href: '/mantenimientos/marca',
+      },
+      {
+        id: uniqueId(),
+        title: 'Listas de precio',
+        icon: IconCurrencyDollar,
+        href: '/mantenimientos/lista-precio',
+      },
+      {
+        id: uniqueId(),
         title: 'Tipo de lente',
         icon: IconAperture,
         href: '/mantenimientos/tipo-lente',
       },
       {
         id: uniqueId(),
-        title: 'Clasificación de pacientes',
-        icon: IconListDetails,
+        title: 'Clasificación pacientes',
+        icon: IconUserCheck,
         href: '/mantenimientos/clasificacion-pacientes',
       },
       {
         id: uniqueId(),
         title: 'Grupos de productos',
-        icon: IconCategory,
+        icon: IconBoxMultiple,
         href: '/mantenimientos/grupos-productos',
       },
     ],

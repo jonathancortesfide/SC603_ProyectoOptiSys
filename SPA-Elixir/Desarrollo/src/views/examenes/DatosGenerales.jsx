@@ -35,12 +35,7 @@ const DatosGenerales = ({ examen, setExamen }) => (
       </Grid>
       <Grid item xs={12}>
       <Box mb={2}>
-      <BusquedaDePaciente
-        onPacienteSeleccionado={(paciente) => setExamen(prev => ({
-          ...prev,
-          NoPaciente: paciente?.numeroDePaciente || 0,
-        }))}
-      />
+      <BusquedaDePaciente />
     </Box>
     </Grid> 
 

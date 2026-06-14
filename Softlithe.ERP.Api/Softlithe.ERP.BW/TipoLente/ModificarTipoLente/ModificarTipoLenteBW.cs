@@ -45,30 +45,27 @@ namespace Softlithe.ERP.BW.TipoLente.ModificarTipoLente
                 return ConstruirRespuestaExitosa(0, 1);
             }
         }
-        private ModeloValidacion ConstruirRespuestaExitosa(int no_marcaIncluida, int errorBitacora)
+        private ModeloValidacion ConstruirRespuestaExitosa(int registrosAfectados, int errorBitacora)
         {
             return new ModeloValidacion
             {
-                Mensaje = (no_marcaIncluida == 0 ? MensajeDeTipoLenteDto.ErrorAlCrearTipoLente : MensajeDeTipoLenteDto.ErrorAlActualizarTipoLente) + (errorBitacora == 0 ? MensajesGeneralesDelSistemaDto.ErrorGuardarBitacora : string.Empty),
-                EsCorrecto = no_marcaIncluida > 0
+                Mensaje = (registrosAfectados > 0 ? "Tipo de lente modificado correctamente." : "Error al modificar el tipo de lente.") + (errorBitacora == 0 ? " Error al guardar en bitácora." : string.Empty),
+                EsCorrecto = registrosAfectados > 0
             };
         }
 
-        //pendinte consultar un par de cosas 
-        private async Task<int> AgregarEventoBitacoraCorrecto(TipoLenteDto tipoLente, int no_marcaIncluida)
+        private async Task<int> AgregarEventoBitacoraCorrecto(TipoLenteDto tipoLente, int registrosAfectados)
         {
             return await _agregarEventoBitacoraBW.AgregarEventoBitacora(new BitacoraDto
             {
-                descripcionDelEvento = no_marcaIncluida > 0 ? "Tipo de lente modificada correctamente. Descripción Tipo de lente: " + tipoLente.descripcion : "Error al modificar la Lista de Precio. Descripción Lista de Precio: " + tipoLente.descripcion,
+                descripcionDelEvento = registrosAfectados > 0 ? "Tipo de lente modificado correctamente. Descripción Tipo de lente: " + tipoLente.descripcion : "Error al modificar el Tipo de lente. Descripción Tipo de lente: " + tipoLente.descripcion,
                 fechaDeRegistro = DateTime.Now,
                 nombreDelMetodo = nameof(ModificarTipoLente),
                 tabla = "TipoLente",
                 idBitacora = Guid.NewGuid(),
-                identificador = tipoLente.Identificador,//pendinteconsultar,
-                usuario = tipoLente.Usuario//pendinteconsultar
+                identificador = tipoLente.Identificador,
+                usuario = tipoLente.Usuario
             });
         }
-
-
     }
 }

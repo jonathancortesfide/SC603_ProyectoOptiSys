@@ -1,13 +1,15 @@
 const apiBase = import.meta.env.VITE_ApiBase;
 
-const apiClasificacionesPacientesPorEmpresa = `${apiBase}/PacienteClasificacion/ObtenerPorEmpresa/`;
-const apiCrearClasificacionPaciente = `${apiBase}/PacienteClasificacion/AgregarClasificacion`;
-const apiActualizarClasificacionPaciente = `${apiBase}/PacienteClasificacion/ModificarClasificacion`;
-const apiCambiarEstadoClasificacionPaciente = `${apiBase}/PacienteClasificacion/`;
+const apiClasificacionesPacientes = `${apiBase}/clasificacionpacientes/`;
+const apiClasificacionPacientePorId = `${apiBase}/clasificacionpacientes/`;
+const apiCrearClasificacionPaciente = `${apiBase}/clasificacionpacientes/`;
+const apiActualizarClasificacionPaciente = `${apiBase}/clasificacionpacientes/`;
+const apiEliminarClasificacionPaciente = `${apiBase}/clasificacionpacientes/`;
 
 export {
-    apiClasificacionesPacientesPorEmpresa,
+    apiClasificacionesPacientes,
+    apiClasificacionPacientePorId,
     apiCrearClasificacionPaciente,
     apiActualizarClasificacionPaciente,
-    apiCambiarEstadoClasificacionPaciente
+    apiEliminarClasificacionPaciente
 };

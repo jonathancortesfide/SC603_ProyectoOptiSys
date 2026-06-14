@@ -38,20 +38,23 @@ namespace Softlithe.ERP.Api.Controllers
 
         // POST: api/TipoLente/Obtener
         /// <summary>
-        /// Obtiene un tipo de lente según su identificador.
+        /// Obtiene los tipos de lente según la descripción.
         /// </summary>
         /// <remarks>
-        /// Devuelve la información del tipo de lente asociado al identificador proporcionado.
+        /// Devuelve la información de los tipos de lente asociados a la descripción proporcionada.
+        /// La búsqueda es insensible a mayúsculas y minúsculas.
         /// </remarks>
-        /// <param name="id_tipo_lente">Identificador único del tipo de lente.</param>
+        /// <param name="descripcion">Descripción del tipo de lente a buscar.</param>
         /// <returns>
         /// Un objeto <see cref="TipoLenteConModeloDeValidacion"/> que contiene la lista de tipos de lente
         /// y el estado de la validación de la operación.
         /// </returns>
         /// <response code="200">Operación exitosa. Retorna la información del tipo de lente.</response>
         /// <response code="500">Error interno del servidor.</response>
-        [HttpPost("Obtener")]
-        public async Task<TipoLenteConModeloDeValidacion> Obtener(int no_empresa)
+        [HttpGet("Obtener")]
+        public async Task<TipoLenteConModeloDeValidacion> Obtener(
+     [FromQuery] string? descripcion,
+     [FromQuery] int identificador)
         {
             var resultado = new TipoLenteConModeloDeValidacion
             {
@@ -59,7 +62,7 @@ namespace Softlithe.ERP.Api.Controllers
                 Mensaje = ""
             };
 
-            resultado.TipoDeLente = await _obtenerTipoLentePorId.Obtener(no_empresa);
+            resultado.TipoDeLente = await _obtenerTipoLentePorId.Obtener(descripcion, identificador);
 
             return resultado;
         }

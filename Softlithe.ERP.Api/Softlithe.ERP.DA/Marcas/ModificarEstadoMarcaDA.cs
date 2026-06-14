@@ -24,7 +24,7 @@ namespace Softlithe.ERP.DA.Marcas
                     {
                         NoMarca = marcaDa.NoMarca,
                         Descripcion = marcaDa.Descripcion ?? string.Empty,
-                        EsActivo = marcaDa.EsActivo,
+                        EsActivo = marcaDa.Activo,
                         Identificador = identificador,
                     },
                     ResultadoRegistro = 0
@@ -51,13 +51,13 @@ namespace Softlithe.ERP.DA.Marcas
                     };
                 }
 
-                marcaExistente.EsActivo = elMarca.EsActivo;
+                marcaExistente.Activo = elMarca.EsActivo;
                 _contextoBasedeDatos.Marcas.Update(marcaExistente);
                 int resultadoRegistro = await _contextoBasedeDatos.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 resultado.ResultadoRegistro = resultadoRegistro;
-                resultado.ModeloMarca.EsActivo = marcaExistente.EsActivo;
+                resultado.ModeloMarca.EsActivo = marcaExistente.Activo;
 
                 return resultado;
             }

@@ -1,158 +1,159 @@
 import axios from 'axios';
-import {
-    apiMarcas,
-    apiMarcaPorId,
-    apiCrearMarca,
-    apiActualizarMarca,
-    apiEliminarMarca,
-} from './DireccionesRequest';
+import { apiMarcas, apiModificaEstadoMarca } from './DireccionesRequest';
 
-axios.interceptors.request.use(async (config) => {
-    const token = window.localStorage.getItem('accessToken');
+/** Sin timeout axios puede quedar pendiente si el API no responde (pantalla de carga infinita). */
+const timeoutMarcasMs = (() => {
+    const raw = import.meta.env.VITE_API_TIMEOUT_MARCAS_MS ?? import.meta.env.VITE_API_TIMEOUT_MS;
+    const n = Number.parseInt(String(raw ?? ''), 10);
+    return Number.isFinite(n) && n > 0 ? n : 60000;
+})();
 
+const axiosMarcas = axios.create({ timeout: timeoutMarcasMs });
+
+axiosMarcas.interceptors.request.use(async (config) => {
     config.headers = {
-        ...(config.headers || {}),
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
     return config;
-}, function (error) {
-    return Promise.reject(error);
-});
+}, (error) => Promise.reject(error));
 
-axios.interceptors.response.use(async (response) => response, function (error) {
-    return Promise.reject(error);
-});
+axiosMarcas.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        console.error('[MarcasAPI] Error:', error?.response?.status, error?.response?.data ?? error?.message);
+        return Promise.reject(error);
+    },
+);
 
-const obtenerListaDeMarcas = async () => {
-    const urlApi = `${apiMarcas}`;
+export const noMarcaDe = (m) => m?.noMarca ?? m?.NoMarca ?? m?.id ?? m?.Id;
+
+export const esActivoMarca = (m) => {
+    if (m?.esActivo !== undefined) return !!m.esActivo;
+    if (m?.EsActivo !== undefined) return !!m.EsActivo;
+    if (m?.activo !== undefined) return !!m.activo;
+    if (m?.Activo !== undefined) return !!m.Activo;
+    return true;
+};
+
+export const descripcionMarcaDe = (m) => m?.descripcion ?? m?.Descripcion ?? '';
+
+export const normalizarListaMarcas = (resp) => {
+    if (!resp) return [];
+    const keys = ['LaListaDeMarcas', 'laListaDeMarcas', 'listaMarcas', 'marcas', 'datos', 'data', 'Data'];
+    for (let i = 0; i < keys.length; i += 1) {
+        const k = keys[i];
+        const v = resp[k];
+        if (v !== undefined && Array.isArray(v)) return v;
+    }
+    if (Array.isArray(resp)) return resp;
+    return [];
+};
+
+const mensajeError = (e) => e?.response?.data?.mensaje
+    ?? e?.response?.data?.Mensaje
+    ?? String(e);
+
+const mockListaMarcas = () => [
+    { NoMarca: 1, Descripcion: 'Oakley', EsActivo: true, NoEmpresa: 7 },
+    { NoMarca: 2, Descripcion: 'Ray-Ban', EsActivo: true, NoEmpresa: 7 },
+];
+
+/**
+ * POST .../Marcas/ObtenerMarca
+ * Cuerpo: { NoEmpresa, Descripcion }
+ */
+const obtenerMarcas = async (noEmpresa, descripcion = '') => {
+    const url = `${apiMarcas}/ObtenerMarca`;
     try {
-        return axios.get(urlApi)
-            .then(respuesta => {
-                if (respuesta.status === 200) return respuesta.data;
-            })
-            .catch(e => {
-                console.log('Error al obtener lista de marcas: ' + e);
-                if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return [
-                        { id: 'b-001', descripcion: 'Oakley' },
-                        { id: 'b-002', descripcion: 'Ray-Ban' }
-                    ];
-                }
-                return [];
-            });
-    } catch (error) {
-        console.log('Error en obtenerListaDeMarcas: ' + error);
-        if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return [
-                { id: 'b-001', descripcion: 'Oakley' },
-                { id: 'b-002', descripcion: 'Ray-Ban' }
-            ];
+        const respuesta = await axiosMarcas.post(url, {
+            NoEmpresa: Number.parseInt(String(noEmpresa), 10) || 0,
+            Descripcion: descripcion != null ? String(descripcion) : '',
+        });
+        if (respuesta.status === 200) return respuesta.data;
+        return { LaListaDeMarcas: [], EsCorrecto: false, Mensaje: 'Respuesta inesperada' };
+    } catch (e) {
+        const usarMock = import.meta.env.VITE_USE_MOCK === 'true';
+        if (usarMock) {
+            console.warn('[MarcasAPI] Usando lista mock (error o timeout):', mensajeError(e));
+            return {
+                LaListaDeMarcas: mockListaMarcas(),
+                EsCorrecto: true,
+                Mensaje: '',
+            };
         }
-        return [];
+        return { LaListaDeMarcas: [], EsCorrecto: false, Mensaje: mensajeError(e) };
     }
 };
 
-const obtenerMarcaPorId = async (id) => {
-    const urlApi = `${apiMarcaPorId}${id}`;
+/**
+ * Lista en memoria: útil cuando la fila no trae todos los campos del DTO.
+ */
+const obtenerMarcaPorNoMarca = async (noEmpresa, noMarca) => {
+    const resp = await obtenerMarcas(noEmpresa, '');
+    const lista = normalizarListaMarcas(resp);
+    const n = Number.parseInt(String(noMarca), 10);
+    return lista.find((x) => Number(noMarcaDe(x)) === n) ?? null;
+};
+
+/**
+ * POST .../Marcas/AgregarMarca
+ */
+const agregarMarca = async (payload) => {
+    const urlApi = `${apiMarcas}/AgregarMarca`;
     try {
-        return axios.get(urlApi)
-            .then(respuesta => {
-                if (respuesta.status === 200) return respuesta.data;
-            })
-            .catch(e => {
-                console.log('Error al obtener marca: ' + e);
-                if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { id: 'b-001', descripcion: 'Oakley' };
-                }
-                return null;
-            });
-    } catch (error) {
-        console.log('Error en obtenerMarcaPorId: ' + error);
+        const respuesta = await axiosMarcas.post(urlApi, payload);
+        if (respuesta.status === 200) return respuesta.data;
+        return { Mensaje: 'Respuesta inesperada', EsCorrecto: false };
+    } catch (e) {
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { id: 'b-001', descripcion: 'Oakley' };
+            return { Mensaje: 'Marca creada (mock)', EsCorrecto: true };
         }
-        return null;
+        return { Mensaje: mensajeError(e), EsCorrecto: false };
     }
 };
 
-const crearMarca = async (marca) => {
-    const urlApi = `${apiCrearMarca}`;
-    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false, Data: null };
+/**
+ * POST .../Marcas/ModificarMarca
+ */
+const modificarMarca = async (payload) => {
+    const urlApi = `${apiMarcas}/ModificarMarca`;
     try {
-        return axios.post(urlApi, marca)
-            .then(respuesta => {
-                if (respuesta.status === 200 || respuesta.status === 201) return respuesta.data;
-            })
-            .catch(e => {
-                console.log('Error al crear marca: ' + e);
-                if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { Mensaje: 'Marca creada (mock)', EsCorrecto: true, Data: { ...marca, id: 'b-mock-' + Date.now() } };
-                }
-                return dataRespuesta;
-            });
-    } catch (error) {
-        console.log('Error en crearMarca: ' + error);
+        const respuesta = await axiosMarcas.post(urlApi, payload);
+        if (respuesta.status === 200) return respuesta.data;
+        return { Mensaje: 'Respuesta inesperada', EsCorrecto: false };
+    } catch (e) {
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { Mensaje: 'Marca creada (mock)', EsCorrecto: true, Data: { ...marca, id: 'b-mock-' + Date.now() } };
+            return { Mensaje: 'Marca actualizada (mock)', EsCorrecto: true };
         }
-        return dataRespuesta;
+        return { Mensaje: mensajeError(e), EsCorrecto: false };
     }
 };
 
-const actualizarMarca = async (id, marca) => {
-    const urlApi = `${apiActualizarMarca}${id}`;
-    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false, Data: null };
+/**
+ * POST .../Marcas/ModificaEstadoMarca
+ * Cuerpo (camelCase, como proveedor): { noMarca, usuario, esActivo, identificador }
+ */
+const modificarEstadoMarca = async (payload) => {
+    const urlApi = (apiModificaEstadoMarca && String(apiModificaEstadoMarca).trim())
+        ? String(apiModificaEstadoMarca).trim()
+        : `${apiMarcas}/ModificaEstadoMarca`;
     try {
-        return axios.put(urlApi, marca)
-            .then(respuesta => {
-                if (respuesta.status === 200) return respuesta.data;
-            })
-            .catch(e => {
-                console.log('Error al actualizar marca: ' + e);
-                if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { Mensaje: 'Marca actualizada (mock)', EsCorrecto: true, Data: { id, ...marca } };
-                }
-                return dataRespuesta;
-            });
-    } catch (error) {
-        console.log('Error en actualizarMarca: ' + error);
+        const respuesta = await axiosMarcas.post(urlApi, payload);
+        if (respuesta.status === 200) return respuesta.data;
+        return { Mensaje: 'Respuesta inesperada', EsCorrecto: false };
+    } catch (e) {
         if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { Mensaje: 'Marca actualizada (mock)', EsCorrecto: true, Data: { id, ...marca } };
+            return { Mensaje: 'Estado actualizado (mock)', EsCorrecto: true };
         }
-        return dataRespuesta;
-    }
-};
-
-const eliminarMarca = async (id) => {
-    const urlApi = `${apiEliminarMarca}${id}`;
-    let dataRespuesta = { Mensaje: 'Hubo un problema con la promesa', EsCorrecto: false };
-    try {
-        return axios.delete(urlApi)
-            .then(respuesta => {
-                if (respuesta.status === 200) return respuesta.data;
-            })
-            .catch(e => {
-                console.log('Error al eliminar marca: ' + e);
-                if (import.meta.env.VITE_USE_MOCK === 'true') {
-                    return { Mensaje: 'Marca eliminada (mock)', EsCorrecto: true };
-                }
-                return dataRespuesta;
-            });
-    } catch (error) {
-        console.log('Error en eliminarMarca: ' + error);
-        if (import.meta.env.VITE_USE_MOCK === 'true') {
-            return { Mensaje: 'Marca eliminada (mock)', EsCorrecto: true };
-        }
-        return dataRespuesta;
+        return { Mensaje: mensajeError(e), EsCorrecto: false };
     }
 };
 
 export {
-    obtenerListaDeMarcas,
-    obtenerMarcaPorId,
-    crearMarca,
-    actualizarMarca,
-    eliminarMarca
+    obtenerMarcas,
+    obtenerMarcaPorNoMarca,
+    agregarMarca,
+    modificarMarca,
+    modificarEstadoMarca,
 };

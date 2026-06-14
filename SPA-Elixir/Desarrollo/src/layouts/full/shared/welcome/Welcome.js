@@ -37,7 +37,7 @@ const Welcome = () => {
           variant="filled"
           sx={{ width: '100%', color: 'white' }}
         >
-          <AlertTitle>Bienvenido a LENSYS</AlertTitle>
+          <AlertTitle>Welcome To Softlithe</AlertTitle>
           Easy to customize the Template!!!
         </Alert>
       </Snackbar>

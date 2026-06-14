@@ -7,9 +7,7 @@ import {
   Alert,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  FormControlLabel,
-  Checkbox
+  DialogActions
 } from '@mui/material';
 
 import {
@@ -17,13 +15,15 @@ import {
   actualizarTipoLente,
   obtenerTipoLentePorId
 } from '../../../requests/mantenimientos/TipoLente/RequestsTipoLente';
-import { getSucursalIdentificador } from '../../../utils/sucursal';
+import { getNoEmpresa } from '../../../utils/sucursal';
 
-const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa }) => {
-  const noEmpresaPorDefecto = String(noEmpresa ?? getSucursalIdentificador() ?? '').trim();
+const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
   const [formData, setFormData] = useState({
+    no_tipo: '',
     descripcion: '',
-    no_empresa: noEmpresaPorDefecto,
+    no_empresa: getNoEmpresa(),
+    activo: true,
+    identificador: getNoEmpresa(),
     usuario: ''
   });
   const [error, setError] = useState(null);
@@ -37,8 +37,11 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa
             const data = await obtenerTipoLentePorId(tipo.no_tipo);
             if (data) {
               setFormData({
+                no_tipo: data.no_tipo || tipo.no_tipo || '',
                 descripcion: data.descripcion || '',
-                no_empresa: data.no_empresa || noEmpresaPorDefecto,
+                no_empresa: data.no_empresa || '',
+                activo: data.activo !== undefined ? data.activo : true,
+                identificador: data.identificador || '',
                 usuario: data.usuario || ''
               });
             }
@@ -47,21 +50,27 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa
           }
         } else {
           setFormData({
+            no_tipo: tipo.no_tipo || '',
             descripcion: tipo.descripcion || '',
-            no_empresa: tipo.no_empresa || noEmpresaPorDefecto,
+            no_empresa: tipo.no_empresa || '',
+            activo: tipo.activo !== undefined ? tipo.activo : true,
+            identificador: tipo.identificador || '',
             usuario: tipo.usuario || ''
           });
         }
       } else {
         setFormData({
+          no_tipo: '',
           descripcion: '',
-          no_empresa: noEmpresaPorDefecto,
+          no_empresa: getNoEmpresa(),
+          activo: true,
+          identificador: getNoEmpresa(),
           usuario: ''
         });
       }
     };
     cargar();
-  }, [tipo, modoEdicion, noEmpresaPorDefecto]);
+  }, [tipo, modoEdicion]);
 
   const handleSubmit = async () => {
     setError(null);
@@ -69,21 +78,28 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa
       setError('Descripción es obligatoria');
       return;
     }
-    if (!formData.no_empresa) {
-      setError('no_empresa es obligatorio');
-      return;
+    
+    // Limpiar espacios en blanco de los campos
+    let datosLimpios = {
+      descripcion: String(formData.descripcion).trim(),
+      no_empresa: formData.no_empresa || getNoEmpresa(),
+      activo: formData.activo,
+      identificador: formData.identificador || getNoEmpresa(),
+      usuario: String(formData.usuario).trim() || String(getNoEmpresa())
+    };
+    // Solo agregar no_tipo si es edición
+    if (modoEdicion && formData.no_tipo) {
+      datosLimpios.no_tipo = parseInt(String(formData.no_tipo).trim(), 10);
     }
-
-    setLoading(true);
     try {
       let res;
       if (modoEdicion && tipo && tipo.no_tipo) {
-        console.log('Actualizando tipo de lente:', tipo.no_tipo, formData);
-        res = await actualizarTipoLente(tipo.no_tipo, formData);
+        console.log('Actualizando tipo de lente:', datosLimpios);
+        res = await actualizarTipoLente(datosLimpios);
       } else {
         console.log('=== CREANDO TIPO DE LENTE ===');
-        console.log('Datos del formulario:', formData);
-        res = await crearTipoLente(formData);
+        console.log('Datos del formulario:', datosLimpios);
+        res = await crearTipoLente(datosLimpios);
       }
       
       console.log('=== RESPUESTA DEL SERVIDOR ===');
@@ -134,23 +150,6 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel, noEmpresa
               onChange={handleChange}
               fullWidth
               required
-              disabled={loading}
-            />
-            <TextField
-              name="no_empresa"
-              label="No. Empresa"
-              type="number"
-              value={formData.no_empresa}
-              fullWidth
-              required
-              disabled
-            />
-            <TextField
-              name="usuario"
-              label="Usuario"
-              value={formData.usuario}
-              onChange={handleChange}
-              fullWidth
               disabled={loading}
             />
           </Stack>

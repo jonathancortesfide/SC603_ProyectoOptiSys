@@ -9,9 +9,11 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.ListaPrecio
         public int no_lista { get; set; }
         public string descripcion { get; set; }
         public int id_moneda { get; set; }
+        public string? descripcionMoneda { get; set; }
         public int Identificador { get; set; }
         public string? Usuario { get; set; } = string.Empty;   
-        public Boolean? Activo { get; set; } 
+        public Boolean? Activo { get; set; }
+        public Boolean? ValorPorDefecto { get; set; }
 
     }
 

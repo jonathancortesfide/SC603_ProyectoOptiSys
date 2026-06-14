@@ -24,12 +24,5 @@ namespace Softlithe.ERP.Api.Controllers
 			ModeloValidacion elModeloDeValidacion = await _agregarExamenBW.Agregar(datos);
 			return elModeloDeValidacion;
 		}
-
-		[HttpGet]
-		public IActionResult GetExamenes([FromQuery] int? NoPaciente)
-		{
-			// TODO: Implementar lógica para obtener exámenes filtrados por NoPaciente
-			return Ok(new object[0]);
-		}
 	}
 }

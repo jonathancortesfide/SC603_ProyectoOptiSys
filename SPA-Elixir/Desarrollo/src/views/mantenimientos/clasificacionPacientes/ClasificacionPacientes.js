@@ -14,8 +14,7 @@ import {
     TextField,
     CircularProgress,
     Alert,
-    TablePagination,
-    Chip
+    TablePagination
 } from '@mui/material';
 import PageContainer from '../../../components/container/PageContainer';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -23,14 +22,11 @@ import ParentCard from '../../../components/shared/ParentCard';
 import FormularioClasificacionPacientes from './FormularioClasificacionPacientes';
 import {
     obtenerListaDeClasificacionesPacientes,
-    cambiarEstadoClasificacionPaciente
+    eliminarClasificacionPaciente
 } from '../../../requests/mantenimientos/clasificacionPacientes/RequestsClasificacionPacientes';
-import { IconEdit, IconPlus, IconToggleLeft, IconToggleRight } from '@tabler/icons';
-import { getSucursalIdentificador } from '../../../utils/sucursal';
-import { getCurrentUsername } from '../../../utils/auth';
+import { IconEdit, IconTrash, IconPlus } from '@tabler/icons';
 
 const ClasificacionPacientes = () => {
-    const noEmpresaPorDefecto = String(getSucursalIdentificador() ?? '').trim();
     const [clasificaciones, setClasificaciones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -41,27 +37,16 @@ const ClasificacionPacientes = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    useEffect(() => { cargarClasificaciones(); }, [noEmpresaPorDefecto]);
+    useEffect(() => { cargarClasificaciones(); }, []);
 
     const cargarClasificaciones = async () => {
-        if (!noEmpresaPorDefecto) {
-            setError('No se encontró la empresa para cargar las clasificaciones');
-            setClasificaciones([]);
-            setLoading(false);
-            return;
-        }
-
         setLoading(true);
         setError(null);
-        const data = await obtenerListaDeClasificacionesPacientes(noEmpresaPorDefecto);
-        if (data && Array.isArray(data.laListaDeClasificaciones)) {
-            setClasificaciones(data.laListaDeClasificaciones);
-            if (data.esCorrecto === false) {
-                setError(data.mensaje || 'No se pudieron cargar las clasificaciones de pacientes');
-            }
+        const data = await obtenerListaDeClasificacionesPacientes();
+        if (data && data.length >= 0) {
+            setClasificaciones(data);
         } else {
             setError('No se pudieron cargar las clasificaciones de pacientes');
-            setClasificaciones([]);
         }
         setLoading(false);
     };
@@ -74,21 +59,13 @@ const ClasificacionPacientes = () => {
     const handleCerrarFormulario = () => { setOpenDialog(false); setClasificacionSeleccionada(null); setModoEdicion(false); };
     const handleGuardar = async () => { await cargarClasificaciones(); handleCerrarFormulario(); };
 
-    const handleCambiarEstado = async (clasificacion) => {
-        const nuevoEstado = !clasificacion.activo;
-        const accion = nuevoEstado ? 'activar' : 'desactivar';
-        if (!window.confirm(`¿Desea ${accion} ${clasificacion.descripcion}?`)) return;
-
-        const res = await cambiarEstadoClasificacionPaciente(
-            clasificacion.no_clasificacion,
-            nuevoEstado,
-            getCurrentUsername()
-        );
-
-        if (res && res.esCorrecto !== false) {
-            await cargarClasificaciones();
+    const handleEliminar = async (c) => {
+        if (!window.confirm(`¿Eliminar ${c.descripcion}?`)) return;
+        const res = await eliminarClasificacionPaciente(c.id);
+        if (res && res.EsCorrecto) {
+            setClasificaciones(clasificaciones.filter(x => x.id !== c.id));
         } else {
-            setError(res?.mensaje || 'No se pudo cambiar el estado de la clasificación de pacientes');
+            setError('No se pudo eliminar la clasificación de pacientes');
         }
     };
 
@@ -125,36 +102,21 @@ const ClasificacionPacientes = () => {
                         <TableHead>
                             <TableRow>
                                 <TableCell>Descripción</TableCell>
-                                <TableCell align="center">Estado</TableCell>
                                 <TableCell align="center">Acciones</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {filtered.length > 0 ? (
                                 filtered.slice(start, start + rowsPerPage).map(c => (
-                                    <TableRow key={c.no_clasificacion} hover>
+                                    <TableRow key={c.id} hover>
                                         <TableCell>{c.descripcion}</TableCell>
-                                        <TableCell align="center">
-                                            <Chip
-                                                label={c.activo ? 'Activo' : 'Inactivo'}
-                                                color={c.activo ? 'success' : 'default'}
-                                                size="small"
-                                                variant={c.activo ? 'filled' : 'outlined'}
-                                            />
-                                        </TableCell>
                                         <TableCell align="center">
                                             <Stack direction="row" spacing={1} justifyContent="center">
                                                 <Button size="small" color="primary" onClick={() => handleAbrirFormulario(c)} startIcon={<IconEdit />}>
                                                     Editar
                                                 </Button>
-                                                <Button
-                                                    size="small"
-                                                    color={c.activo ? 'error' : 'success'}
-                                                    variant={c.activo ? 'outlined' : 'contained'}
-                                                    onClick={() => handleCambiarEstado(c)}
-                                                    startIcon={c.activo ? <IconToggleLeft /> : <IconToggleRight />}
-                                                >
-                                                    {c.activo ? 'Desactivar' : 'Activar'}
+                                                <Button size="small" color="error" onClick={() => handleEliminar(c)} startIcon={<IconTrash />}>
+                                                    Eliminar
                                                 </Button>
                                             </Stack>
                                         </TableCell>
@@ -162,7 +124,7 @@ const ClasificacionPacientes = () => {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} align="center">No hay clasificaciones</TableCell>
+                                    <TableCell colSpan={2} align="center">No hay clasificaciones</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -185,7 +147,6 @@ const ClasificacionPacientes = () => {
                         modoEdicion={modoEdicion}
                         onGuardar={handleGuardar}
                         onCancel={handleCerrarFormulario}
-                        noEmpresa={noEmpresaPorDefecto}
                     />
                 </Dialog>
             </ParentCard>

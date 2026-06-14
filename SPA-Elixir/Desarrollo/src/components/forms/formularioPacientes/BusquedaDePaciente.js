@@ -35,7 +35,7 @@ const followerCard = [
 ];
 
 
-const BusquedaDePaciente = ({ onPacienteSeleccionado }) => {
+const BusquedaDePaciente = () => {
   const [options, setOptions] = React.useState([]);
   const [pacientes, setPacientes] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -49,7 +49,7 @@ const BusquedaDePaciente = ({ onPacienteSeleccionado }) => {
         const response = await BuscarPacientePorNombreOIdentificacion('');
         if (response && response.length) {
           const formattedData = response.map(item => ({
-            label: `${item.cedula || item.identificacion}-${item.nombre}`,
+            label: `${item.cedula}-${item.nombre}`,
             value: item.numeroDePaciente
           }));
           setOptions(formattedData);
@@ -79,7 +79,7 @@ const BusquedaDePaciente = ({ onPacienteSeleccionado }) => {
         const response = await BuscarPacientePorNombreOIdentificacion(inputValue);
         if (response && response.length) {
           const formattedData = response.map(item => ({
-            label: `${item.cedula || item.identificacion}-${item.nombre}`,
+            label: `${item.cedula}-${item.nombre}`,
             value: item.numeroDePaciente
           }));
           setOptions(formattedData);
@@ -106,12 +106,10 @@ const BusquedaDePaciente = ({ onPacienteSeleccionado }) => {
       const paciente = pacientes.find(p => p.numeroDePaciente === numeroDePaciente.value);
       setSelectedPaciente(paciente);
       setIsVisible(true);
-      onPacienteSeleccionado?.(paciente || null);
       console.log("Paciente seleccionado:", paciente);
     } else {
       setIsVisible(false);
       setSelectedPaciente(null);
-      onPacienteSeleccionado?.(null);
     }
     
   };
@@ -165,7 +163,7 @@ const BusquedaDePaciente = ({ onPacienteSeleccionado }) => {
               Identificación: {selectedPaciente?.cedula}
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              Correo: {selectedPaciente?.email || selectedPaciente?.email1}
+              Correo: {selectedPaciente?.email}
             </Typography>
           </Stack>
         </Box>

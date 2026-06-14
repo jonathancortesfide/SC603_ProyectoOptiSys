@@ -13,14 +13,13 @@ public partial class Marca
     [Column("no_marca")]
     public int NoMarca { get; set; }
 
-    [Column("descripcion")]
-    [StringLength(100)]
-    [Unicode(false)]
-    public string? Descripcion { get; set; }
-
     [Column("no_empresa")]
     public int NoEmpresa { get; set; }
 
+    [Column("descripcion")]
+    [StringLength(100)]
+    public string Descripcion { get; set; } = string.Empty;
+
     [Column("es_activo")]
-    public bool EsActivo { get; set; }
+    public bool Activo { get; set; }
 }

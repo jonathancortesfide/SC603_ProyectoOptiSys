@@ -15,6 +15,7 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.MensajesDelSistema
         public const string CodigoEmpresaRequerida = "El código de empresa es requerido.";
         public const string CodigoIdentificadorRequerido = "El código identificador es requerido.";
 		public const string UsuarioRequerido = "El usuario es requerido.";
+        public const string EmailRequerido = "El correo electrónico es requerido.";
         public const string DatoEsActivoRequerido = "El dato es activo es requerido.";
         public const string ErrorGuardarBitacora = "Existen inconvenientes al guardar la bitácora, contacte al encargado. ";
     }
