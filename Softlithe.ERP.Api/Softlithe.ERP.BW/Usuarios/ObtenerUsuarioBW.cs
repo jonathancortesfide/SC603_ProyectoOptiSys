@@ -140,4 +140,38 @@ public class ObtenerUsuarioBW : IObtenerUsuarioBW
             };
         }
     }
+
+    public async Task<ModeloValidacionConDatos<List<UsuarioDto>>> ObtenerDoctores(int identificador)
+    {
+        if (identificador <= 0)
+        {
+            return new ModeloValidacionConDatos<List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.CodigoIdentificadorRequerido,
+                EsCorrecto = false,
+                Datos = new List<UsuarioDto>()
+            };
+        }
+
+        try
+        {
+            var lista = await _obtenerUsuarioDA.ObtenerDoctores(identificador);
+            return new ModeloValidacionConDatos<List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.DatosObtenidosDeManeraCorrecta,
+                EsCorrecto = true,
+                Datos = lista
+            };
+        }
+        catch (Exception ex)
+        {
+            await _logger.RegistrarEventoError(ex);
+            return new ModeloValidacionConDatos<List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.OcurrioUnErrorEnElSistema,
+                EsCorrecto = false,
+                Datos = new List<UsuarioDto>()
+            };
+        }
+    }
 }

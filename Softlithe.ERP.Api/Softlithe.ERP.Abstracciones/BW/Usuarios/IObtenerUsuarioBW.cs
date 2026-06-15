@@ -10,4 +10,6 @@ public interface IObtenerUsuarioBW
     Task<ModeloValidacionConDatos<UsuarioDto?>> ObtenerUsuarioPorId(ParametroConsultaUsuarioPorId parametro);
 
     Task<ModeloValidacionConDatos<UsuarioDto?>> ObtenerUsuarioPorCorreo(ParametroConsultaUsuarioPorCorreo parametro);
+
+    Task<ModeloValidacionConDatos<List<UsuarioDto>>> ObtenerDoctores(int identificador);
 }

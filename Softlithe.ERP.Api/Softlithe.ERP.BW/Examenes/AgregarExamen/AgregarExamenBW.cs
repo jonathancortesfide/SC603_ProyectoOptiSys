@@ -24,7 +24,7 @@ namespace Softlithe.ERP.BW.Examenes.AgregarExamen
 			int resultado = await _agregarExamenDA.Agregar(datos);
 			if (resultado > 0)
 			{
-				modeloValidacion = GenerarModeloDeValidacion(false, MensajesDeExamenesDto.ExamenAgregadoCorrectamente);
+				modeloValidacion = GenerarModeloDeValidacion(true, MensajesDeExamenesDto.ExamenAgregadoCorrectamente);
 			}
 			return modeloValidacion;	
 		}
@@ -32,7 +32,7 @@ namespace Softlithe.ERP.BW.Examenes.AgregarExamen
 		private ModeloValidacion GenerarModeloDeValidacion (bool esValido, string mensaje)
 		{
 			return new ModeloValidacion {
-				EsCorrecto = false,
+				EsCorrecto = esValido,
 				Mensaje = mensaje
 			};
 		}

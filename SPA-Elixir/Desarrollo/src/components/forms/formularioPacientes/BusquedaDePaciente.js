@@ -3,7 +3,7 @@ import { CardContent, Typography, Grid, Button, Box, AvatarGroup, Avatar, Stack 
 import BlankCard from '../../shared/BlankCard';
 import AsyncSelect from 'react-select/async';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
-import { BuscarPacientePorNombreOIdentificacion } from '../../../requests/pacientes/RequestsPacientes';
+import { obtenerListaDePacientes } from '../../../requests/pacientes/RequestsPacientes';
 
 import img1 from 'src/assets/images/profile/user-1.jpg';
 import img2 from 'src/assets/images/profile/user-2.jpg';
@@ -35,22 +35,23 @@ const followerCard = [
 ];
 
 
-const BusquedaDePaciente = () => {
+const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, onPacienteChange }) => {
   const [options, setOptions] = React.useState([]);
   const [pacientes, setPacientes] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [selectedPaciente, setSelectedPaciente] = React.useState(null);
+  const [noPaciente, setNoPaciente] = React.useState(initialNoPaciente);
   const [isVisible, setIsVisible] = React.useState(false);
   // Cargar opciones por defecto
   const loadDefaultData = async (inputValue, callback) => {
     if(inputValue.length === 0) {
       setLoading(true);
       try {
-        const response = await BuscarPacientePorNombreOIdentificacion('');
+        const response = await obtenerListaDePacientes('');
         if (response && response.length) {
           const formattedData = response.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
-            value: item.numeroDePaciente
+            value: item.noPaciente || item.numeroDePaciente
           }));
           setOptions(formattedData);
           setPacientes(response);
@@ -76,11 +77,11 @@ const BusquedaDePaciente = () => {
     if(inputValue.length > 3) {
       setLoading(true);
       try {
-        const response = await BuscarPacientePorNombreOIdentificacion(inputValue);
+        const response = await obtenerListaDePacientes(inputValue);
         if (response && response.length) {
           const formattedData = response.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
-            value: item.numeroDePaciente
+            value: item.noPaciente || item.numeroDePaciente
           }));
           setOptions(formattedData);
           setPacientes(response);
@@ -103,15 +104,23 @@ const BusquedaDePaciente = () => {
 
   const seleccionarPaciente = async (numeroDePaciente) => { 
     if (numeroDePaciente) {
-      const paciente = pacientes.find(p => p.numeroDePaciente === numeroDePaciente.value);
+      const paciente = pacientes.find(p => (p.noPaciente || p.numeroDePaciente) === numeroDePaciente.value);
       setSelectedPaciente(paciente);
+      setNoPaciente(numeroDePaciente.value);
+      if (onPacienteChange) {
+        onPacienteChange(paciente || { noPaciente: numeroDePaciente.value });
+      }
       setIsVisible(true);
       console.log("Paciente seleccionado:", paciente);
+      console.log("noPaciente guardado:", numeroDePaciente.value);
     } else {
       setIsVisible(false);
       setSelectedPaciente(null);
+      setNoPaciente(null);
+      if (onPacienteChange) {
+        onPacienteChange(null);
+      }
     }
-    
   };
   return (
     <div>

@@ -76,4 +76,13 @@ public class UsuarioController : ControllerBase
     {
         return await _obtenerUsuarioBW.ObtenerUsuarioPorCorreo(parametro);
     }
+
+    /// <summary>
+    /// Obtiene todos los doctores (usuarios con EsDoctor = true) para un identificador de sucursal.
+    /// </summary>
+    [HttpPost("ObtenerDoctores/{identificador}")]
+    public async Task<ModeloValidacionConDatos<List<UsuarioDto>>> ObtenerDoctores([FromRoute] int identificador)
+    {
+        return await _obtenerUsuarioBW.ObtenerDoctores(identificador);
+    }
 }

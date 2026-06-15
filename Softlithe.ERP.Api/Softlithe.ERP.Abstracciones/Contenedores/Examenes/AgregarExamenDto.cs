@@ -34,7 +34,7 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Examenes
 		public string XmlGraduaciones { get; set; }
 		public string XmlDisenos { get; set; }
 		public string CodigoAro { get; set; }
-		public byte[] Imagen { get; set; }
+		public byte[]? Imagen { get; set; }
 		public string CodigoExamen { get; set; }
 		public int NumeroProveedorLaboratorio { get; set; }
 		public string NumeroOrdenLaboratorio { get; set; }

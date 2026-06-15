@@ -8,8 +8,12 @@ using Softlithe.ERP.DA.GestionBitacora.AgregarEventoBitacora;
 using Softlithe.ERP.DA.Modelos;
 using Softlithe.ERP.Abstracciones.BW.Examenes.AgregarExamen;
 using Softlithe.ERP.Abstracciones.DA.Examenes.AgregarExamen;
+using Softlithe.ERP.Abstracciones.BW.Examenes;
+using Softlithe.ERP.Abstracciones.DA.Examenes;
 using Softlithe.ERP.BW.Examenes.AgregarExamen;
 using Softlithe.ERP.DA.Examenes.AgregarExamen;
+using Softlithe.ERP.BW.Examenes.ObtenerExamenCompleto;
+using Softlithe.ERP.DA.Examenes.ObtenerExamenGraduaciones;
 
 namespace Softlithe.ERP.Api.Inyeccion
 {
@@ -17,9 +21,13 @@ namespace Softlithe.ERP.Api.Inyeccion
 	{
 		internal static IServiceCollection InyectarDependencias(this IServiceCollection services)
 		{
-			//Inyeccion de Examenes 
+			//Inyeccion de Examenes - Agregar
 			services.AddScoped<IAgregarExamenDA, AgregarExamenDA>();
 			services.AddScoped<IAgregarExamenBW, AgregarExamenBW>();
+
+			//Inyeccion de Examenes - Obtener
+			services.AddScoped<IObtenerExamenGraduacionesAD, ObtenerExamenGraduacionesAD>();
+			services.AddScoped<IObtenerExamenCompletoBW, ObtenerExamenCompletoBW>();
 
 			return services;
 		}
