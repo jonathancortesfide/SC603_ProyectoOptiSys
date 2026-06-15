@@ -1,4 +1,5 @@
 using System.Text;
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -68,11 +69,17 @@ builder.Services.AddCors(Options =>
 });
 
 builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
-builder.Logging.AddEventLog(EventLogSettings =>
+
+// EventLog is only supported on Windows
+if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 {
-    EventLogSettings.SourceName = builder.Configuration.GetValue<string>("EventLog:SourceName");
-    EventLogSettings.LogName = builder.Configuration.GetValue<string>("EventLog:LogName");
-});
+    builder.Logging.AddEventLog(EventLogSettings =>
+    {
+        EventLogSettings.SourceName = builder.Configuration.GetValue<string>("EventLog:SourceName");
+        EventLogSettings.LogName = builder.Configuration.GetValue<string>("EventLog:LogName");
+    });
+}
+
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,6 +23,13 @@ namespace Softlithe.ERP.BW.Generales.ManejoDeErrores
 		{
 			await Task.Run(() =>
 			{
+				// EventLog is only supported on Windows
+				if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				{
+					// On non-Windows platforms, just skip EventLog
+					return;
+				}
+
 				string source = _configurationManager.GetValue<string>("Logging:SourceName");
 				string log = _configurationManager.GetValue<string>("Logging:LogName");
 				string eventMessage = $"Se ha producido un error no controlado en la aplicación.\n" +

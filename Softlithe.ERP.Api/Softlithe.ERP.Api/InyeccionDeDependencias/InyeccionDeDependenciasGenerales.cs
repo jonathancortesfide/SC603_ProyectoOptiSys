@@ -21,6 +21,7 @@ using Softlithe.ERP.BW.Generales.GestionDeBitacora.AgregarEventoBitacora;
 using Softlithe.ERP.Abstracciones.BW.Generales.ManejoDeErrores;
 using Softlithe.ERP.BW.Generales.ManejoDeErrores;
 using Softlithe.ERP.BW.Generales.ManejoDeErrores.Composite;
+using System.Runtime.InteropServices;
 
 namespace Softlithe.ERP.Api.Inyeccion
 {
@@ -42,7 +43,13 @@ namespace Softlithe.ERP.Api.Inyeccion
 
 			//Gestion de eventos de bitacora composite
 			services.AddScoped<IInternalErrorLogger, BaseDeDatosLoggerBW>();
-			services.AddScoped<IInternalErrorLogger, EventViewerLoggerBW>();
+			
+			// Only register EventViewerLoggerBW on Windows
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				services.AddScoped<IInternalErrorLogger, EventViewerLoggerBW>();
+			}
+			
 			services.AddScoped<IInternalErrorLogger, FileEventLoggerBW>();
 
 			// El composite es el único IErrorLogger
