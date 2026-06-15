@@ -13,5 +13,7 @@ namespace Softlithe.ERP.Abstracciones.DA.Pacientes
         Task<int> ActualizarPacienteAsync(PacienteDto pacienteDto);
 
         Task<int> ModificaEstadoPacienteAsync(PacienteInActivaDto pacienteInActivaDto);
+
+        Task<int?> ObtenerUltimoIdExamenPorNoPacienteAsync(int noPaciente);
     }
 }

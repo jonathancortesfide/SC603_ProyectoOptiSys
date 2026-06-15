@@ -6,6 +6,10 @@ namespace Softlithe.ERP.Abstracciones.DA.Productos
     {
         Task<List<ProductoDto>> ObtenerProductosAsync(int noEmpresa, string? textoBusqueda);
 
+        Task<List<ProductoDto>> ObtenerProductosMTAsync(int noEmpresa, int noTipo);
+
+        Task<List<ProductoDto>> ObtenerProductosARAsync(int noEmpresa, string descripcion);
+
         Task<ProductoDetalleDto?> ObtenerProductoPorIdAsync(int idProducto);
 
         Task<int> InsertarProductoAsync(ProductoDto productoDto);

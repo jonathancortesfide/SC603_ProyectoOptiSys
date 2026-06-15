@@ -11,15 +11,13 @@ const DetalleDeCosto = ({ examen, setExamen }) => {
       CostoLente = 0,
       CostoMaterial = 0,
       CostoExamen = 0,
-      TratamientosCosto = 0,
     } = examen;
 
     const total =
       Number(CostoAro) +
       Number(CostoLente) +
       Number(CostoMaterial) +
-      Number(CostoExamen) +
-      Number(TratamientosCosto);
+      Number(CostoExamen);
 
     setExamen(prev => ({ ...prev, PrecioFinal: total }));
   }, [
@@ -27,7 +25,6 @@ const DetalleDeCosto = ({ examen, setExamen }) => {
     examen.CostoLente,
     examen.CostoMaterial,
     examen.CostoExamen,
-    examen.TratamientosCosto,
   ]);
 
   return (
@@ -84,19 +81,6 @@ const DetalleDeCosto = ({ examen, setExamen }) => {
             value={examen.CostoExamen || ""}
             onChange={(e) =>
               setExamen(prev => ({ ...prev, CostoExamen: e.target.value }))
-            }
-          />
-        </Grid>
-
-        {/* TRATAMIENTOS */}
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            type="number"
-            label="Costo de Tratamientos"
-            value={examen.TratamientosCosto || ""}
-            onChange={(e) =>
-              setExamen(prev => ({ ...prev, TratamientosCosto: e.target.value }))
             }
           />
         </Grid>

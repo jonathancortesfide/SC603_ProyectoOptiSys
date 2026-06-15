@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { CardContent, Typography, Grid, Button, Box, AvatarGroup, Avatar, Stack } from '@mui/material';
 import BlankCard from '../../shared/BlankCard';
 import AsyncSelect from 'react-select/async';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
 import { BuscarPacientePorNombreOIdentificacion } from '../../../requests/pacientes/RequestsPacientes';
+import { getSucursalIdentificador } from '../../../utils/sucursal';
 
 import img1 from 'src/assets/images/profile/user-1.jpg';
 import img2 from 'src/assets/images/profile/user-2.jpg';
@@ -35,22 +36,23 @@ const followerCard = [
 ];
 
 
-const BusquedaDePaciente = () => {
+const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, onPacienteChange }) => {
   const [options, setOptions] = React.useState([]);
   const [pacientes, setPacientes] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [selectedPaciente, setSelectedPaciente] = React.useState(null);
+  const [noPaciente, setNoPaciente] = React.useState(initialNoPaciente);
   const [isVisible, setIsVisible] = React.useState(false);
   // Cargar opciones por defecto
   const loadDefaultData = async (inputValue, callback) => {
     if(inputValue.length === 0) {
       setLoading(true);
       try {
-        const response = await BuscarPacientePorNombreOIdentificacion('');
+        const response = await BuscarPacientePorNombreOIdentificacion('', getSucursalIdentificador());
         if (response && response.length) {
           const formattedData = response.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
-            value: item.numeroDePaciente
+            value: item.noPaciente
           }));
           setOptions(formattedData);
           setPacientes(response);
@@ -72,15 +74,15 @@ const BusquedaDePaciente = () => {
   };
 
   const loadOptions = async (inputValue, callback) => {
-    let valoresPredefinidos = await loadDefaultData(inputValue,callback); // Cargar datos por defecto
+    let valoresPredefinidos = await loadDefaultData(inputValue, callback); // Cargar datos por defecto
     if(inputValue.length > 3) {
       setLoading(true);
       try {
-        const response = await BuscarPacientePorNombreOIdentificacion(inputValue);
+        const response = await BuscarPacientePorNombreOIdentificacion(inputValue, getSucursalIdentificador());
         if (response && response.length) {
           const formattedData = response.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
-            value: item.numeroDePaciente
+            value: item.noPaciente
           }));
           setOptions(formattedData);
           setPacientes(response);
@@ -103,16 +105,59 @@ const BusquedaDePaciente = () => {
 
   const seleccionarPaciente = async (numeroDePaciente) => { 
     if (numeroDePaciente) {
-      const paciente = pacientes.find(p => p.numeroDePaciente === numeroDePaciente.value);
+      const paciente = pacientes.find(p => p.noPaciente === numeroDePaciente.value);
       setSelectedPaciente(paciente);
+      setNoPaciente(numeroDePaciente.value);
+      if (onPacienteChange) {
+        onPacienteChange(paciente || { noPaciente: numeroDePaciente.value });
+      }
       setIsVisible(true);
       console.log("Paciente seleccionado:", paciente);
+      console.log("noPaciente guardado:", numeroDePaciente.value);
     } else {
       setIsVisible(false);
       setSelectedPaciente(null);
+      setNoPaciente(null);
+      if (onPacienteChange) {
+        onPacienteChange(null);
+      }
     }
     
   };
+
+  React.useEffect(() => {
+    const cargarPacientePorId = async () => {
+      if (!initialNoPaciente || initialNoPaciente === 0) return;
+      if (selectedPaciente && selectedPaciente.noPaciente === initialNoPaciente) return;
+
+      setLoading(true);
+      try {
+        const response = await BuscarPacientePorNombreOIdentificacion('', getSucursalIdentificador());
+        if (response && response.length) {
+          const paciente = response.find((p) => p.noPaciente === initialNoPaciente);
+          if (paciente) {
+            setSelectedPaciente(paciente);
+            setNoPaciente(paciente.noPaciente);
+            setIsVisible(true);
+            const formattedData = response.map((item) => ({
+              label: `${item.cedula}-${item.nombre}`,
+              value: item.noPaciente,
+            }));
+            setOptions(formattedData);
+            setPacientes(response);
+            if (onPacienteChange) onPacienteChange(paciente);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar paciente por noPaciente:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarPacientePorId();
+  }, [initialNoPaciente]);
+
   return (
     <div>
       
@@ -129,9 +174,10 @@ const BusquedaDePaciente = () => {
         <Grid item xs={12} sm={9}>
         <AsyncSelect
           cacheOptions
-          defaultOptions
+          defaultOptions={true}
+          value={selectedPaciente ? { label: `${selectedPaciente.cedula}-${selectedPaciente.nombre}`, value: selectedPaciente.noPaciente } : null}
           loadOptions={loadOptions} // Usamos `promiseOptions` para cargar datos asíncronos
-          placeholder="Ingrese la identificación o nombre del paciente"
+          placeholder="Ingrese identificación o parte del nombre del paciente"
           noOptionsMessage={() => "No se encontraron resultados"} // Mensaje cuando no hay resultados
           menuPortalTarget={document.body} // Esto mueve el dropdown fuera del contenedor
           onChange={seleccionarPaciente} // Función que se ejecuta cuando se selecciona un valor
@@ -142,9 +188,12 @@ const BusquedaDePaciente = () => {
             }),
           }}
       />
+      {selectedPaciente && (
+        <Typography variant="subtitle1" sx={{ mt: 2 }}>
+          Paciente seleccionado: {selectedPaciente?.nombre}
+        </Typography>
+      )}
         </Grid>
-        <br></br>
-        <br></br>
         <Grid container spacing={3} justifyContent="center" alignItems="center"> 
   <Grid item xs={12} sm={6} lg={12} marginLeft={2} marginTop={2}>
     <BlankCard>
@@ -168,11 +217,7 @@ const BusquedaDePaciente = () => {
           </Stack>
         </Box>
       </Stack>
-      <Stack spacing={2} mt={3} direction="row" justifyContent="center" alignItems="center">
-        <Button size="large" variant="text" color="primary">
-          Editar paciente
-        </Button>
-      </Stack>
+      
     </CardContent>
       )}
 

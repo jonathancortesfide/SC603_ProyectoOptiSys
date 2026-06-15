@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Softlithe.ERP.Abstracciones.Contenedores.Graduaciones;
+using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
 
 namespace Softlithe.ERP.DA.Modelos;
 
@@ -16,12 +17,12 @@ public partial class ContextoBasedeDatos : DbContext
     }
     public virtual DbSet<SeguridadAccion> SeguridadAccions { get; set; }
     public virtual DbSet<TipoLenteAD> TipoLente { get; set; }
-
+    public DbSet<ObtenerGraduacionPorSucursalSPDto> ObtenerGraduacionPorSucursalSPDto { get; set; }
     public virtual DbSet<SeguridadOpcione> SeguridadOpciones { get; set; }
     public virtual DbSet<SeguridadRolAccione> SeguridadRolAcciones { get; set; }
     public virtual DbSet<SeguridadRolesUsuario> SeguridadRolesUsuarios { get; set; }
     public virtual DbSet<Paciente> Pacientes { get; set; }
-	public virtual DbSet<Moneda> Monedas { get; set; }
+    public virtual DbSet<Moneda> Monedas { get; set; }
     public virtual DbSet<ListaPrecioAD> ListaPrecioContexto { get; set; }
     public virtual DbSet<Bitacora> Bitacoras { get; set; }
     public virtual DbSet<Marca> Marcas { get; set; }
@@ -32,14 +33,9 @@ public partial class ContextoBasedeDatos : DbContext
     public virtual DbSet<EnfermedadSucursal> Enfermedades { get; set; }
     public virtual DbSet<PacienteClasificacion> PacienteClasificaciones { get; set; }
     public virtual DbSet<Grupo> Grupos { get; set; }
-
+    public virtual DbSet<GraduacionAD> GraduacionContexto { get; set; }
+    public virtual DbSet<TipoGraduacionAD> TipoGraduacionContexto { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
-    public virtual DbSet<Seccion> Secciones { get; set; }
-    public virtual DbSet<Modulo> Modulos { get; set; }
-    public virtual DbSet<Permiso> Permisos { get; set; }
-    public virtual DbSet<Rol> Roles { get; set; }
-    public virtual DbSet<RolPermiso> RolPermisos { get; set; }
-    public virtual DbSet<UsuarioRol> UsuarioRoles { get; set; }
     public virtual DbSet<Empresa> Empresas { get; set; }
     public virtual DbSet<Sucursal> Sucursales { get; set; }
     public virtual DbSet<EmpresaSucursal> EmpresaSucursales { get; set; }
@@ -70,7 +66,6 @@ public partial class ContextoBasedeDatos : DbContext
     public virtual DbSet<ExistenciaBodega> ExistenciasBodega { get; set; }
 
     public virtual DbSet<ActividadEconomicaHacienda> ActividadEconomicaHaciendas { get; set; }
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,6 +100,7 @@ public partial class ContextoBasedeDatos : DbContext
         {
             entity.Property(e => e.NoMarca).ValueGeneratedOnAdd();
         });
+
         modelBuilder.Entity<EnfermedadCatalogo>(entity =>
         {
             entity.HasKey(e => e.IdEnfermedad).HasName("EnfermedadCatalogo_id_enfermedad_PK");
@@ -113,10 +109,12 @@ public partial class ContextoBasedeDatos : DbContext
         modelBuilder.Entity<UsuarioEmpresaSucursal>(entity =>
         {
             entity.HasKey(e => new { e.IdUsuario, e.Identificador });
+
             entity.HasOne(e => e.Usuario)
                 .WithMany(u => u.UsuarioEmpresaSucursales)
                 .HasForeignKey(e => e.IdUsuario)
                 .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(e => e.EmpresaSucursal)
                 .WithMany(es => es.UsuarioEmpresaSucursales)
                 .HasForeignKey(e => e.Identificador)
@@ -129,14 +127,18 @@ public partial class ContextoBasedeDatos : DbContext
                 .WithMany(em => em.EmpresaSucursales)
                 .HasForeignKey(e => e.NoEmpresa)
                 .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(e => e.Sucursal)
                 .WithMany(s => s.EmpresaSucursales)
                 .HasForeignKey(e => e.NoSucursal)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // AGREGAR ESTO
+        modelBuilder.Entity<ObtenerGraduacionPorSucursalSPDto>()
+            .HasNoKey();
+
         OnModelCreatingPartial(modelBuilder);
     }
-
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

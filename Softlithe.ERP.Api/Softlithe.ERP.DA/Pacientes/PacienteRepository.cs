@@ -16,6 +16,29 @@ namespace Softlithe.ERP.DA.Pacientes
             _contexto = contexto;
         }
 
+        public async Task<int?> ObtenerUltimoIdExamenPorNoPacienteAsync(int noPaciente)
+        {
+            try
+            {
+                var conexion = await ObtenerConexionAsync();
+
+                var parametros = new DynamicParameters();
+                parametros.Add("@NoPaciente", noPaciente);
+
+                // Asumimos que el SP devuelve los examenes y retornamos el id del mas reciente
+                var resultado = await conexion.QueryFirstOrDefaultAsync<int?>(
+                    "sp_Examen_ObtenerUltimoIdPorPaciente",
+                    parametros,
+                    commandType: CommandType.StoredProcedure);
+
+                return resultado;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener el ultimo id de examen por paciente", ex);
+            }
+        }
+
         private async Task<IDbConnection> ObtenerConexionAsync()
         {
             var conexion = _contexto.Database.GetDbConnection();
@@ -99,12 +122,12 @@ namespace Softlithe.ERP.DA.Pacientes
                 parametros.Add("@EsEmpadronado", pacienteDto.EsEmpadronado);
                 parametros.Add("@CodigoActividad", string.IsNullOrWhiteSpace(pacienteDto.CodigoActividad) ? null : pacienteDto.CodigoActividad);
 
-                await conexion.ExecuteAsync(
+                var resultado = await conexion.ExecuteAsync(
                     "sp_Paciente_Insertar",
                     parametros,
                     commandType: CommandType.StoredProcedure);
 
-                return 1;
+                return resultado;
             }
             catch (Exception ex)
             {
@@ -139,12 +162,12 @@ namespace Softlithe.ERP.DA.Pacientes
                 parametros.Add("@EsEmpadronado", pacienteDto.EsEmpadronado);
                 parametros.Add("@CodigoActividad", string.IsNullOrWhiteSpace(pacienteDto.CodigoActividad) ? null : pacienteDto.CodigoActividad);
 
-                await conexion.ExecuteAsync(
+                var resultado = await conexion.ExecuteAsync(
                     "sp_Paciente_Actualizar",
                     parametros,
                     commandType: CommandType.StoredProcedure);
 
-                return 1;
+                return resultado;
             }
             catch (Exception ex)
             {

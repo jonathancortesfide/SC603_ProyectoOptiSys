@@ -58,11 +58,6 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     secure: false, // ignora el certificado autofirmado de ASP.NET Core dev
                 },
-                '/connect': {
-                    target: apiHost,
-                    changeOrigin: true,
-                    secure: false,
-                },
             },
         },
     };

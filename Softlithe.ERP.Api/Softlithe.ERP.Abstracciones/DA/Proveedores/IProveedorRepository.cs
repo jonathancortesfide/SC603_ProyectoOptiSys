@@ -16,5 +16,7 @@ namespace Softlithe.ERP.Abstracciones.DA.Proveedores
         Task<int> ActualizarProveedorAsync(ProveedorDto proveedorDto);
 
         Task<int> ModificaEstadoProveedorAsync(ProveedorInActivaDto proveedorInActivaDto);
+
+        Task<List<ProveedorDto>> ObtenerProveedoresPorIdentificadorAsync(int identificador);
     }
 }

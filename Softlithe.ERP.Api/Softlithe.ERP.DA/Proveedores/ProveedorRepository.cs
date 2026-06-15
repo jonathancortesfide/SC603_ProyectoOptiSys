@@ -16,6 +16,28 @@ namespace Softlithe.ERP.DA.Proveedores
             _contexto = contexto;
         }
 
+        public async Task<List<ProveedorDto>> ObtenerProveedoresPorIdentificadorAsync(int identificador)
+        {
+            try
+            {
+                var conexion = await ObtenerConexionAsync();
+
+                var parametros = new DynamicParameters();
+                parametros.Add("@Identificador", identificador);
+
+                var proveedores = (await conexion.QueryAsync<ProveedorDto>(
+                    "sp_ObtenerLaboratorios",
+                    parametros,
+                    commandType: CommandType.StoredProcedure)).ToList();
+
+                return proveedores;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener laboratorios", ex);
+            }
+        }
+
         private async Task<IDbConnection> ObtenerConexionAsync()
         {
             var conexion = _contexto.Database.GetDbConnection();

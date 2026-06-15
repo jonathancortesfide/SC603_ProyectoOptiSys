@@ -1,5 +1,6 @@
 const STORAGE_IDENTIFICADOR_SUCURSAL = 'identificadorSucursalSeleccionado';
 const STORAGE_NOMBRE_SUCURSAL = 'nombreSucursalSesion';
+const STORAGE_NO_EMPRESA = 'noEmpresaSeleccionado';
 
 import { getSessionSucursalIdentificador } from './session';
 
@@ -26,6 +27,12 @@ export const setNombreSucursalSesion = (nombre) => {
   else window.localStorage.removeItem(STORAGE_NOMBRE_SUCURSAL);
 };
 
+export const setNoEmpresaSeleccionado = (noEmpresa) => {
+  const n = Number.parseInt(String(noEmpresa), 10);
+  if (!Number.isFinite(n)) return;
+  window.localStorage.setItem(STORAGE_NO_EMPRESA, String(n));
+};
+
 export const getNombreSucursalSesion = () => {
   const t = window.localStorage.getItem(STORAGE_NOMBRE_SUCURSAL);
   return t && String(t).trim() ? String(t).trim() : '';
@@ -34,10 +41,14 @@ export const getNombreSucursalSesion = () => {
 export const clearIdentificadorSucursalSeleccionado = () => {
   window.localStorage.removeItem(STORAGE_IDENTIFICADOR_SUCURSAL);
   window.localStorage.removeItem(STORAGE_NOMBRE_SUCURSAL);
+  window.localStorage.removeItem(STORAGE_NO_EMPRESA);
 };
 
 export const resolveSucursalIdentificadorFromSession = () =>
   parseOptionalInt(window.localStorage.getItem(STORAGE_IDENTIFICADOR_SUCURSAL));
+
+export const resolveNoEmpresaFromSession = () =>
+  parseOptionalInt(window.localStorage.getItem(STORAGE_NO_EMPRESA));
 
 /**
  * Identificador de sucursal en contexto empresa-sucursal (tabla Empresa_Sucursal).
@@ -55,6 +66,17 @@ export const getSucursalIdentificador = () => {
 
   // Temporary fallback to keep current behavior until session-based logic exists.
   return 7;
+};
+
+/**
+ * Número de empresa en contexto global.
+ * Valor por defecto cuando no se recibe nada.
+ */
+export const getNoEmpresa = () => {
+  const fromLs = resolveNoEmpresaFromSession();
+  if (fromLs !== undefined) return fromLs;
+
+  return 1;
 };
 
 /** True si el usuario ya eligió sucursal (localStorage). */

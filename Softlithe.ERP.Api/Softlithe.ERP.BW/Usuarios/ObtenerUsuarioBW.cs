@@ -51,6 +51,41 @@ public class ObtenerUsuarioBW : IObtenerUsuarioBW
                 EsCorrecto = false,
             };
         }
+        }
+
+    // Nuevo método: ObtenerDoctores
+    public async Task<ModeloValidacionConDatos<System.Collections.Generic.List<UsuarioDto>>> ObtenerDoctores(int identificador)
+    {
+        if (identificador <= 0)
+        {
+            return new ModeloValidacionConDatos<System.Collections.Generic.List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.CodigoIdentificadorRequerido,
+                EsCorrecto = false,
+                Datos = new System.Collections.Generic.List<UsuarioDto>()
+            };
+        }
+
+        try
+        {
+            var lista = await _obtenerUsuarioDA.ObtenerDoctores(identificador);
+            return new ModeloValidacionConDatos<System.Collections.Generic.List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.DatosObtenidosDeManeraCorrecta,
+                EsCorrecto = true,
+                Datos = lista
+            };
+        }
+        catch (Exception ex)
+        {
+            await _logger.RegistrarEventoError(ex);
+            return new ModeloValidacionConDatos<System.Collections.Generic.List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.OcurrioUnErrorEnElSistema,
+                EsCorrecto = false,
+                Datos = new System.Collections.Generic.List<UsuarioDto>()
+            };
+        }
     }
 
     public async Task<ModeloValidacionConDatos<UsuarioDto?>> ObtenerUsuarioPorId(ParametroConsultaUsuarioPorId parametro)

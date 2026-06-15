@@ -1,107 +1,130 @@
 import axios from "axios";
-import {
-    apiObtenerPacientes,
-    apiAgregarPacientes,
-    apiModificarPacientes,
-    apiModificarEstadoPaciente,
-} from './DireccionesRequest';
+import {apiObtenerPacientes, apiAgregarPacientes} from './DireccionesRequest';
+import { apiObtenerCuentasPaciente } from './DireccionesRequest';
+import { ejemploCuentasPaciente, ejemploListaPacientes } from '../../views/seguridad/ejemplosDatos';
 import { getSucursalIdentificador } from '../../utils/sucursal';
-import { getCurrentUsername } from '../../utils/session';
+
+const apiBuscarPacientes = `https://localhost:44352/api/Paciente/ObtenerPaciente`;
+
+axios.interceptors.request.use(async (config) => {
+
+    config.headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      };
+    return config
+}, function (error) {
+    return Promise.reject(error);
+});
+
+axios.interceptors.response.use(async (response)=> {
+    return response;
+}, function (error) {
+    return Promise.reject(error);
+});
 
 let _cachePacientes = { data: null, ts: 0 };
 const _CACHE_TTL = 30 * 1000;
 
-const invalidarCache = () => { _cachePacientes = { data: null, ts: 0 }; };
-
-const TIPO_ID_MAP = {
-    fisica:    '01',
-    juridica:  '02',
-    dimex:     '02',
-    nite:      '04',
-    pasaporte: '03',
-};
-
-const buildDto = (form, noPaciente = 0) => ({
-    noPaciente,
-    identificador:              getSucursalIdentificador(),
-    cedula:                     form.identificacion || '',
-    nombre:                     form.nombre || '',
-    usuario:                    getCurrentUsername(),
-    tipoIdentificacion:         TIPO_ID_MAP[form.tipoIdentificacion] ?? form.tipoIdentificacion ?? null,
-    direccion:                  form.direccion || null,
-    fechaNacimiento:            form.fechaNacimiento ? `${form.fechaNacimiento}T00:00:00` : null,
-    email:                      form.email1 || null,
-    telefono1:                  form.telefono1 || null,
-    sexo:                       form.sexo || null,
-    nombreContactoEmergencia:   form.contactoEmergenciaNombre || null,
-    telefonoContactoEmergencia: form.contactoEmergenciaTelefono || null,
-    activo:                     true,
-    sinIdentificacion:          false,
-    email2:                     null,
-    telefono2:                  null,
-    codigoActividad:            null,
-    esEmpadronado:              null,
-});
-
-const obtenerListaDePacientes = async (textoBusqueda = '') => {
+const obtenerListaDePacientes = async () => {
+    const urlApi = `${apiObtenerPacientes}`;
     const now = Date.now();
-    if (!textoBusqueda && _cachePacientes.data && (now - _cachePacientes.ts) < _CACHE_TTL) {
-        return _cachePacientes.data;
-    }
+    if (_cachePacientes.data && (now - _cachePacientes.ts) < _CACHE_TTL) return _cachePacientes.data;
+    if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploListaPacientes;
     try {
-        const respuesta = await axios.post(apiObtenerPacientes, {
-            identificador: getSucursalIdentificador(),
-            textoBusqueda,
-        });
-        if (respuesta.status === 200 && respuesta.data?.esCorrecto) {
-            const lista = respuesta.data.laListaDePacientes || [];
-            if (!textoBusqueda) _cachePacientes = { data: lista, ts: Date.now() };
-            return lista;
-        }
-        console.log('ObtenerPaciente esCorrecto:false —', respuesta.data?.mensaje);
+        return axios.get(urlApi)
+            .then(respuesta => {
+                if (respuesta.status === 200) {
+                    _cachePacientes = { data: respuesta.data, ts: Date.now() };
+                    return respuesta.data;
+                }
+            })
+            .catch(e => {
+                console.log("Error producido al realizar la petición por medio de Axios al API para el método ConsultarParametrosSolicitudCancelacionOmision. Error: " + e);
+                if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploListaPacientes;
+                return [];
+            })
+    } catch (error) {
+        console.log("Se produjo un error en el método ConsultarParametrosSolicitudCancelacionOmision. Error: " + error);
+        if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploListaPacientes;
         return [];
+    }
+}
+
+const BuscarPacientePorNombreOIdentificacion = async (textoBusqueda = '', identificador) => {
+    const id = identificador ?? getSucursalIdentificador();
+    try {
+        return axios.post(apiBuscarPacientes, {
+            identificador: id,
+            textoBusqueda: textoBusqueda ?? ''
+        })
+        .then(respuesta => {
+            if (respuesta.status === 200) {
+                const data = respuesta.data;
+                if (data?.laListaDePacientes) return data.laListaDePacientes;
+                return data;
+            }
+            return [];
+        })
+        .catch(e => {
+            console.log("Error producido al realizar la petición por medio de Axios al API para el método BuscarPacientePorNombreOIdentificacion. Error: " + e);
+            return [];
+        });
     } catch (error) {
-        console.log('Error en obtenerListaDePacientes:', error);
+        console.log("Se produjo un error en el método BuscarPacientePorNombreOIdentificacion. Error: " + error);
+        return [];
+    }
+}
+
+const AgregarPaciente = async (paciente) => {
+    const urlApi = `${apiAgregarPacientes}`;
+    let dataRespuesta = {
+        Mensaje: "Hubo un problema con la promesa",
+        EsCorrecto : false
+    };
+    try {
+        return axios.post(urlApi, paciente)
+            .then(respuesta => {
+                if (respuesta.status === 200) {
+                    dataRespuesta = respuesta.data;
+                    _cachePacientes = { data: null, ts: 0 };
+                    return dataRespuesta;
+                }
+            })
+            .catch(e => {
+                console.log("Error producido al realizar la petición por medio de Axios al API para el método AgregarPaciente. Error: " + e);
+                return dataRespuesta;
+            })
+    } catch (error) {
+        console.log("Se produjo un error en el método AgregarPaciente. Error: " + error);
+        return dataRespuesta;
+    }
+}
+
+export {
+    obtenerListaDePacientes, BuscarPacientePorNombreOIdentificacion, AgregarPaciente
+};
+
+const obtenerCuentasDePaciente = async (pacienteId) => {
+    const urlApi = `${apiObtenerCuentasPaciente}${pacienteId}`;
+    if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploCuentasPaciente;
+    try {
+        return axios.get(urlApi)
+            .then(respuesta => {
+                if (respuesta.status === 200) {
+                    return respuesta.data;
+                }
+            })
+            .catch(e => {
+                console.log("Error al obtener cuentas de paciente: " + e);
+                if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploCuentasPaciente;
+                return [];
+            })
+    } catch (error) {
+        console.log("Error en obtenerCuentasDePaciente: " + error);
+        if (import.meta.env.VITE_USE_MOCK === 'true') return ejemploCuentasPaciente;
         return [];
     }
 };
 
-const AgregarPaciente = async (form) => {
-    try {
-        const respuesta = await axios.post(apiAgregarPacientes, buildDto(form, 0));
-        invalidarCache();
-        return respuesta.data;
-    } catch (error) {
-        console.log('Error en AgregarPaciente:', error);
-        return { esCorrecto: false, mensaje: 'Error al crear el paciente' };
-    }
-};
-
-const ModificarPaciente = async (form, noPaciente) => {
-    try {
-        const respuesta = await axios.post(apiModificarPacientes, buildDto(form, noPaciente));
-        invalidarCache();
-        return respuesta.data;
-    } catch (error) {
-        console.log('Error en ModificarPaciente:', error);
-        return { esCorrecto: false, mensaje: 'Error al modificar el paciente' };
-    }
-};
-
-const ModificarEstadoPaciente = async (noPaciente, esActivo, identificador) => {
-    try {
-        const respuesta = await axios.post(apiModificarEstadoPaciente, {
-            noPaciente,
-            identificador: identificador ?? getSucursalIdentificador(),
-            esActivo,
-            usuario: getCurrentUsername(),
-        });
-        invalidarCache();
-        return respuesta.data;
-    } catch (error) {
-        console.log('Error en ModificarEstadoPaciente:', error);
-        return { esCorrecto: false, mensaje: 'Error al modificar estado del paciente' };
-    }
-};
-
-export { obtenerListaDePacientes, AgregarPaciente, ModificarPaciente, ModificarEstadoPaciente };
+export { obtenerCuentasDePaciente };

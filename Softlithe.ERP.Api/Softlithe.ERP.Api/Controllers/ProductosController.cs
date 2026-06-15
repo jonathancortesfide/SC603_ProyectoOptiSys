@@ -68,5 +68,25 @@ namespace Softlithe.ERP.Api.Controllers
             ModeloValidacion resultadoModeloValidacion = await _modificarEstadoProductoBW.ModificarEstadoProducto(parametroProducto);
             return resultadoModeloValidacion;
         }
+
+        /// <summary>
+        /// Obtiene productos mediante sp_ObtenerProductosMT por empresa y tipo.
+        /// </summary>
+        [HttpGet("ObtenerProductosMT/{noEmpresa}/{noTipo}")]
+        public async Task<ProductoConModeloDeValidacion> ObtenerProductosMT([FromRoute] int noEmpresa, [FromRoute] int noTipo)
+        {
+            ProductoConModeloDeValidacion resultado = await _obtenerProductoBW.ObtenerProductosMT(noEmpresa, noTipo);
+            return resultado;
+        }
+
+        /// <summary>
+        /// Obtiene productos mediante sp_ObtenerProductosAR por empresa y descripción.
+        /// </summary>
+        [HttpGet("ObtenerProductosAR/{noEmpresa}/{descripcion}")]
+        public async Task<ProductoConModeloDeValidacion> ObtenerProductosAR([FromRoute] int noEmpresa, [FromRoute] string descripcion)
+        {
+            ProductoConModeloDeValidacion resultado = await _obtenerProductoBW.ObtenerProductosAR(noEmpresa, descripcion);
+            return resultado;
+        }
     }
 }

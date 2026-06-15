@@ -36,7 +36,7 @@ namespace Softlithe.ERP.BC.Productos
                 return Task.FromResult(validacion);
             }
 
-            if (string.IsNullOrWhiteSpace(productoDto.Descripcion))
+            if (string.IsNullOrWhiteSpace(productoDto.descripcion))
             {
                 validacion.Mensaje = MensajeDeProductoDto.DescripcionProductoRequerida;
                 validacion.EsCorrecto = false;
@@ -97,7 +97,7 @@ namespace Softlithe.ERP.BC.Productos
                 return Task.FromResult(validacion);
             }
 
-            if (string.IsNullOrWhiteSpace(productoDto.Descripcion))
+            if (string.IsNullOrWhiteSpace(productoDto.descripcion))
             {
                 validacion.Mensaje = MensajeDeProductoDto.DescripcionProductoRequerida;
                 validacion.EsCorrecto = false;

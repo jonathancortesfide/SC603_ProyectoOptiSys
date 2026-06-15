@@ -53,6 +53,37 @@ public class ObtenerUsuarioDA : IObtenerUsuarioDA
         }
     }
 
+    public async Task<List<UsuarioDto>> ObtenerDoctores(int identificador)
+    {
+        try
+        {
+            return await _contexto.Usuarios.AsNoTracking()
+                .Where(u => u.Identificador == identificador && u.EsDoctor == true)
+                .OrderBy(u => u.Nombre)
+                .Select(u => new UsuarioDto
+                {
+                    IdUsuario = u.IdUsuario,
+                    IdIdentityServer = u.IdIdentityServer,
+                    Identificador = u.Identificador,
+                    Nombre = u.Nombre ?? string.Empty,
+                    EsDoctor = u.EsDoctor,
+                    CodigoProfesional = u.CodigoProfesional,
+                    Email = u.Email ?? string.Empty,
+                    Telefono = u.Telefono,
+                    Direccion = u.Direccion,
+                    FechaNacimiento = u.FechaNacimiento,
+                    EsActivo = u.Activo,
+                })
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(
+                "Ocurrió un error al obtener los doctores: " + ex.Message + ". StackTrace: " + ex.StackTrace +
+                ". Mensaje Inner Exception: " + ex.InnerException?.Message);
+        }
+    }
+
     public async Task<UsuarioDto?> ObtenerUsuarioPorId(int idUsuario)
     {
         try

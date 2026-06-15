@@ -17,6 +17,34 @@ namespace Softlithe.ERP.BW.Productos
             _logger = errorLogger;
         }
 
+        public async Task<ProductoConModeloDeValidacion> ObtenerProductosMT(int noEmpresa, int noTipo)
+        {
+            try
+            {
+                List<ProductoDto> productos = await _productoRepository.ObtenerProductosMTAsync(noEmpresa, noTipo);
+                return ConstruirRespuestaListaExitosa(productos);
+            }
+            catch (Exception ex)
+            {
+                await _logger.RegistrarEventoError(ex);
+                return ConstruirRespuestaListaExitosa(null);
+            }
+        }
+
+        public async Task<ProductoConModeloDeValidacion> ObtenerProductosAR(int noEmpresa, string descripcion)
+        {
+            try
+            {
+                List<ProductoDto> productos = await _productoRepository.ObtenerProductosARAsync(noEmpresa, descripcion);
+                return ConstruirRespuestaListaExitosa(productos);
+            }
+            catch (Exception ex)
+            {
+                await _logger.RegistrarEventoError(ex);
+                return ConstruirRespuestaListaExitosa(null);
+            }
+        }
+
         public async Task<ProductoConModeloDeValidacion> ObtenerProductos(ParametroConsultaProducto parametroConsultaProducto)
         {
             try

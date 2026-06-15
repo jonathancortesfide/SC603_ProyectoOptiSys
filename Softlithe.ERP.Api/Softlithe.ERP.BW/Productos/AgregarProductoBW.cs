@@ -64,7 +64,7 @@ namespace Softlithe.ERP.BW.Productos
         {
             return await _agregarEventoBitacoraBW.AgregarEventoBitacora(new BitacoraDto
             {
-                descripcionDelEvento = resultadoInsercion > 0 ? string.Format(MensajeDeProductoDto.ProductoAgregadoCorrectamente, productoDto.Descripcion) + ". Código: " + productoDto.Codigo : MensajeDeProductoDto.ProductoNoGuardar + ". Código: " + productoDto.Codigo,
+                descripcionDelEvento = resultadoInsercion > 0 ? string.Format(MensajeDeProductoDto.ProductoAgregadoCorrectamente, productoDto.descripcion) + ". Código: " + productoDto.Codigo : MensajeDeProductoDto.ProductoNoGuardar + ". Código: " + productoDto.Codigo,
                 fechaDeRegistro = DateTime.Now,
                 nombreDelMetodo = nameof(AgregarProducto),
                 tabla = "Producto",

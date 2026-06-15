@@ -24,11 +24,6 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Productos
         public string? CodigoBarra { get; set; }
 
         public string? CodigoProveedor { get; set; }
-
-        [Required(ErrorMessage = MensajeDeProductoDto.DescripcionProductoRequerida)]
-        public string Descripcion { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "El grupo del producto es requerido.")]
         public int NoGrupo { get; set; }
 
         public bool? Activo { get; set; }
@@ -55,21 +50,14 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Productos
 
         public string? CodigoCabys { get; set; }
 
-        /// <summary>Precio unitario sin impuesto (<c>PrecioVenta.precio_venta</c>) en la lista con <c>ListaPrecios.valor_por_defecto = true</c>.</summary>
-        public decimal? PrecioSinImpuesto { get; set; }
+        public string? descripcion { get; set; }
 
-        /// <summary>Precio unitario con impuesto (<c>PrecioVenta.precio_neto</c>) en la lista por defecto.</summary>
-        public decimal? PrecioConImpuesto { get; set; }
     }
 
     public class ProductoDetalleDto : ProductoDto
     {
         public string NombreMarca { get; set; } = string.Empty;
-
-        /// <summary>Nombre de la tarifa (columna descripcion en TarifaImpuesto).</summary>
         public string NombreTarifaImpuesto { get; set; } = string.Empty;
-
-        /// <summary>Valor del impuesto asociado a la tarifa.</summary>
         public decimal? ValorImpuesto { get; set; }
     }
 

@@ -9,4 +9,6 @@ public interface IObtenerUsuarioDA
     Task<UsuarioDto?> ObtenerUsuarioPorId(int idUsuario);
 
     Task<UsuarioDto?> ObtenerUsuarioPorCorreo(string email);
+
+    Task<List<UsuarioDto>> ObtenerDoctores(int identificador);
 }

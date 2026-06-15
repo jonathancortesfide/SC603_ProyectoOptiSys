@@ -9,9 +9,13 @@ import {
   Button,
   Box,
   Alert,
+  FormControlLabel,
+  Checkbox,
   Typography,
+  IconButton,
   Autocomplete,
 } from '@mui/material';
+import { IconSearch } from '@tabler/icons';
 
 const TIPOS_IDENTIFICACION = [
   { value: 'fisica', label: 'Cédula física' },
@@ -27,7 +31,7 @@ const SEXOS = [
   { value: 'O', label: 'Otro' },
 ];
 
-const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFormChange }) => {
+const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false }) => {
   const [form, setForm] = useState({
     numeroDePaciente: '',
     tipoIdentificacion: 'fisica',
@@ -38,41 +42,50 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
     fechaNacimiento: '',
     sexo: '',
     telefono1: '',
+    telefono2: '',
     email1: '',
+    email2: '',
+    empadronado: false,
     nacionalidad: '',
+    actividadEconomicaCodigo: '',
+    actividadEconomicaNombre: '',
     contactoEmergenciaNombre: '',
     contactoEmergenciaTelefono: '',
+    noEnviaFacturaElectronica: false,
   });
 
   const [nacionalidades, setNacionalidades] = useState([]);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
+  const [loadingPadron, setLoadingPadron] = useState(false);
   const [edad, setEdad] = useState('');
 
   useEffect(() => {
     if (paciente) {
       const fechaNac = paciente.fechaNacimiento || '';
-      const nuevoForm = {
-        numeroDePaciente: paciente.noPaciente || paciente.numeroDePaciente || '',
+      setForm({
+        numeroDePaciente: paciente.numeroDePaciente || '',
         tipoIdentificacion: paciente.tipoIdentificacion || 'fisica',
-        identificacion: paciente.cedula || paciente.identificacion || '',
+        identificacion: paciente.identificacion || paciente.cedula || '',
         nombre: paciente.nombre || '',
         nombreComercial: paciente.nombreComercial || '',
         direccion: paciente.direccion || '',
-        fechaNacimiento: fechaNac ? fechaNac.substring(0, 10) : '',
+        fechaNacimiento: fechaNac,
         sexo: paciente.sexo || '',
         telefono1: paciente.telefono1 || '',
-        email1: paciente.email || paciente.email1 || '',
+        telefono2: paciente.telefono2 || '',
+        email1: paciente.email1 || paciente.email || '',
+        email2: paciente.email2 || '',
+        empadronado: paciente.esEmpadronado || false,
         nacionalidad: paciente.nacionalidad || '',
-        contactoEmergenciaNombre: paciente.nombreContactoEmergencia || paciente.contactoEmergenciaNombre || '',
-        contactoEmergenciaTelefono: paciente.telefonoContactoEmergencia || paciente.contactoEmergenciaTelefono || '',
-      };
-      setForm(nuevoForm);
-      if (onFormChange) onFormChange(nuevoForm);
+        actividadEconomicaCodigo: paciente.codigoActividadEconomica || '',
+        actividadEconomicaNombre: '',
+        contactoEmergenciaNombre: paciente.contactoEmergenciaNombre || '',
+        contactoEmergenciaTelefono: paciente.contactoEmergenciaTelefono || '',
+        noEnviaFacturaElectronica: paciente.noEnviaFacturaElectronica || false,
+      });
       if (fechaNac) {
         calcularEdad(fechaNac);
-      } else {
-        setEdad('0');
       }
     }
     cargarNacionalidades();
@@ -91,34 +104,14 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
     ]);
   };
 
-  const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const onlyNumbers = (value) => {
-    return value.replace(/[^0-9]/g, '');
-  };
-
   const handleChange = (field) => (event) => {
-    let value = event.target.value;
-    
-    // Validar campos numéricos
-    if (['identificacion', 'telefono1', 'contactoEmergenciaTelefono'].includes(field)) {
-      value = onlyNumbers(value);
-    }
-
-    // Validar email
-    if (field === 'email1') {
-      // Permitir escribir, pero no lo validaremos hasta blur o submit
-    }
-
-    const nuevoForm = { ...form, [field]: value };
-    setForm(nuevoForm);
-    if (onFormChange) onFormChange(nuevoForm);
+    const value = event.target.value;
+    setForm({ ...form, [field]: value });
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' });
     }
+
+    // Calcular edad si el campo es fechaNacimiento
     if (field === 'fechaNacimiento' && value) {
       calcularEdad(value);
     }
@@ -137,41 +130,95 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
     setEdad(edadCalculada.toString());
   };
 
+  const handleBuscarActividadEconomica = async () => {
+    // Mock - En producción debe buscar en tabla ActividadEconomicaHacienda
+    if (!form.actividadEconomicaCodigo) {
+      alert('Ingrese un código de actividad económica');
+      return;
+    }
+
+    // Simulación de búsqueda
+    const mockActividades = {
+      '4774': 'Venta al por menor de productos farmacéuticos y medicinales',
+      '6201': 'Actividades de programación informática',
+      '8621': 'Actividades de la práctica médica',
+    };
+
+    const nombre = mockActividades[form.actividadEconomicaCodigo];
+    if (nombre) {
+      setForm({ ...form, actividadEconomicaNombre: nombre });
+      setSuccess('Actividad económica encontrada');
+    } else {
+      setErrors({ actividadEconomicaCodigo: 'Código no encontrado' });
+    }
+  };
+
+  const handleBuscarEnPadron = async () => {
+    if (!form.identificacion) {
+      setErrors({ identificacion: 'Ingrese una identificación para buscar en el padrón' });
+      return;
+    }
+
+    setLoadingPadron(true);
+    setErrors({});
+
+    try {
+      // Mock data - En producción debe llamar al API del padrón nacional
+      const mockPadronData = {
+        '3010000001': {
+          nombre: 'JUAN PÉREZ GARCÍA',
+          fechaNacimiento: '1980-05-15',
+          sexo: 'M',
+          empadronado: true,
+        },
+        '3010000002': {
+          nombre: 'MARÍA GARCÍA RODRÍGUEZ',
+          fechaNacimiento: '1985-08-22',
+          sexo: 'F',
+          empadronado: true,
+        },
+        '3010000003': {
+          nombre: 'CARLOS SMITH JOHNSON',
+          fechaNacimiento: '1975-03-10',
+          sexo: 'M',
+          empadronado: false,
+        },
+      };
+
+      // Simular delay de búsqueda
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const resultado = mockPadronData[form.identificacion];
+
+      if (resultado) {
+        setForm({
+          ...form,
+          nombre: resultado.nombre,
+          fechaNacimiento: resultado.fechaNacimiento,
+          sexo: resultado.sexo,
+          empadronado: resultado.empadronado,
+          nacionalidad: 'Costarricense', // Auto-asignado por búsqueda en padrón
+        });
+        setSuccess('Datos encontrados en el padrón nacional');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setErrors({
+          identificacion: 'Identificación no encontrada en el padrón nacional',
+        });
+      }
+    } catch (error) {
+      setErrors({
+        identificacion: 'Error al buscar en el padrón nacional',
+      });
+    } finally {
+      setLoadingPadron(false);
+    }
+  };
+
   const handleGuardar = async () => {
     const newErrors = {};
-    
-    // Validaciones requeridas
-    if (!form.tipoIdentificacion) {
-      newErrors.tipoIdentificacion = 'Tipo de identificación es obligatorio';
-    }
-    if (!form.identificacion) {
-      newErrors.identificacion = 'Identificación es obligatoria';
-    }
-    if (!form.fechaNacimiento) {
-      newErrors.fechaNacimiento = 'Fecha de nacimiento es obligatoria';
-    }
-    if (!form.sexo) {
-      newErrors.sexo = 'Sexo es obligatorio';
-    }
-    if (!form.telefono1) {
-      newErrors.telefono1 = 'Teléfono principal es obligatorio';
-    }
-    if (!form.email1) {
-      newErrors.email1 = 'Email principal es obligatorio';
-    } else if (!isValidEmail(form.email1)) {
-      newErrors.email1 = 'Email inválido';
-    }
-    
-    // Validar nombre o nombre comercial según tipo de identificación
-    if (form.tipoIdentificacion === 'juridica') {
-      if (!form.nombreComercial) {
-        newErrors.nombreComercial = 'Nombre comercial es obligatorio para cédula jurídica';
-      }
-    } else {
-      if (!form.nombre) {
-        newErrors.nombre = 'Nombre es obligatorio';
-      }
-    }
+    if (!form.identificacion) newErrors.identificacion = 'Identificación es obligatoria';
+    if (!form.nombre) newErrors.nombre = 'Nombre es obligatorio';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -190,7 +237,7 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
       
       <Grid container spacing={2}>
         <Grid item xs={12} sm={4}>
-          <FormControl fullWidth size="small" error={!!errors.tipoIdentificacion}>
+          <FormControl fullWidth size="small">
             <InputLabel>Tipo Identificación *</InputLabel>
             <Select
               value={form.tipoIdentificacion}
@@ -215,7 +262,32 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
             onChange={handleChange('identificacion')}
             error={!!errors.identificacion}
             helperText={errors.identificacion}
-            inputProps={{ inputMode: 'numeric' }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <Button
+            fullWidth
+            variant="outlined"
+            size="small"
+            onClick={handleBuscarEnPadron}
+            disabled={loadingPadron}
+            sx={{ height: '36px', minHeight: '36px' }}
+          >
+            {loadingPadron ? 'Buscando...' : 'Buscar en Padrón'}
+          </Button>
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.empadronado}
+                disabled
+              />
+            }
+            label="Empadronado"
+            sx={{ mt: 0 }}
           />
         </Grid>
 
@@ -225,11 +297,11 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
           <TextField
             fullWidth
             size="small"
-            label={form.tipoIdentificacion === 'juridica' ? 'Nombre Comercial *' : 'Nombre *'}
-            value={form.tipoIdentificacion === 'juridica' ? form.nombreComercial : form.nombre}
-            onChange={handleChange(form.tipoIdentificacion === 'juridica' ? 'nombreComercial' : 'nombre')}
-            error={form.tipoIdentificacion === 'juridica' ? !!errors.nombreComercial : !!errors.nombre}
-            helperText={form.tipoIdentificacion === 'juridica' ? errors.nombreComercial : errors.nombre}
+            label="Nombre *"
+            value={form.nombre}
+            onChange={handleChange('nombre')}
+            error={!!errors.nombre}
+            helperText={errors.nombre}
           />
         </Grid>
 
@@ -240,7 +312,6 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
             label="Nombre Comercial"
             value={form.nombreComercial}
             onChange={handleChange('nombreComercial')}
-            disabled={form.tipoIdentificacion !== 'juridica'}
           />
         </Grid>
 
@@ -260,14 +331,11 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
           <TextField
             fullWidth
             size="small"
-            label="Fecha de Nacimiento *"
+            label="Fecha de Nacimiento"
             type="date"
             value={form.fechaNacimiento}
             onChange={handleChange('fechaNacimiento')}
-            error={!!errors.fechaNacimiento}
-            helperText={errors.fechaNacimiento}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ max: new Date().toISOString().split('T')[0] }}
           />
         </Grid>
 
@@ -283,11 +351,11 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
         </Grid>
 
         <Grid item xs={12} sm={4}>
-          <FormControl fullWidth size="small" error={!!errors.sexo}>
-            <InputLabel>Sexo *</InputLabel>
+          <FormControl fullWidth size="small">
+            <InputLabel>Sexo</InputLabel>
             <Select
               value={form.sexo}
-              label="Sexo *"
+              label="Sexo"
               onChange={handleChange('sexo')}
             >
               <MenuItem value="">Seleccione</MenuItem>
@@ -327,12 +395,9 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
           <TextField
             fullWidth
             size="small"
-            label="Teléfono principal *"
+            label="Teléfono principal"
             value={form.telefono1}
             onChange={handleChange('telefono1')}
-            error={!!errors.telefono1}
-            helperText={errors.telefono1}
-            inputProps={{ inputMode: 'numeric' }}
           />
         </Grid>
 
@@ -340,15 +405,34 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
           <TextField
             fullWidth
             size="small"
-            label="Email principal *"
+            label="Teléfono secundario"
+            value={form.telefono2}
+            onChange={handleChange('telefono2')}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Email principal"
             type="email"
             value={form.email1}
             onChange={handleChange('email1')}
-            error={!!errors.email1}
-            helperText={errors.email1}
           />
         </Grid>
-        <Grid item xs={12} sm={4} />
+
+        <Grid item xs={12} sm={4}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Email secundario"
+            type="email"
+            value={form.email2}
+            onChange={handleChange('email2')}
+          />
+        </Grid>
+
         <Grid item xs={12} sm={4} />
 
         <Grid item xs={12}>
@@ -374,7 +458,47 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
             label="Teléfono del Contacto"
             value={form.contactoEmergenciaTelefono}
             onChange={handleChange('contactoEmergenciaTelefono')}
-            inputProps={{ inputMode: 'numeric' }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Código Actividad Económica"
+            value={form.actividadEconomicaCodigo}
+            onChange={handleChange('actividadEconomicaCodigo')}
+            error={!!errors.actividadEconomicaCodigo}
+            helperText={errors.actividadEconomicaCodigo}
+            InputProps={{
+              endAdornment: (
+                <IconButton size="small" onClick={handleBuscarActividadEconomica}>
+                  <IconSearch size={18} />
+                </IconButton>
+              ),
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Actividad Económica"
+            value={form.actividadEconomicaNombre}
+            InputProps={{ readOnly: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.noEnviaFacturaElectronica}
+                onChange={handleChange('noEnviaFacturaElectronica')}
+              />
+            }
+            label="Cliente no envía factura electrónica"
           />
         </Grid>
 

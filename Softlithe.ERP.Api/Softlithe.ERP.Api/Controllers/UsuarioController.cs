@@ -76,4 +76,10 @@ public class UsuarioController : ControllerBase
     {
         return await _obtenerUsuarioBW.ObtenerUsuarioPorCorreo(parametro);
     }
+
+    [HttpPost("ObtenerDoctores/{identificador}")]
+    public async Task<ModeloValidacionConDatos<System.Collections.Generic.List<UsuarioDto>>> ObtenerDoctores([FromRoute] int identificador)
+    {
+        return await _obtenerUsuarioBW.ObtenerDoctores(identificador);
+    }
 }
