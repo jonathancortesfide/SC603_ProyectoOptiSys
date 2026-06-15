@@ -29,7 +29,7 @@ import PageContainer from '../../../components/container/PageContainer';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioTipoLente from './FormularioTipoLente'; 
-import { getNoEmpresa } from '../../../utils/sucursal';
+import { getNoEmpresa } from '../../../utils/empresa';
 
 import { 
   obtenerTipoLentePorDescripcion,

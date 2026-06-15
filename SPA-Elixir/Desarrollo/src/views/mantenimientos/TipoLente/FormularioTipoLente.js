@@ -15,7 +15,7 @@ import {
   actualizarTipoLente,
   obtenerTipoLentePorId
 } from '../../../requests/mantenimientos/TipoLente/RequestsTipoLente';
-import { getNoEmpresa } from '../../../utils/sucursal';
+import { getNoEmpresa } from '../../../utils/empresa';
 
 const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
   const [formData, setFormData] = useState({

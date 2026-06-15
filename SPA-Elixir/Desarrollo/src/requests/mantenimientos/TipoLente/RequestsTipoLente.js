@@ -1,6 +1,6 @@
 // RequestsTipoLente.js
 import axios from '../../../utils/axios';
-import { getNoEmpresa } from '../../../utils/sucursal';
+import { getNoEmpresa } from '../../../utils/empresa';
 
 import {
   apiObtenerTipoLente,
