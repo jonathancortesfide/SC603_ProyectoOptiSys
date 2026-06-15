@@ -62,7 +62,8 @@ builder.Services.AddCors(Options =>
                     "http://127.0.0.1:5173",
                     "http://localhost:5173",
                     "http://127.0.0.1:8090",
-                    "http://localhost:8090")
+                    "http://localhost:8090",
+                    "https://lensys.onrender.com")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
