@@ -41,6 +41,7 @@ namespace Softlithe.ERP.DA.ListaPrecio.AgregarListaPrecio
                 Descripcion = laListaNuevaPrecio.descripcion,
                 IdMoneda = laListaNuevaPrecio.id_moneda,
                 Activo = laListaNuevaPrecio.Activo,
+                ValorPorDefecto = laListaNuevaPrecio.ValorPorDefecto
                 //Usuario = laListaNuevaPrecio.Usuario,
                 //Identificador = laListaNuevaPrecio.Identificador
 

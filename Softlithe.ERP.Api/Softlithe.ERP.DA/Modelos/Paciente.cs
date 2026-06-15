@@ -1,50 +1,76 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Softlithe.ERP.DA.Modelos
 {
-[Table("Paciente")]
-public class Paciente
-{
-    [Key]
-    [Column("no_paciente")]
-    public int no_paciente { get; set; }
-    [Column("no_empresa")]
-    public int no_empresa { get; set; }
-    [NotMapped]
-    public string numero_de_paciente { get; set; } = string.Empty;
-    [Column("tipo_identificacion")]
-    public string tipo_identificacion { get; set; } = string.Empty;
-    [Column("identificacion")]
-    public string identificacion { get; set; } = string.Empty;
-    [Column("nombre")]
-    public string nombre { get; set; } = string.Empty;
-    [Column("fecha_nacimiento")]
-    public DateTime? fecha_nacimiento { get; set; }
-    [Column("sexo")]
-    public string? sexo { get; set; }
-    [Column("nacionalidad")]
-    public string? nacionalidad { get; set; }
-    [Column("telefono1")]
-    public string? telefono1 { get; set; }
-    [Column("telefono2")]
-    public string? telefono2 { get; set; }
-    [Column("email1")]
-    public string? email1 { get; set; }
-    [Column("direccion")]
-    public string? direccion { get; set; }
-    [Column("no_envia_factura_electronica")]
-    public bool no_envia_factura_electronica { get; set; }
-    [Column("contacto_emergencia_nombre")]
-    public string? contacto_emergencia_nombre { get; set; }
-    [Column("contacto_emergencia_telefono")]
-    public string? contacto_emergencia_telefono { get; set; }
-    [Column("es_activo")]
-    public bool es_activo { get; set; }
-    [Column("fecha_creacion")]
-    public DateTime fecha_creacion { get; set; }
-    [Column("fecha_modificacion")]
-    public DateTime? fecha_modificacion { get; set; }
-}
+    [Keyless]
+    [Table("Paciente")]
+    public class Paciente
+    {
+        [Column("no_paciente")]
+        public int numeroDePaciente { get; set; }
+
+        [Column("identificador")]
+        public int identificador { get; set; }
+
+        [Column("tipoidentificacion")]
+        public string? tipoIdentificacion { get; set; }
+
+        [Column("cedula")]
+        public string? cedula { get; set; }
+
+        [Column("nombre")]
+        public string? nombre { get; set; }
+
+        [Column("direccion")]
+        public string? direccion { get; set; }
+
+        [Column("fechanacimiento")]
+        public DateTime? fechaDeNacimiento { get; set; }
+
+        [Column("email")]
+        public string? email { get; set; }
+
+        [Column("email2")]
+        public string? email2 { get; set; }
+
+        [Column("telefono1")]
+        public string? telefono1 { get; set; }
+
+        [Column("telefono2")]
+        public string? telefono2 { get; set; }
+
+        [Column("sexo")]
+        public string? sexo { get; set; }
+
+        [Column("plazo")]
+        public int? plazo { get; set; }
+
+        [Column("limitecredito")]
+        public double? limiteDeCredito { get; set; }
+
+        [Column("activo")]
+        public bool? activo { get; set; }
+
+        [Column("sinidentificacion")]
+        public bool? sinIdentificacion { get; set; }
+
+        [Column("fecharegistro")]
+        public DateTime? fechaDeRegistro { get; set; }
+
+        [Column("nombre_contacto_emergencia")]
+        public string? nombreContactoEmergencia { get; set; }
+
+        [Column("telefono_contacto_emergencia")]
+        public string? telefonoContactoEmergencia { get; set; }
+
+        [Column("es_empadronado")]
+        public bool? esEmpadronado { get; set; }
+
+        [Column("codigo_actividad")]
+        public string? codigoActividad { get; set; }
+
+        [Column("no_lista")]
+        public int? noLista { get; set; }
+    }
 }

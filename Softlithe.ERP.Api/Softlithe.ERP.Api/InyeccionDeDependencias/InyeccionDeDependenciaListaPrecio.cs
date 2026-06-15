@@ -1,6 +1,7 @@
 ﻿using Softlithe.ERP.Abstracciones.BW.ListaPrecio.AgregarListaPrecio;
 using Softlithe.ERP.Abstracciones.BW.ListaPrecio.ModificarEstadoListaPrecio;
 using Softlithe.ERP.Abstracciones.BW.ListaPrecio.ModificarListaPrecio;
+using Softlithe.ERP.Abstracciones.BW.ListaPrecio.ObetenerListaPrecioPorID;
 using Softlithe.ERP.Abstracciones.DA.ListaPrecio;
 using Softlithe.ERP.Abstracciones.DA.ListaPrecio.AgregarListaPrecio;
 using Softlithe.ERP.Abstracciones.DA.ListaPrecio.ModificarEstadoListaPrecio;

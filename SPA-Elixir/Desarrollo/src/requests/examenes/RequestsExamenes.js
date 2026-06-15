@@ -1,14 +1,11 @@
 import axios from "axios";
-import {apiAgregarExamenes, apiObtenerExamenes} from './DireccionesRequest';
+import { apiAgregarExamenes, apiObtenerExamenCompleto } from './DireccionesRequest';
 
 axios.interceptors.request.use(async (config) => {
-    const token = window.localStorage.getItem('accessToken');
 
     config.headers = {
-        ...(config.headers || {}),
         "Content-Type": "application/json",
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
+        Accept: "application/json"
       };
     return config
 }, function (error) {
@@ -21,8 +18,6 @@ axios.interceptors.response.use(async (response)=> {
     return Promise.reject(error);
 });
 
-const _isSuccessStatus = (status) => status === 200 || status === 201;
-
 const AgregarExamen = async (examen) => {
     const urlApi = `${apiAgregarExamenes}`;
     let dataRespuesta = {
@@ -32,11 +27,10 @@ const AgregarExamen = async (examen) => {
     try {
         return axios.post(urlApi, examen)
             .then(respuesta => {
-                if (_isSuccessStatus(respuesta.status)) {
+                if (respuesta.status === 200) {
                     dataRespuesta = respuesta.data;
                     return dataRespuesta;
                 }
-                return dataRespuesta;
             })
             .catch(e => {
                 console.log("Error producido al realizar la petición por medio de Axios al API para el método AgregarExamen. Error: " + e);
@@ -48,28 +42,27 @@ const AgregarExamen = async (examen) => {
     }
 }
 
-const obtenerExamenes = async (noPaciente = '') => {
-    const query = noPaciente ? `?NoPaciente=${encodeURIComponent(noPaciente)}` : '';
-    const urlApi = `${apiObtenerExamenes}${query}`;
+const obtenerExamenCompletoPorNoPaciente = async (noPaciente) => {
+    const urlApi = `${apiObtenerExamenCompleto}?noPaciente=${encodeURIComponent(String(noPaciente))}`;
     try {
-        return axios.get(urlApi)
+        return axios.post(urlApi, {})
             .then(respuesta => {
-                if (_isSuccessStatus(respuesta.status)) {
+                if (respuesta.status === 200) {
                     return respuesta.data;
                 }
                 return [];
             })
             .catch(e => {
-                console.log("Error producido al realizar la petición por medio de Axios al API para el método obtenerExamenes. Error: " + e);
+                console.log("Error producido al realizar la petición por medio de Axios al API para el método ObtenerExamenCompletoPorNoPaciente. Error: " + e);
                 return [];
-            })
+            });
     } catch (error) {
-        console.log("Se produjo un error en el método obtenerExamenes. Error: " + error);
+        console.log("Se produjo un error en el método ObtenerExamenCompletoPorNoPaciente. Error: " + error);
         return [];
     }
-}
+};
 
 export {
     AgregarExamen,
-    obtenerExamenes
+    obtenerExamenCompletoPorNoPaciente
 };

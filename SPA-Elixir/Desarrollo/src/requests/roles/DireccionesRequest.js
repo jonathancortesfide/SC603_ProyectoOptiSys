@@ -1,23 +1,28 @@
-// Configurar estas URLs según tu API de roles
 const apiBase = import.meta.env.VITE_ApiBase;
 
-const apiObtenerRoles = `${apiBase}/Roles/`;
+const apiObtenerRoles = `${apiBase}/Roles`;
 const apiObtenerRolPorId = `${apiBase}/Roles/`;
-const apiCrearRol = `${apiBase}/Roles/`;
-const apiActualizarRol = `${apiBase}/Roles/`;
-const apiEliminarRol = `${apiBase}/Roles/`;
-const apiObtenerPermisos = `${apiBase}/Permisos/`;
-const apiAsignarRolAUsuario = `${apiBase}/UsuariosRoles/asignar`;
-const apiDesvincularRolDelUsuario = `${apiBase}/UsuariosRoles/desvincular`;
-const apiObtenerRolesDelUsuario = `${apiBase}/UsuariosRoles/usuario/`;
+const apiCrearRol = `${apiBase}/Roles`;
+const apiCambiarEstadoRol = `${apiBase}/Roles/estado`;
+const apiObtenerModulos = `${apiBase}/Modulos`;
+const apiObtenerPermisos = `${apiBase}/Permisos`;
+const apiObtenerPermisosDelRol = `${apiBase}/Roles/`;
+const apiAsignarPermisoARol = `${apiBase}/Roles/permisos`;
+const apiCambiarEstadoPermisoDeRol = `${apiBase}/Roles/permisos/estado`;
+const apiAsignarRolAUsuario = `${apiBase}/usuarios/`;
+const apiDesvincularRolDelUsuario = `${apiBase}/usuarios/`;
+const apiObtenerRolesDelUsuario = `${apiBase}/usuarios/`;
 
 export {
     apiObtenerRoles,
     apiObtenerRolPorId,
     apiCrearRol,
-    apiActualizarRol,
-    apiEliminarRol,
+    apiCambiarEstadoRol,
+    apiObtenerModulos,
     apiObtenerPermisos,
+    apiObtenerPermisosDelRol,
+    apiAsignarPermisoARol,
+    apiCambiarEstadoPermisoDeRol,
     apiAsignarRolAUsuario,
     apiDesvincularRolDelUsuario,
     apiObtenerRolesDelUsuario

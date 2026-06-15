@@ -1,6 +1,10 @@
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { styled, Box } from '@mui/material';
+import { ReactComponent as LogoDark } from 'src/assets/images/logos/Logo en blanco.svg';
+import { ReactComponent as LogoDarkRTL } from 'src/assets/images/logos/Logo sin degradado.svg';
+import { ReactComponent as LogoLight } from 'src/assets/images/logos/Logo sin degradado.svg';
+import { ReactComponent as LogoLightRTL } from 'src/assets/images/logos/Logo positivo.svg';
+import { styled } from '@mui/material';
 
 const Logo = () => {
   const customizer = useSelector((state) => state.customizer);
@@ -10,28 +14,35 @@ const Logo = () => {
     overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: customizer.isCollapse ? 'center' : 'flex-start',
+    justifyContent: 'center',
+    padding: '0 10px',
+    '& svg': {
+      width: '100%',
+      height: '100%',
+      maxWidth: '100%',
+      maxHeight: '100%',
+    }
   }));
 
+  if (customizer.activeDir === 'ltr') {
+    return (
+      <LinkStyled to="/">
+        {customizer.activeMode === 'dark' ? (
+          <LogoDark />
+        ) : (
+          <LogoLight />
+        )}
+      </LinkStyled>
+    );
+  }
+
   return (
-    <LinkStyled
-      to="/"
-      style={{
-        padding: customizer.isCollapse ? '8px 0 0 0' : '24px 0 0 28px',
-      }}
-    >
-      <Box
-        component="img"
-        src="/lensys_logo.png"
-        alt="Lensys"
-        sx={{
-          width: customizer.isCollapse ? 32 : 150,
-          maxWidth: '100%',
-          height: 'auto',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
+    <LinkStyled to="/">
+      {customizer.activeMode === 'dark' ? (
+        <LogoDarkRTL />
+      ) : (
+        <LogoLightRTL />
+      )}
     </LinkStyled>
   );
 };

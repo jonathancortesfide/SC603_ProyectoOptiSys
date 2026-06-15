@@ -18,7 +18,6 @@ import {
   IconButton,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { obtenerCuentasDePaciente } from '../../../requests/pacientes/RequestsPacientes';
 
 const InformacionFacturacion = ({ paciente, onUpdate }) => {
   const [documentos, setDocumentos] = useState([]);
@@ -30,48 +29,79 @@ const InformacionFacturacion = ({ paciente, onUpdate }) => {
 
   useEffect(() => {
     if (paciente) {
+      // Cargar documentos del paciente (mock data)
       cargarDocumentosPaciente();
     }
-  }, [paciente?.numeroDePaciente, paciente?.id]);
+  }, [paciente]);
 
   const cargarDocumentosPaciente = async () => {
-    if (!paciente?.numeroDePaciente) {
-      setDocumentos([]);
-      setMonedasDisponibles([]);
-      setMonedaFiltro('');
-      setRecibosPorFactura({});
-      return;
-    }
-
-    const cuentas = await obtenerCuentasDePaciente(paciente.numeroDePaciente);
-    const docsTemp = (Array.isArray(cuentas) ? cuentas : []).flatMap((cuenta, cuentaIndex) => {
-      const facturas = (cuenta.facturas || []).map((factura, facturaIndex) => ({
-        id: `f-${cuentaIndex}-${facturaIndex}`,
-        noFactura: factura.noFactura,
-        noExamen: factura.noExamen,
-        fecha: factura.fecha,
-        tipo: factura.tipo || 'Factura',
-        moneda: factura.moneda || cuenta.moneda,
-        monto: Number(factura.monto || 0),
-        saldo: Number(factura.saldo || 0),
-      }));
-
-      const creditos = (cuenta.creditos || []).map((credito, creditoIndex) => ({
-        id: `c-${cuentaIndex}-${creditoIndex}`,
-        noFactura: credito.noDocumento,
-        noExamen: '-',
-        fecha: credito.fecha,
-        tipo: credito.tipoDocumento || 'Crédito',
-        moneda: credito.moneda || cuenta.moneda,
-        monto: Number(credito.monto || 0),
-        saldo: Number(credito.saldo || 0),
-      }));
-
-      return [...facturas, ...creditos];
-    });
-
+    // Mock - En producción llamar al API de documentos del paciente
+    const docsTemp = [
+      {
+        id: 1,
+        noFactura: 'F-001',
+        noExamen: 'E-001',
+        fecha: '2025-02-15',
+        tipo: 'Factura',
+        moneda: 'CRC',
+        monto: 150000,
+        saldo: 0,
+      },
+      {
+        id: 2,
+        noFactura: 'F-002',
+        noExamen: 'E-002',
+        fecha: '2025-02-10',
+        tipo: 'Factura',
+        moneda: 'USD',
+        monto: 250,
+        saldo: 250,
+      },
+      {
+        id: 4,
+        noFactura: 'F-003',
+        noExamen: 'E-003',
+        fecha: '2025-02-01',
+        tipo: 'Factura',
+        moneda: 'USD',
+        monto: 500,
+        saldo: 0,
+      },
+      {
+        id: 5,
+        noFactura: 'F-004',
+        noExamen: 'E-004',
+        fecha: '2025-01-28',
+        tipo: 'Factura',
+        moneda: 'CRC',
+        monto: 75000,
+        saldo: 15000,
+      },
+      {
+        id: 6,
+        noFactura: 'F-005',
+        noExamen: 'E-005',
+        fecha: '2025-01-22',
+        tipo: 'Factura',
+        moneda: 'USD',
+        monto: 300,
+        saldo: 300,
+      },
+    ];
     setDocumentos(docsTemp);
-    setRecibosPorFactura({});
+
+    setRecibosPorFactura({
+      'F-001': [
+        { id: 101, noRecibo: 'R-0101', fecha: '2025-02-18', moneda: 'CRC', monto: 50000 },
+        { id: 102, noRecibo: 'R-0102', fecha: '2025-02-20', moneda: 'CRC', monto: 100000 },
+      ],
+      'F-003': [
+        { id: 201, noRecibo: 'R-0201', fecha: '2025-02-03', moneda: 'USD', monto: 300 },
+        { id: 202, noRecibo: 'R-0202', fecha: '2025-02-05', moneda: 'USD', monto: 200 },
+      ],
+      'F-002': [],
+      'F-005': [],
+    });
 
     // Extraer monedas únicas de los documentos
     const monedas = [...new Set(docsTemp.map((doc) => doc.moneda))];
@@ -80,8 +110,6 @@ const InformacionFacturacion = ({ paciente, onUpdate }) => {
     // Establecer la primera moneda como filtro predeterminado
     if (monedas.length > 0) {
       setMonedaFiltro(monedas[0]);
-    } else {
-      setMonedaFiltro('');
     }
   };
 

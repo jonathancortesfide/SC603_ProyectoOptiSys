@@ -12,6 +12,7 @@ import Profile from './Profile';
 import Search from './Search';
 import Language from './Language';
 import Navigation from './Navigation';
+import SesionEmpresaSucursalBarra from 'src/layouts/full/shared/sesionEmpresaSucursalBarra/SesionEmpresaSucursalBarra';
 import MobileRightSidebar from './MobileRightSidebar';
 
 const Header = () => {
@@ -56,8 +57,11 @@ const Header = () => {
         {lgUp ? (
           <>
             <Navigation />
+            <SesionEmpresaSucursalBarra />
           </>
-        ) : null}
+        ) : (
+          <SesionEmpresaSucursalBarra />
+        )}
 
         <Box flexGrow={1} />
         <Stack spacing={1} direction="row" alignItems="center">

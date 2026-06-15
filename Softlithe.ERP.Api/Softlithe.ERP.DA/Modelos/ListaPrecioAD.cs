@@ -20,5 +20,7 @@ namespace Softlithe.ERP.DA.Modelos;
 
         [Column("activo")]
         public bool? Activo { get; set; }
+        [Column("valor_por_defecto")]
+        public bool? ValorPorDefecto { get; set; }
 }
 

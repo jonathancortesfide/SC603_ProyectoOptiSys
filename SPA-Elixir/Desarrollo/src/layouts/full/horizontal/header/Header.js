@@ -8,6 +8,7 @@ import Profile from 'src/layouts/full/vertical/header/Profile';
 import Search from 'src/layouts/full/vertical/header/Search';
 import Language from 'src/layouts/full/vertical/header/Language';
 import Logo from 'src/layouts/full/shared/logo/Logo';
+import SesionEmpresaSucursalBarra from 'src/layouts/full/shared/sesionEmpresaSucursalBarra/SesionEmpresaSucursalBarra';
 
 const Header = () => {
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down('lg'));
@@ -55,6 +56,7 @@ const Header = () => {
         {/* Search Dropdown */}
         {/* ------------------------------------------- */}
         <Search />
+        <SesionEmpresaSucursalBarra />
         <Box flexGrow={1} />
         <Stack spacing={1} direction="row" alignItems="center">
           <Language />

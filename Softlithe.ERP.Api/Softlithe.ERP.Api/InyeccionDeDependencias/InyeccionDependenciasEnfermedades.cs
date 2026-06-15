@@ -1,18 +1,34 @@
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.AgregarEnfermedad;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.AgregarEnfermedadCatalogo;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.AgregarEnfermedadConCatalogo;
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.CambiarEstado;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerEnfermedadCatalogo;
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerEnfermedadPorIdentificador;
+using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerEnfermedadTipo;
 using Softlithe.ERP.Abstracciones.BW.Enfermedades.ObtenerTodasLasEnfermedades;
 using Softlithe.ERP.Abstracciones.DA.Enfermedades.AgregarEnfermedad;
+using Softlithe.ERP.Abstracciones.DA.Enfermedades.AgregarEnfermedadCatalogo;
+using Softlithe.ERP.Abstracciones.DA.Enfermedades.AgregarEnfermedadConCatalogo;
 using Softlithe.ERP.Abstracciones.DA.Enfermedades.CambiarEstado;
+using Softlithe.ERP.Abstracciones.DA.Enfermedades.ObtenerEnfermedadCatalogo;
 using Softlithe.ERP.Abstracciones.DA.Enfermedades.ObtenerEnfermedadPorIdentificador;
+using Softlithe.ERP.Abstracciones.DA.Enfermedades.ObtenerEnfermedadTipo;
 using Softlithe.ERP.Abstracciones.DA.Enfermedades.ObtenerTodasLasEnfermedades;
 using Softlithe.ERP.BW.Enfermedades.AgregarEnfermedad;
+using Softlithe.ERP.BW.Enfermedades.AgregarEnfermedadCatalogo;
+using Softlithe.ERP.BW.Enfermedades.AgregarEnfermedadConCatalogo;
 using Softlithe.ERP.BW.Enfermedades.CambiarEstado;
+using Softlithe.ERP.BW.Enfermedades.ObtenerEnfermedadCatalogo;
 using Softlithe.ERP.BW.Enfermedades.ObtenerEnfermedadPorIdentificador;
+using Softlithe.ERP.BW.Enfermedades.ObtenerEnfermedadTipo;
 using Softlithe.ERP.BW.Enfermedades.ObtenerTodasLasEnfermedades;
 using Softlithe.ERP.DA.Enfermedades.AgregarEnfermedad;
+using Softlithe.ERP.DA.Enfermedades.AgregarEnfermedadCatalogo;
+using Softlithe.ERP.DA.Enfermedades.AgregarEnfermedadConCatalogo;
 using Softlithe.ERP.DA.Enfermedades.CambiarEstado;
+using Softlithe.ERP.DA.Enfermedades.ObtenerEnfermedadCatalogo;
 using Softlithe.ERP.DA.Enfermedades.ObtenerEnfermedadPorIdentificador;
+using Softlithe.ERP.DA.Enfermedades.ObtenerEnfermedadTipo;
 using Softlithe.ERP.DA.Enfermedades.ObtenerTodasLasEnfermedades;
 
 namespace Softlithe.ERP.Api.Inyeccion
@@ -37,7 +53,24 @@ namespace Softlithe.ERP.Api.Inyeccion
 			services.AddScoped<ICambiarEstadoEnfermedadDA, CambiarEstadoEnfermedadDA>();
 			services.AddScoped<ICambiarEstadoEnfermedadBW, CambiarEstadoEnfermedadBW>();
 
+			//Inyeccion de Obtener Catálogo de Enfermedades
+			services.AddScoped<IObtenerEnfermedadCatalogoDA, ObtenerEnfermedadCatalogoDA>();
+			services.AddScoped<IObtenerEnfermedadCatalogoBW, ObtenerEnfermedadCatalogoBW>();
+
+			//Inyeccion de Agregar Enfermedad al Catálogo
+			services.AddScoped<IAgregarEnfermedadCatalogoDA, AgregarEnfermedadCatalogoDA>();
+			services.AddScoped<IAgregarEnfermedadCatalogoBW, AgregarEnfermedadCatalogoBW>();
+
+			//Inyeccion de Agregar Enfermedad con Catálogo
+			services.AddScoped<IAgregarEnfermedadConCatalogoDA, AgregarEnfermedadConCatalogoDA>();
+			services.AddScoped<IAgregarEnfermedadConCatalogoBW, AgregarEnfermedadConCatalogoBW>();
+
+			//Inyeccion de Obtener Tipos de Enfermedad
+			services.AddScoped<IObtenerEnfermedadTipoDA, ObtenerEnfermedadTipoDA>();
+			services.AddScoped<IObtenerEnfermedadTipoBW, ObtenerEnfermedadTipoBW>();
+
 			return services;
 		}
 	}
 }
+

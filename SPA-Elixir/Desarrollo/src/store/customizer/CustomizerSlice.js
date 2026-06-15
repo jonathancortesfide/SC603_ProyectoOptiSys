@@ -13,7 +13,7 @@ const initialState = {
   isSidebarHover: false,
   isMobileSidebar: false,
   isHorizontal: false,
-  isLanguage: 'en',
+  isLanguage: 'es',
   isCardShadow: true,
   borderRadius: 7,
 };

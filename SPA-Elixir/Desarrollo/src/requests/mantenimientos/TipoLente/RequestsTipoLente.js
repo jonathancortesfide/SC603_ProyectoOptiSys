@@ -1,7 +1,10 @@
 // RequestsTipoLente.js
 import axios from '../../../utils/axios';
+import { getNoEmpresa } from '../../../utils/sucursal';
+
 import {
   apiObtenerTipoLente,
+  apiObtenerTipoLentePorDescripcion,
   apiCrearTipoLente,
   apiActualizarTipoLente,
   apiEliminarTipoLente,
@@ -10,13 +13,9 @@ import {
 } from './DireccionesRequest';
 
 axios.interceptors.request.use(async (config) => {
-  const token = window.localStorage.getItem('accessToken');
-
   config.headers = {
-    ...(config.headers || {}),
     'Content-Type': 'application/json',
-    Accept: 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
+    Accept: 'application/json'
   };
   return config;
 }, function (error) {
@@ -27,20 +26,24 @@ axios.interceptors.response.use(async (response) => response, function (error) {
   return Promise.reject(error);
 });
 
-const obtenerTipoLente = async (no_empresa) => {
-  const urlApi = `${apiObtenerTipoLente}${no_empresa}`;
-  console.log('URL API:', urlApi);
+const obtenerTipoLente = async (identificador) => {
+  const id = identificador ?? getNoEmpresa();
+
   try {
-    const response = await axios.post(urlApi);
-    console.log('Respuesta API:', response);
-    if (response.status === 200 && response.data && response.data.esCorrecto) {
-      console.log('Datos:', response.data.tipoDeLente);
+    const response = await axios.get('/api/TipoLente/Obtener', {
+      params: {
+        descripcion: '',
+        identificador: id
+      }
+    });
+
+    if (response.status === 200 && response.data?.esCorrecto) {
       return response.data.tipoDeLente || [];
     }
+
     return [];
   } catch (e) {
     console.log('Error al obtener tipos de lente:', e);
-    console.log('Error response:', e.response);
     return [];
   }
 };
@@ -60,10 +63,34 @@ const obtenerTipoLentePorId = async (id) => {
   }
 };
 
+const obtenerTipoLentePorDescripcion = async (descripcion, identificador) => {
+  const id = identificador ?? getNoEmpresa();
+
+  try {
+    const response = await axios.get('/api/TipoLente/Obtener', {
+      params: {
+        descripcion: descripcion,
+        identificador: id
+      }
+    });
+
+    if (response.status === 200 && response.data && response.data.esCorrecto) {
+      return response.data.tipoDeLente || [];
+    }
+
+    return [];
+  } catch (e) {
+    console.log('Error al obtener tipos de lente por descripción:', e);
+    return [];
+  }
+};
+
 const crearTipoLente = async (data) => {
   const urlApi = `${apiCrearTipoLente}`;
+  data.no_empresa = data.no_empresa || getNoEmpresa();  
   console.log('URL de crear:', urlApi);
   console.log('Data enviada:', data);
+
   try {
     const response = await axios.post(urlApi, data);
     console.log('Respuesta completa de crear:', response);
@@ -81,10 +108,12 @@ const crearTipoLente = async (data) => {
   }
 };
 
-const actualizarTipoLente = async (id, data) => {
-  const urlApi = `${apiActualizarTipoLente}${id}`;
+const actualizarTipoLente = async (datos) => {
+  const urlApi = `${apiActualizarTipoLente}`;
+  console.log('URL de actualizar:', urlApi);
+  console.log('Data enviada:', datos);
   try {
-    const response = await axios.put(urlApi, data);
+    const response = await axios.put(urlApi, datos);
     return response.data;
   } catch (error) {
     console.log('Error en actualizarTipoLente: ' + error);
@@ -122,6 +151,7 @@ const modificarEstadoTipoLente = async (id, estado) => {
 
 export {
   obtenerTipoLente,
+  obtenerTipoLentePorDescripcion,
   obtenerTipoLentePorId,
   crearTipoLente,
   actualizarTipoLente,

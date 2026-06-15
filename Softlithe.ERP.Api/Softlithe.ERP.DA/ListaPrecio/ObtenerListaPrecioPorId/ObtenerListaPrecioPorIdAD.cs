@@ -21,28 +21,39 @@ namespace Softlithe.ERP.DA.ListaPrecio.ObtenerListaPrecioPorID
             _contextoBasedeDatos = contextoBasedeDatos;
         }
 
-        public async Task<List<ListaPrecioDto>> Obtener(int idMoneda)
+        public async Task<List<ListaPrecioDto>> Obtener(string descripcion, int identificador)
         {
             try
             {
-                List<ListaPrecioDto> listaPrecioDtos = await (from listaPrecios in _contextoBasedeDatos.ListaPrecioContexto
-                                                              where listaPrecios.IdMoneda == idMoneda
-                    select new ListaPrecioDto
+                var query = _contextoBasedeDatos.ListaPrecioContexto
+                    .Join(
+                        _contextoBasedeDatos.MonedasSucursal,
+                        l => l.IdMoneda,
+                        ms => ms.idMoneda,
+                        (l, ms) => new { l, ms }
+                    )
+                    .Where(x => x.ms.identificador == identificador
+                                && (string.IsNullOrEmpty(descripcion)
+                                    || EF.Functions.Like(x.l.Descripcion, $"%{descripcion}%")))
+                    .Select(x => new ListaPrecioDto
                     {
-                        descripcion = listaPrecios.Descripcion,
-                        id_moneda = listaPrecios.IdMoneda,
-                        no_lista = listaPrecios.NoLista,
-                        Activo = listaPrecios.Activo
+                        descripcion = x.l.Descripcion,
+                        id_moneda = x.l.IdMoneda,
+                        no_lista = x.l.NoLista,
+                        Activo = x.l.Activo,
+                        descripcionMoneda = x.ms.Moneda.descripcion,
+                        ValorPorDefecto = x.l.ValorPorDefecto
+                    });
 
-                    }).ToListAsync();
-
-                return listaPrecioDtos;
+                return await query.ToListAsync();
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener las listas de precios por ID de moneda.", ex);
+                throw new Exception("Error al obtener las listas de precios por descripción.", ex);
             }
         }
+
+
 
     }
 }

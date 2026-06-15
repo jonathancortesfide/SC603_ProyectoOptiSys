@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Softlithe.ERP.Abstracciones\Softlithe.ERP.Abstracciones.csproj" />
+    <ProjectReference Include="..\Softlithe.ERP.BC\Softlithe.ERP.BC.csproj" />
     <ProjectReference Include="..\Softlithe.ERP.BW\Softlithe.ERP.BW.csproj" />
     <ProjectReference Include="..\Softlithe.ERP.DA\Softlithe.ERP.DA.csproj" />
   </ItemGroup>

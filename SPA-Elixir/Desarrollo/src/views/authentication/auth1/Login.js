@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Grid, Box, Stack, Typography } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import img1 from 'src/assets/images/backgrounds/login-bg.svg';
@@ -66,13 +67,30 @@ const Login = () => (
       >
         <Box p={4}>
           <AuthLogin
-            title="Iniciar sesión"
+            title="Welcome to Softlithe"
             subtext={
               <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                Acceda con su usuario y contraseña.
+                Your Admin Dashboard
               </Typography>
             }
-            subtitle={<Stack direction="row" spacing={1} mt={3} />}
+            subtitle={
+              <Stack direction="row" spacing={1} mt={3}>
+                <Typography color="textSecondary" variant="h6" fontWeight="500">
+                  New to Softlithe?
+                </Typography>
+                <Typography
+                  component={Link}
+                  to="/auth/register"
+                  fontWeight="500"
+                  sx={{
+                    textDecoration: 'none',
+                    color: 'primary.main',
+                  }}
+                >
+                  Create an account
+                </Typography>
+              </Stack>
+            }
           />
         </Box>
       </Grid>

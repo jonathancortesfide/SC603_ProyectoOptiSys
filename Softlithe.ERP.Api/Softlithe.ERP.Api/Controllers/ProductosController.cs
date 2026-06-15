@@ -1,76 +1,92 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Softlithe.ERP.Abstracciones.BW.Productos;
+using Softlithe.ERP.Abstracciones.Contenedores;
 using Softlithe.ERP.Abstracciones.Contenedores.Productos;
 
 namespace Softlithe.ERP.Api.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class ProductosController : ControllerBase
     {
-        private readonly IProductoBW _productoBW;
-        
-        public ProductosController(IProductoBW productoBW)
+        private readonly IObtenerProductoBW _obtenerProductoBW;
+        private readonly IAgregarProductoBW _agregarProductoBW;
+        private readonly IModificarProductoBW _modificarProductoBW;
+        private readonly IModificarEstadoProductoBW _modificarEstadoProductoBW;
+
+        public ProductosController(
+            IObtenerProductoBW obtenerProductoBW,
+            IAgregarProductoBW agregarProductoBW,
+            IModificarProductoBW modificarProductoBW,
+            IModificarEstadoProductoBW modificarEstadoProductoBW)
         {
-            _productoBW = productoBW;
-        }
-        
-        [HttpGet]
-        [ProducesResponseType(typeof(List<ProductoDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetProductos() 
-        {
-            var productos = await _productoBW.ObtenerTodos();
-            return Ok(productos);
+            _obtenerProductoBW = obtenerProductoBW;
+            _agregarProductoBW = agregarProductoBW;
+            _modificarProductoBW = modificarProductoBW;
+            _modificarEstadoProductoBW = modificarEstadoProductoBW;
         }
 
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetProducto(int id)
+        /// <summary>
+        /// Obtiene los productos de la empresa; filtro opcional por texto (código, barra, proveedor, descripción, marca).
+        /// Incluye precio unitario sin y con impuesto (<see cref="ProductoDto.PrecioSinImpuesto"/>, <see cref="ProductoDto.PrecioConImpuesto"/>)
+        /// desde <c>PrecioVenta</c> usando la lista en <c>ListaPrecios</c> con <c>valor_por_defecto = true</c>.
+        /// </summary>
+        [HttpGet("ObtenerProducto")]
+        public async Task<ProductoConModeloDeValidacion> ObtenerProducto([FromQuery] ParametroConsultaProducto parametroConsultaProducto)
         {
-            var producto = await _productoBW.ObtenerPorId(id);
-            if (producto == null) 
-                return NotFound(new { EsCorrecto = false, Mensaje = "Producto no encontrado." });
-            return Ok(producto);
+            ProductoConModeloDeValidacion resultado = await _obtenerProductoBW.ObtenerProductos(parametroConsultaProducto);
+            return resultado;
         }
 
-        [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CrearProducto([FromBody] ProductoDto producto)
+        /// <summary>
+        /// Obtiene un producto por <c>idProducto</c> único (sin filtro por empresa) con marca, tarifa de impuesto y precios de lista por defecto.
+        /// </summary>
+        [HttpGet("ObtenerProductoPorId")]
+        public async Task<ProductoDetalleConModeloDeValidacion> ObtenerProductoPorId([FromQuery] ParametroConsultaProductoPorId parametro)
         {
-            var id = await _productoBW.Crear(producto);
-            return Ok(new { EsCorrecto = true, Mensaje = "Producto creado correctamente.", Data = new { id } });
+            ProductoDetalleConModeloDeValidacion resultado = await _obtenerProductoBW.ObtenerProductoPorId(parametro);
+            return resultado;
         }
 
-        [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ActualizarProducto(int id, [FromBody] ProductoDto producto)
+        [HttpPost("AgregarProducto")]
+        public async Task<ModeloValidacion> AgregarProducto(ProductoDto parametroProducto)
         {
-            if (id != producto.noProducto)
-                return BadRequest(new { EsCorrecto = false, Mensaje = "El id de la URL no coincide con el del producto." });
-            
-            var ok = await _productoBW.Actualizar(producto);
-            return Ok(new { EsCorrecto = ok, Mensaje = ok ? "Producto actualizado correctamente." : "No se encontró el producto." });
+            ModeloValidacion resultadoModeloValidacion = await _agregarProductoBW.AgregarProducto(parametroProducto);
+            return resultadoModeloValidacion;
         }
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> EliminarProducto(int id)
+        [HttpPost("ModificarProducto")]
+        public async Task<ModeloValidacion> ModificarProducto(ProductoDto parametroProducto)
         {
-            var ok = await _productoBW.Eliminar(id);
-            return Ok(new { EsCorrecto = ok, Mensaje = ok ? "Producto eliminado correctamente." : "No se encontró el producto." });
+            ModeloValidacion resultadoModeloValidacion = await _modificarProductoBW.ModificarProducto(parametroProducto);
+            return resultadoModeloValidacion;
         }
 
-        [HttpPut("{id}/estado/{activo}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> CambiarEstadoProducto(int id, bool activo)
+        [HttpPost("ModificarEstadoProducto")]
+        public async Task<ModeloValidacion> ModificarEstadoProducto(ProductoInActivaDto parametroProducto)
         {
-            var ok = await _productoBW.CambiarEstado(id, activo);
-            return Ok(new { EsCorrecto = ok, Mensaje = ok ? $"Producto {(activo ? "activado" : "desactivado")} correctamente." : "No se encontró el producto." });
+            ModeloValidacion resultadoModeloValidacion = await _modificarEstadoProductoBW.ModificarEstadoProducto(parametroProducto);
+            return resultadoModeloValidacion;
+        }
+
+        /// <summary>
+        /// Obtiene productos mediante sp_ObtenerProductosMT por empresa y tipo.
+        /// </summary>
+        [HttpGet("ObtenerProductosMT/{noEmpresa}/{noTipo}")]
+        public async Task<ProductoConModeloDeValidacion> ObtenerProductosMT([FromRoute] int noEmpresa, [FromRoute] int noTipo)
+        {
+            ProductoConModeloDeValidacion resultado = await _obtenerProductoBW.ObtenerProductosMT(noEmpresa, noTipo);
+            return resultado;
+        }
+
+        /// <summary>
+        /// Obtiene productos mediante sp_ObtenerProductosAR por empresa y descripción.
+        /// </summary>
+        [HttpGet("ObtenerProductosAR/{noEmpresa}/{descripcion}")]
+        public async Task<ProductoConModeloDeValidacion> ObtenerProductosAR([FromRoute] int noEmpresa, [FromRoute] string descripcion)
+        {
+            ProductoConModeloDeValidacion resultado = await _obtenerProductoBW.ObtenerProductosAR(noEmpresa, descripcion);
+            return resultado;
         }
     }
 }

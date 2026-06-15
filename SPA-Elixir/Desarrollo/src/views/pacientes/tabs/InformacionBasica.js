@@ -11,8 +11,11 @@ import {
   Alert,
   FormControlLabel,
   Checkbox,
+  Typography,
+  IconButton,
   Autocomplete,
 } from '@mui/material';
+import { IconSearch } from '@tabler/icons';
 
 const TIPOS_IDENTIFICACION = [
   { value: 'fisica', label: 'Cédula física' },
@@ -28,18 +31,24 @@ const SEXOS = [
   { value: 'O', label: 'Otro' },
 ];
 
-const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = false }) => {
+const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false }) => {
   const [form, setForm] = useState({
+    numeroDePaciente: '',
     tipoIdentificacion: 'fisica',
     identificacion: '',
     nombre: '',
+    nombreComercial: '',
     direccion: '',
     fechaNacimiento: '',
     sexo: '',
     telefono1: '',
     telefono2: '',
     email1: '',
+    email2: '',
+    empadronado: false,
     nacionalidad: '',
+    actividadEconomicaCodigo: '',
+    actividadEconomicaNombre: '',
     contactoEmergenciaNombre: '',
     contactoEmergenciaTelefono: '',
     noEnviaFacturaElectronica: false,
@@ -48,48 +57,29 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
   const [nacionalidades, setNacionalidades] = useState([]);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
+  const [loadingPadron, setLoadingPadron] = useState(false);
   const [edad, setEdad] = useState('');
-
-  const mapFormToPaciente = (nextForm) => ({
-    tipoIdentificacion: nextForm.tipoIdentificacion,
-    identificacion: nextForm.identificacion,
-    cedula: nextForm.identificacion,
-    nombre: nextForm.nombre,
-    direccion: nextForm.direccion,
-    fechaNacimiento: nextForm.fechaNacimiento,
-    sexo: nextForm.sexo,
-    telefono1: nextForm.telefono1,
-    telefono2: nextForm.telefono2,
-    email1: nextForm.email1,
-    email: nextForm.email1,
-    nacionalidad: nextForm.nacionalidad,
-    contactoEmergenciaNombre: nextForm.contactoEmergenciaNombre,
-    contactoEmergenciaTelefono: nextForm.contactoEmergenciaTelefono,
-    noEnviaFacturaElectronica: nextForm.noEnviaFacturaElectronica,
-  });
-
-  const updateForm = (changes) => {
-    setForm((prev) => {
-      const next = { ...prev, ...changes };
-      onChange?.(mapFormToPaciente(next));
-      return next;
-    });
-  };
 
   useEffect(() => {
     if (paciente) {
       const fechaNac = paciente.fechaNacimiento || '';
       setForm({
+        numeroDePaciente: paciente.numeroDePaciente || '',
         tipoIdentificacion: paciente.tipoIdentificacion || 'fisica',
         identificacion: paciente.identificacion || paciente.cedula || '',
         nombre: paciente.nombre || '',
+        nombreComercial: paciente.nombreComercial || '',
         direccion: paciente.direccion || '',
         fechaNacimiento: fechaNac,
         sexo: paciente.sexo || '',
         telefono1: paciente.telefono1 || '',
         telefono2: paciente.telefono2 || '',
         email1: paciente.email1 || paciente.email || '',
+        email2: paciente.email2 || '',
+        empadronado: paciente.esEmpadronado || false,
         nacionalidad: paciente.nacionalidad || '',
+        actividadEconomicaCodigo: paciente.codigoActividadEconomica || '',
+        actividadEconomicaNombre: '',
         contactoEmergenciaNombre: paciente.contactoEmergenciaNombre || '',
         contactoEmergenciaTelefono: paciente.contactoEmergenciaTelefono || '',
         noEnviaFacturaElectronica: paciente.noEnviaFacturaElectronica || false,
@@ -99,7 +89,7 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
       }
     }
     cargarNacionalidades();
-  }, [paciente?.numeroDePaciente, paciente?.id]);
+  }, [paciente]);
 
   const cargarNacionalidades = async () => {
     // Mock data - En producción debe llamar al API de tabla Pais
@@ -115,8 +105,8 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
   };
 
   const handleChange = (field) => (event) => {
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-    updateForm({ [field]: value });
+    const value = event.target.value;
+    setForm({ ...form, [field]: value });
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' });
     }
@@ -138,6 +128,91 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
     }
     
     setEdad(edadCalculada.toString());
+  };
+
+  const handleBuscarActividadEconomica = async () => {
+    // Mock - En producción debe buscar en tabla ActividadEconomicaHacienda
+    if (!form.actividadEconomicaCodigo) {
+      alert('Ingrese un código de actividad económica');
+      return;
+    }
+
+    // Simulación de búsqueda
+    const mockActividades = {
+      '4774': 'Venta al por menor de productos farmacéuticos y medicinales',
+      '6201': 'Actividades de programación informática',
+      '8621': 'Actividades de la práctica médica',
+    };
+
+    const nombre = mockActividades[form.actividadEconomicaCodigo];
+    if (nombre) {
+      setForm({ ...form, actividadEconomicaNombre: nombre });
+      setSuccess('Actividad económica encontrada');
+    } else {
+      setErrors({ actividadEconomicaCodigo: 'Código no encontrado' });
+    }
+  };
+
+  const handleBuscarEnPadron = async () => {
+    if (!form.identificacion) {
+      setErrors({ identificacion: 'Ingrese una identificación para buscar en el padrón' });
+      return;
+    }
+
+    setLoadingPadron(true);
+    setErrors({});
+
+    try {
+      // Mock data - En producción debe llamar al API del padrón nacional
+      const mockPadronData = {
+        '3010000001': {
+          nombre: 'JUAN PÉREZ GARCÍA',
+          fechaNacimiento: '1980-05-15',
+          sexo: 'M',
+          empadronado: true,
+        },
+        '3010000002': {
+          nombre: 'MARÍA GARCÍA RODRÍGUEZ',
+          fechaNacimiento: '1985-08-22',
+          sexo: 'F',
+          empadronado: true,
+        },
+        '3010000003': {
+          nombre: 'CARLOS SMITH JOHNSON',
+          fechaNacimiento: '1975-03-10',
+          sexo: 'M',
+          empadronado: false,
+        },
+      };
+
+      // Simular delay de búsqueda
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const resultado = mockPadronData[form.identificacion];
+
+      if (resultado) {
+        setForm({
+          ...form,
+          nombre: resultado.nombre,
+          fechaNacimiento: resultado.fechaNacimiento,
+          sexo: resultado.sexo,
+          empadronado: resultado.empadronado,
+          nacionalidad: 'Costarricense', // Auto-asignado por búsqueda en padrón
+        });
+        setSuccess('Datos encontrados en el padrón nacional');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setErrors({
+          identificacion: 'Identificación no encontrada en el padrón nacional',
+        });
+      }
+    } catch (error) {
+      setErrors({
+        identificacion: 'Error al buscar en el padrón nacional',
+      });
+    } finally {
+      setLoadingPadron(false);
+    }
   };
 
   const handleGuardar = async () => {
@@ -190,6 +265,34 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
           />
         </Grid>
 
+        <Grid item xs={12} sm={4}>
+          <Button
+            fullWidth
+            variant="outlined"
+            size="small"
+            onClick={handleBuscarEnPadron}
+            disabled={loadingPadron}
+            sx={{ height: '36px', minHeight: '36px' }}
+          >
+            {loadingPadron ? 'Buscando...' : 'Buscar en Padrón'}
+          </Button>
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.empadronado}
+                disabled
+              />
+            }
+            label="Empadronado"
+            sx={{ mt: 0 }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={4} />
+
         <Grid item xs={12} sm={8}>
           <TextField
             fullWidth
@@ -199,6 +302,16 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
             onChange={handleChange('nombre')}
             error={!!errors.nombre}
             helperText={errors.nombre}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Nombre Comercial"
+            value={form.nombreComercial}
+            onChange={handleChange('nombreComercial')}
           />
         </Grid>
 
@@ -255,18 +368,18 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
           </FormControl>
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
           <Autocomplete
             freeSolo
             size="small"
             options={nacionalidades.map((nac) => nac.nombre)}
             value={form.nacionalidad || ''}
             onChange={(event, newValue) => {
-              updateForm({ nacionalidad: newValue || '' });
+              setForm({ ...form, nacionalidad: newValue || '' });
             }}
             inputValue={form.nacionalidad}
             onInputChange={(event, newInputValue) => {
-              updateForm({ nacionalidad: newInputValue });
+              setForm({ ...form, nacionalidad: newInputValue });
             }}
             renderInput={(params) => (
               <TextField
@@ -278,7 +391,7 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
           <TextField
             fullWidth
             size="small"
@@ -288,7 +401,7 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
           <TextField
             fullWidth
             size="small"
@@ -298,7 +411,7 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
           <TextField
             fullWidth
             size="small"
@@ -307,6 +420,25 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
             value={form.email1}
             onChange={handleChange('email1')}
           />
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Email secundario"
+            type="email"
+            value={form.email2}
+            onChange={handleChange('email2')}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={4} />
+
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Contacto de Emergencia
+          </Typography>
         </Grid>
 
         <Grid item xs={12} sm={6}>
@@ -326,6 +458,35 @@ const InformacionBasica = ({ paciente, onUpdate, onChange, hideGuardarButton = f
             label="Teléfono del Contacto"
             value={form.contactoEmergenciaTelefono}
             onChange={handleChange('contactoEmergenciaTelefono')}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Código Actividad Económica"
+            value={form.actividadEconomicaCodigo}
+            onChange={handleChange('actividadEconomicaCodigo')}
+            error={!!errors.actividadEconomicaCodigo}
+            helperText={errors.actividadEconomicaCodigo}
+            InputProps={{
+              endAdornment: (
+                <IconButton size="small" onClick={handleBuscarActividadEconomica}>
+                  <IconSearch size={18} />
+                </IconButton>
+              ),
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Actividad Económica"
+            value={form.actividadEconomicaNombre}
+            InputProps={{ readOnly: true }}
           />
         </Grid>
 

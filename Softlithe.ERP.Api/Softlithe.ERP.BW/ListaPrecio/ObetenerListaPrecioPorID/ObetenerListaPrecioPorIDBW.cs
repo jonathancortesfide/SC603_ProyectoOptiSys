@@ -1,4 +1,5 @@
 ﻿using Softlithe.ERP.Abstracciones.BW.Generales.ManejoDeErrores;
+using Softlithe.ERP.Abstracciones.BW.ListaPrecio.ObetenerListaPrecioPorID;
 using Softlithe.ERP.Abstracciones.Contenedores.ListaPrecio;
 using Softlithe.ERP.Abstracciones.Contenedores.MensajesDelSistema;
 using Softlithe.ERP.Abstracciones.DA.ListaPrecio;
@@ -18,11 +19,11 @@ namespace Softlithe.ERP.BW.ListaPrecio.ObetenerListaPrecioPorID
             _logger = errorLogger;
         }
 
-        public async Task<ListaPrecioConModeloDeValidacion> Obtener(int id_moneda)
+        public async Task<ListaPrecioConModeloDeValidacion> Obtener(string descripcion, int identificador)
         {
             try
             {
-                List<ListaPrecioDto> listaPrecioDtos = await _obtenerListaPrecioPorIdAD.Obtener(id_moneda);
+                List<ListaPrecioDto> listaPrecioDtos = await _obtenerListaPrecioPorIdAD.Obtener(descripcion, identificador);
                 return ConstruirRespuestaExitosa(listaPrecioDtos);
             }
             catch (Exception ex)

@@ -9,6 +9,6 @@ namespace Softlithe.ERP.Abstracciones.DA.ListaPrecio.ObetenerListaPrecioPorID
 {
     public interface IObtenerListaPrecioPorIdAD
     {
-        Task<List<ListaPrecioDto>> Obtener(int id_moneda);
+        Task<List<ListaPrecioDto>> Obtener(string descripcion, int identificador);
     }
 }

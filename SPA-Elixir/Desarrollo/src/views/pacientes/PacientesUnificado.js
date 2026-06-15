@@ -4,6 +4,7 @@ import {
   Box,
   Grid,
   Paper,
+  Stack,
   Button,
   TextField,
   CircularProgress,
@@ -13,57 +14,23 @@ import {
   ListItemButton,
   ListItemText,
   Divider,
+  Menu,
+  MenuItem,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParendCard';
-import FeedbackDialog from '../../components/shared/FeedbackDialog';
-import { obtenerListaDePacientes, AgregarPaciente, ActualizarPaciente } from '../../requests/pacientes/RequestsPacientes';
+import { obtenerListaDePacientes } from '../../requests/pacientes/RequestsPacientes';
 import InformacionBasica from './tabs/InformacionBasica';
-import { getSucursalIdentificador } from '../../utils/sucursal';
+import CuentasTab from './tabs/CuentasTab';
+import InformacionAdicional from './tabs/InformacionAdicional';
+import InformacionFacturacion from './tabs/InformacionFacturacion';
 
 const BCrumb = [{ title: 'Gestión de Pacientes' }];
-
-const sucursalIdentificador = getSucursalIdentificador();
-
-const crearPacienteVacio = () => ({
-  noEmpresa: sucursalIdentificador,
-  nombre: '',
-  cedula: '',
-  identificacion: '',
-  email: '',
-  email1: '',
-  telefono1: '',
-  telefono2: '',
-  direccion: '',
-  tipoIdentificacion: 'fisica',
-  sexo: '',
-  fechaNacimiento: '',
-  nacionalidad: '',
-  noEnviaFacturaElectronica: false,
-  contactoEmergenciaNombre: '',
-  contactoEmergenciaTelefono: '',
-  esActivo: true,
-});
-
-const normalizarPacientePayload = (paciente) => ({
-  noEmpresa: paciente.noEmpresa || sucursalIdentificador,
-  tipoIdentificacion: paciente.tipoIdentificacion || 'fisica',
-  identificacion: paciente.identificacion || paciente.cedula || '',
-  cedula: paciente.cedula || paciente.identificacion || '',
-  nombre: paciente.nombre || '',
-  direccion: paciente.direccion || '',
-  fechaNacimiento: paciente.fechaNacimiento || null,
-  sexo: paciente.sexo || '',
-  telefono1: paciente.telefono1 || '',
-  telefono2: paciente.telefono2 || '',
-  email1: paciente.email1 || paciente.email || '',
-  nacionalidad: paciente.nacionalidad || '',
-  noEnviaFacturaElectronica: Boolean(paciente.noEnviaFacturaElectronica),
-  contactoEmergenciaNombre: paciente.contactoEmergenciaNombre || '',
-  contactoEmergenciaTelefono: paciente.contactoEmergenciaTelefono || '',
-  esActivo: paciente.esActivo !== false,
-});
 
 const PacientesUnificado = () => {
   const [listaDePacientes, setListaDePacientes] = useState([]);
@@ -72,12 +39,14 @@ const PacientesUnificado = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
   const [modoCreacion, setModoCreacion] = useState(false);
+  const [anchorElAcciones, setAnchorElAcciones] = useState(null);
   const [guardando, setGuardando] = useState(false);
-  const [feedback, setFeedback] = useState({ open: false, severity: 'info', title: '', message: '' });
-
-  const mostrarFeedback = (severity, title, message) => {
-    setFeedback({ open: true, severity, title, message });
-  };
+  const [expandedAccordions, setExpandedAccordions] = useState({
+    'informacion-basica': true,
+    'cuentas': false,
+    'informacion-adicional': false,
+    'informacion-facturacion': false,
+  });
 
   useEffect(() => {
     cargarPacientes();
@@ -105,23 +74,37 @@ const PacientesUnificado = () => {
       p.nombre?.toLowerCase().includes(term) ||
       p.cedula?.toLowerCase().includes(term) ||
       p.identificacion?.toLowerCase().includes(term) ||
-      p.email?.toLowerCase().includes(term) ||
-      p.email1?.toLowerCase().includes(term)
+      p.email?.toLowerCase().includes(term)
     );
   });
-
-  const actualizarPacienteSeleccionado = (changes) => {
-    setPacienteSeleccionado((prev) => ({ ...(prev || {}), ...changes }));
-  };
 
   const handleSeleccionarPaciente = (paciente) => {
     setPacienteSeleccionado(paciente);
     setModoCreacion(false);
+    setExpandedAccordions({
+      'informacion-basica': true,
+      'cuentas': false,
+      'informacion-adicional': false,
+      'informacion-facturacion': false,
+    });
   };
 
   const handleAgregarPaciente = () => {
-    setPacienteSeleccionado(crearPacienteVacio());
+    setPacienteSeleccionado({
+      nombre: '',
+      cedula: '',
+      identificacion: '',
+      email: '',
+      telefono: '',
+      direccion: '',
+    });
     setModoCreacion(true);
+    setExpandedAccordions({
+      'informacion-basica': true,
+      'cuentas': false,
+      'informacion-adicional': false,
+      'informacion-facturacion': false,
+    });
   };
 
   const handleCancelarCreacion = () => {
@@ -131,44 +114,92 @@ const PacientesUnificado = () => {
     } else {
       setPacienteSeleccionado(null);
     }
+    setExpandedAccordions({
+      'informacion-basica': true,
+      'cuentas': false,
+      'informacion-adicional': false,
+      'informacion-facturacion': false,
+    });
+  };
+
+  const handleAgregarExamen = () => {
+    if (!pacienteSeleccionado) {
+      alert('Seleccione un paciente primero');
+      return;
+    }
+    alert(`Agregar examen para ${pacienteSeleccionado.nombre}`);
+  };
+
+  const handleAgregarFactura = () => {
+    if (!pacienteSeleccionado) {
+      alert('Seleccione un paciente primero');
+      return;
+    }
+    alert(`Agregar factura para ${pacienteSeleccionado.nombre}`);
+  };
+
+  const handleAgregarReciboNota = () => {
+    if (!pacienteSeleccionado) {
+      alert('Seleccione un paciente primero');
+      return;
+    }
+    alert(`Agregar recibo o nota para ${pacienteSeleccionado.nombre}`);
+  };
+
+  const handleAbrirExamen = () => {
+    if (!pacienteSeleccionado) {
+      alert('Seleccione un paciente primero');
+      return;
+    }
+    alert(`Abrir examen para ${pacienteSeleccionado.nombre}`);
+  };
+
+  const handleOpenAcciones = (event) => {
+    setAnchorElAcciones(event.currentTarget);
+  };
+
+  const handleCloseAcciones = () => {
+    setAnchorElAcciones(null);
+  };
+
+  const handleAccion = (action) => {
+    switch (action) {
+      case 'agregar_examen':
+        handleAgregarExamen();
+        break;
+      case 'agregar_factura':
+        handleAgregarFactura();
+        break;
+      case 'agregar_recibo_nota':
+        handleAgregarReciboNota();
+        break;
+      case 'abrir_examen':
+        handleAbrirExamen();
+        break;
+      default:
+        break;
+    }
+    handleCloseAcciones();
   };
 
   const handleGuardarCambios = async () => {
     if (!pacienteSeleccionado) return;
-    if (!String(pacienteSeleccionado.identificacion || pacienteSeleccionado.cedula || '').trim()) {
-      mostrarFeedback('warning', 'Dato requerido', 'La identificación es obligatoria');
-      return;
-    }
-    if (!String(pacienteSeleccionado.nombre || '').trim()) {
-      mostrarFeedback('warning', 'Dato requerido', 'El nombre es obligatorio');
-      return;
-    }
     
     setGuardando(true);
     try {
-      const payload = normalizarPacientePayload(pacienteSeleccionado);
-      const respuesta = modoCreacion
-        ? await AgregarPaciente(payload)
-        : await ActualizarPaciente(pacienteSeleccionado.numeroDePaciente || pacienteSeleccionado.id, payload);
-
-      if (!respuesta?.EsCorrecto) {
-        throw new Error(respuesta?.Mensaje || 'No se pudo guardar el paciente');
-      }
+      // Aquí se debe llamar al API para guardar todos los cambios del paciente
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simular guardado
       
       if (modoCreacion) {
-        mostrarFeedback('success', 'Paciente creado', 'Paciente creado correctamente');
+        alert('Paciente creado correctamente');
         setModoCreacion(false);
       } else {
-        mostrarFeedback('success', 'Cambios guardados', 'Cambios guardados correctamente');
+        alert('Cambios guardados correctamente');
       }
       
       await cargarPacientes();
     } catch (err) {
-      mostrarFeedback(
-        'error',
-        modoCreacion ? 'Error al crear paciente' : 'Error al guardar cambios',
-        err?.message || (modoCreacion ? 'Error al crear el paciente' : 'Error al guardar los cambios')
-      );
+      alert(modoCreacion ? 'Error al crear el paciente' : 'Error al guardar los cambios');
     } finally {
       setGuardando(false);
     }
@@ -198,13 +229,6 @@ const PacientesUnificado = () => {
     <PageContainer title="Gestión de Pacientes" description="Gestión de pacientes">
       <ParentCard title="">
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <FeedbackDialog
-          open={feedback.open}
-          onClose={() => setFeedback((prev) => ({ ...prev, open: false }))}
-          severity={feedback.severity}
-          title={feedback.title}
-          message={feedback.message}
-        />
 
         <Grid container spacing={2}>
           {/* Panel izquierdo - Listado de pacientes */}
@@ -234,7 +258,7 @@ const PacientesUnificado = () => {
                   pacientesFiltrados.map((paciente) => (
                     <ListItem key={paciente.id || paciente.numeroDePaciente} disablePadding>
                       <ListItemButton
-                        selected={(pacienteSeleccionado?.id && pacienteSeleccionado?.id === paciente.id) || (pacienteSeleccionado?.numeroDePaciente && pacienteSeleccionado?.numeroDePaciente === paciente.numeroDePaciente)}
+                        selected={pacienteSeleccionado?.id === paciente.id}
                         onClick={() => handleSeleccionarPaciente(paciente)}
                       >
                         <ListItemText
@@ -274,15 +298,75 @@ const PacientesUnificado = () => {
                           Cancelar
                         </Button>
                       )}
+                      {!modoCreacion && (
+                        <Button size="small" variant="contained" endIcon={<ExpandMoreIcon />} onClick={handleOpenAcciones}>
+                          Acciones
+                        </Button>
+                      )}
                     </Box>
                   </Box>
 
                   {/* Contenido completo con scroll */}
                   <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                      Información Básica
-                    </Typography>
-                    <InformacionBasica paciente={pacienteSeleccionado} onUpdate={cargarPacientes} onChange={actualizarPacienteSeleccionado} hideGuardarButton={true} />
+                    {/* Información Básica - Accordion */}
+                    <Accordion 
+                      expanded={expandedAccordions['informacion-basica']} 
+                      onChange={handleAccordionChange('informacion-basica')}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Información Básica
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <InformacionBasica paciente={pacienteSeleccionado} onUpdate={cargarPacientes} hideGuardarButton={true} />
+                      </AccordionDetails>
+                    </Accordion>
+
+                    {/* Cuentas - Accordion */}
+                    <Accordion 
+                      expanded={expandedAccordions['cuentas']} 
+                      onChange={handleAccordionChange('cuentas')}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Cuentas
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <CuentasTab paciente={pacienteSeleccionado} onUpdate={cargarPacientes} hideGuardarButton={true} />
+                      </AccordionDetails>
+                    </Accordion>
+
+                    {/* Información Adicional - Accordion */}
+                    <Accordion 
+                      expanded={expandedAccordions['informacion-adicional']} 
+                      onChange={handleAccordionChange('informacion-adicional')}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Información Adicional
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <InformacionAdicional paciente={pacienteSeleccionado} onUpdate={cargarPacientes} hideGuardarButton={true} />
+                      </AccordionDetails>
+                    </Accordion>
+
+                    {/* Información de Facturación - Accordion */}
+                    <Accordion 
+                      expanded={expandedAccordions['informacion-facturacion']} 
+                      onChange={handleAccordionChange('informacion-facturacion')}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Información de Facturación
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <InformacionFacturacion paciente={pacienteSeleccionado} onUpdate={cargarPacientes} />
+                      </AccordionDetails>
+                    </Accordion>
                   </Box>
 
                   {/* Footer con botón de guardar */}
@@ -297,6 +381,18 @@ const PacientesUnificado = () => {
                     </Button>
                   </Box>
 
+                  <Menu
+                    anchorEl={anchorElAcciones}
+                    open={Boolean(anchorElAcciones)}
+                    onClose={handleCloseAcciones}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  >
+                    <MenuItem onClick={() => handleAccion('agregar_examen')}>Agregar Examen</MenuItem>
+                    <MenuItem onClick={() => handleAccion('agregar_factura')}>Agregar Factura</MenuItem>
+                    <MenuItem onClick={() => handleAccion('agregar_recibo_nota')}>Agregar Recibo o Nota</MenuItem>
+                    <MenuItem onClick={() => handleAccion('abrir_examen')}>Abrir Examen</MenuItem>
+                  </Menu>
                 </>
               ) : (
                 <Box sx={{ p: 3, textAlign: 'center' }}>

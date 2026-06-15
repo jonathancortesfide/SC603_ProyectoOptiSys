@@ -21,25 +21,21 @@ import {
     CircularProgress,
     Alert,
 } from '@mui/material';
-import { IconEdit, IconTrash, IconLock, IconPlus } from '@tabler/icons';
+import { IconEdit, IconTrash, IconPlus } from '@tabler/icons';
 import ParentCard from '../../../components/shared/ParentCard';
-import FeedbackDialog from '../../../components/shared/FeedbackDialog';
 import FormularioUsuario from './FormularioUsuario';
-import CambiarContrasena from './CambiarContrasena';
-import { obtenerListaDeUsuarios, eliminarUsuario } from '../../../requests/usuarios/RequestsUsuarios';
+import { obtenerListaDeUsuarios, modificarEstadoUsuario } from '../../../requests/usuarios/RequestsUsuarios';
 
 const ListadoUsuarios = () => {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
-    const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
     const [modoEdicion, setModoEdicion] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [feedback, setFeedback] = useState({ open: false, severity: 'info', title: '', message: '' });
 
     useEffect(() => {
         cargarUsuarios();
@@ -90,23 +86,15 @@ const ListadoUsuarios = () => {
         handleCerrarFormulario();
     };
 
-    const handleAbrirCambioContrasena = (usuario) => {
-        setUsuarioSeleccionado(usuario);
-        setOpenPasswordDialog(true);
-    };
-
-    const handleCerrarCambioContrasena = () => {
-        setOpenPasswordDialog(false);
-        setUsuarioSeleccionado(null);
-    };
-
-    const handleEliminarUsuario = async (usuario) => {
-        if (window.confirm(`¿Está seguro de eliminar el usuario ${usuario.nombre}?`)) {
-            const resultado = await eliminarUsuario(usuario.id);
-            if (resultado.EsCorrecto) {
-                setUsuarios(usuarios.filter(u => u.id !== usuario.id));
+    const handleToggleEstadoUsuario = async (usuario) => {
+        const siguienteEstado = !usuario.esActivo;
+        const accion = siguienteEstado ? 'activar' : 'inactivar';
+        if (window.confirm(`¿Está seguro de ${accion} al usuario ${usuario.nombre}?`)) {
+            const resultado = await modificarEstadoUsuario(usuario.idUsuario, siguienteEstado);
+            if (resultado.esCorrecto) {
+                await cargarUsuarios();
             } else {
-                setError('Error al eliminar el usuario');
+                setError(resultado.mensaje || `Error al ${accion} el usuario`);
             }
         }
     };
@@ -116,7 +104,6 @@ const ListadoUsuarios = () => {
         if (!term) return usuarios;
         return usuarios.filter(usuario =>
             usuario.nombre?.toLowerCase().includes(term) ||
-            usuario.login?.toLowerCase().includes(term) ||
             usuario.email?.toLowerCase().includes(term)
         );
     }, [usuarios, searchTerm]);
@@ -143,18 +130,11 @@ const ListadoUsuarios = () => {
                     {error}
                 </Alert>
             )}
-            <FeedbackDialog
-                open={feedback.open}
-                onClose={() => setFeedback((prev) => ({ ...prev, open: false }))}
-                severity={feedback.severity}
-                title={feedback.title}
-                message={feedback.message}
-            />
 
             <Stack spacing={2} sx={{ mb: 2 }}>
                 <Stack direction="row" spacing={2} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <TextField
-                        placeholder="Buscar por nombre, login o email..."
+                        placeholder="Buscar por nombre o email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         size="small"
@@ -175,7 +155,6 @@ const ListadoUsuarios = () => {
                 <Table>
                     <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                         <TableRow>
-                            <TableCell><strong>Login</strong></TableCell>
                             <TableCell><strong>Email</strong></TableCell>
                             <TableCell><strong>Nombre</strong></TableCell>
                             <TableCell align="center"><strong>Es Doctor</strong></TableCell>
@@ -190,8 +169,7 @@ const ListadoUsuarios = () => {
                     <TableBody>
                         {usuariosFiltrados.length > 0 ? (
                             usuariosPaginados.map((usuario) => (
-                                <TableRow key={usuario.id} hover>
-                                    <TableCell>{usuario.login}</TableCell>
+                                <TableRow key={usuario.idUsuario} hover>
                                     <TableCell>{usuario.email}</TableCell>
                                     <TableCell>{usuario.nombre}</TableCell>
                                     <TableCell align="center">
@@ -230,17 +208,9 @@ const ListadoUsuarios = () => {
                                             </IconButton>
                                             <IconButton
                                                 size="small"
-                                                color="warning"
-                                                onClick={() => handleAbrirCambioContrasena(usuario)}
-                                                title="Cambiar contraseña"
-                                            >
-                                                <IconLock size={18} />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                onClick={() => handleEliminarUsuario(usuario)}
-                                                title="Eliminar"
+                                                color={usuario.esActivo ? 'error' : 'success'}
+                                                onClick={() => handleToggleEstadoUsuario(usuario)}
+                                                title={usuario.esActivo ? 'Inactivar' : 'Activar'}
                                             >
                                                 <IconTrash size={18} />
                                             </IconButton>
@@ -250,7 +220,7 @@ const ListadoUsuarios = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                                     No hay usuarios disponibles
                                 </TableCell>
                             </TableRow>
@@ -279,22 +249,7 @@ const ListadoUsuarios = () => {
                 />
             </Dialog>
 
-            {/* Dialog Cambiar Contraseña */}
-            <Dialog open={openPasswordDialog} onClose={handleCerrarCambioContrasena} maxWidth="xs" fullWidth>
-                <CambiarContrasena
-                    usuario={usuarioSeleccionado}
-                    onCancel={handleCerrarCambioContrasena}
-                    onSuccess={() => {
-                        handleCerrarCambioContrasena();
-                        setFeedback({
-                            open: true,
-                            severity: 'success',
-                            title: 'Contraseña actualizada',
-                            message: 'Contraseña cambiada correctamente',
-                        });
-                    }}
-                />
-            </Dialog>
+
         </ParentCard>
     );
 };

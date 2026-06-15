@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Softlithe.ERP.DA.Modelos
 {
-    [Table("GrupoProductos")]
+    [Table("Grupo")]
     public class Grupo
     {
         [Column("no_grupo")]
@@ -12,8 +12,7 @@ namespace Softlithe.ERP.DA.Modelos
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int no_grupo { get; set; }
 
-        [Column("descripcion")]
-        [StringLength(150)]
+        [Column("Descripcion")]
         public string Descripcion { get; set; } = string.Empty;
 
         [Column("no_empresa")]
@@ -21,11 +20,5 @@ namespace Softlithe.ERP.DA.Modelos
 
         [Column("activo")]
         public bool activo { get; set; }
-
-        [Column("fecha_creacion", TypeName = "datetime")]
-        public DateTime fecha_creacion { get; set; }
-
-        [Column("fecha_modificacion", TypeName = "datetime")]
-        public DateTime? fecha_modificacion { get; set; }
     }
 }

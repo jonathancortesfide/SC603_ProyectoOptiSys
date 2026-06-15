@@ -160,42 +160,20 @@ export const responseBuscarUsuarios = [
 // Obtener lista de roles
 export const ejemploListaRoles = [
     {
-        id: "role-001",
+        idRol: 1,
+        id: 1,
         nombre: "Administrador",
         descripcion: "Acceso total al sistema",
-        permisos: [
-            {
-                id: "perm-001",
-                nombre: "Ver Usuarios",
-                moduloId: "mod-001",
-                moduloNombre: "Seguridad",
-                descripcion: "Permite ver el listado de usuarios",
-                accion: "read"
-            },
-            {
-                id: "perm-002",
-                nombre: "Crear Usuarios",
-                moduloId: "mod-001",
-                moduloNombre: "Seguridad",
-                descripcion: "Permite crear nuevos usuarios",
-                accion: "create"
-            }
-        ]
+        activo: true,
+        esActivo: true,
     },
     {
-        id: "role-002",
+        idRol: 2,
+        id: 2,
         nombre: "Doctor",
         descripcion: "Acceso limitado para doctores",
-        permisos: [
-            {
-                id: "perm-003",
-                nombre: "Ver Pacientes",
-                moduloId: "mod-002",
-                moduloNombre: "Pacientes",
-                descripcion: "Permite ver el listado de pacientes",
-                accion: "read"
-            }
-        ]
+        activo: true,
+        esActivo: true,
     }
 ];
 
@@ -235,31 +213,8 @@ export const requestCrearRol = {
 
 // RESPONSE
 export const responseCrearRol = {
-    Mensaje: "Rol creado exitosamente",
-    EsCorrecto: true,
-    Data: {
-        id: "role-003",
-        nombre: "Gerente",
-        descripcion: "Acceso limitado para gerentes",
-        permisos: [
-            {
-                id: "perm-001",
-                nombre: "Ver Usuarios",
-                moduloId: "mod-001",
-                moduloNombre: "Seguridad",
-                descripcion: "Permite ver el listado de usuarios",
-                accion: "read"
-            },
-            {
-                id: "perm-003",
-                nombre: "Ver Pacientes",
-                moduloId: "mod-002",
-                moduloNombre: "Pacientes",
-                descripcion: "Permite ver el listado de pacientes",
-                accion: "read"
-            }
-        ]
-    }
+    mensaje: "Rol creado exitosamente",
+    esCorrecto: true,
 };
 
 // PUT /api/roles/{id} - Actualizar rol
@@ -307,65 +262,92 @@ export const responseActualizarRol = {
     }
 };
 
-// DELETE /api/roles/{id}
-// RESPONSE
 export const responseEliminarRol = {
-    Mensaje: "Rol eliminado exitosamente",
-    EsCorrecto: true
+    mensaje: "Rol inactivado exitosamente",
+    esCorrecto: true,
 };
+
+// GET /api/modulos/
+// Obtener lista de módulos disponibles
+export const ejemploListaModulos = [
+    { idModulo: 1, nombre: "Seguridad", descripcion: "Gestión de usuarios y roles", idSeccion: 1, nombreSeccion: "Administración", activo: true },
+    { idModulo: 2, nombre: "Pacientes", descripcion: "Gestión de pacientes", idSeccion: 2, nombreSeccion: "Clínica", activo: true },
+];
 
 // GET /api/permisos/
 // Obtener lista de permisos disponibles
 export const ejemploListaPermisos = [
     // Módulo: Seguridad
     {
-        id: "perm-001",
+        idPermiso: 1,
+        id: 1,
         nombre: "Ver Usuarios",
-        moduloId: "mod-001",
+        codigo: "VER_USUARIOS",
+        codigoPermiso: "VER_USUARIOS",
+        idModulo: 1,
+        moduloId: 1,
+        nombreModulo: "Seguridad",
         moduloNombre: "Seguridad",
         descripcion: "Permite ver el listado de usuarios",
-        accion: "read"
+        activo: true,
+        esActivo: true,
     },
     {
-        id: "perm-002",
+        idPermiso: 2,
+        id: 2,
         nombre: "Crear Usuarios",
-        moduloId: "mod-001",
+        codigo: "CREAR_USUARIOS",
+        codigoPermiso: "CREAR_USUARIOS",
+        idModulo: 1,
+        moduloId: 1,
+        nombreModulo: "Seguridad",
         moduloNombre: "Seguridad",
         descripcion: "Permite crear nuevos usuarios",
-        accion: "create"
+        activo: true,
+        esActivo: true,
     },
     {
-        id: "perm-003",
+        idPermiso: 3,
+        id: 3,
         nombre: "Editar Usuarios",
-        moduloId: "mod-001",
+        codigo: "EDITAR_USUARIOS",
+        codigoPermiso: "EDITAR_USUARIOS",
+        idModulo: 1,
+        moduloId: 1,
+        nombreModulo: "Seguridad",
         moduloNombre: "Seguridad",
         descripcion: "Permite editar usuarios",
-        accion: "update"
-    },
-    {
-        id: "perm-004",
-        nombre: "Eliminar Usuarios",
-        moduloId: "mod-001",
-        moduloNombre: "Seguridad",
-        descripcion: "Permite eliminar usuarios",
-        accion: "delete"
+        activo: true,
+        esActivo: true,
     },
     // Módulo: Pacientes
     {
-        id: "perm-005",
+        idPermiso: 4,
+        id: 4,
         nombre: "Ver Pacientes",
-        moduloId: "mod-002",
+        codigo: "VER_PACIENTES",
+        codigoPermiso: "VER_PACIENTES",
+        idModulo: 2,
+        moduloId: 2,
+        nombreModulo: "Pacientes",
         moduloNombre: "Pacientes",
         descripcion: "Permite ver el listado de pacientes",
-        accion: "read"
+        activo: true,
+        esActivo: true,
     },
     {
-        id: "perm-006",
+        idPermiso: 5,
+        id: 5,
         nombre: "Crear Pacientes",
-        moduloId: "mod-002",
+        codigo: "CREAR_PACIENTES",
+        codigoPermiso: "CREAR_PACIENTES",
+        idModulo: 2,
+        moduloId: 2,
+        nombreModulo: "Pacientes",
         moduloNombre: "Pacientes",
         descripcion: "Permite crear nuevos pacientes",
-        accion: "create"
+        activo: true,
+        esActivo: true,
     }
 ];
 
@@ -382,13 +364,13 @@ export const requestAsignarRol = {
 
 // RESPONSE
 export const responseAsignarRol = {
-    Mensaje: "Rol asignado exitosamente",
-    EsCorrecto: true
+    mensaje: "Rol asignado exitosamente",
+    esCorrecto: true,
 };
 
 export const responseDesvincularRol = {
-    Mensaje: "Rol desvinculado exitosamente",
-    EsCorrecto: true
+    mensaje: "Rol desvinculado exitosamente",
+    esCorrecto: true,
 };
 
 // ============================================
@@ -530,18 +512,28 @@ export const ejemploCuentasPaciente = [
     }
 ];
 
-// GET /api/usuarios-roles/usuario/{usuarioId}
+// GET /api/usuarios/{idUsuario}/roles
 // Obtener roles de un usuario
 export const ejemploRolesDelUsuario = [
     {
-        id: "role-001",
+        idUsuarioRol: 1,
+        idUsuario: 1,
+        idRol: 1,
+        id: 1,
         nombre: "Administrador",
-        descripcion: "Acceso total al sistema"
+        nombreRol: "Administrador",
+        activo: true,
+        esActivo: true,
     },
     {
-        id: "role-002",
+        idUsuarioRol: 2,
+        idUsuario: 1,
+        idRol: 2,
+        id: 2,
         nombre: "Doctor",
-        descripcion: "Acceso limitado para doctores"
+        nombreRol: "Doctor",
+        activo: true,
+        esActivo: true,
     }
 ];
 

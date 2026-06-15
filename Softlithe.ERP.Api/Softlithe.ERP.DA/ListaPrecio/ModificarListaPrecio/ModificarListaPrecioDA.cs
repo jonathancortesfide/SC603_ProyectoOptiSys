@@ -28,7 +28,8 @@ namespace Softlithe.ERP.DA.ListaPrecio.ModificarListaPrecio
                     return 0;
                 }
                 ListaExistente.Descripcion = laListaPrecio.descripcion;
-                ListaExistente.Activo = laListaPrecio.Activo;// aca se le manda el estado en caso de que este camnbie a inactivo o activo
+                ListaExistente.IdMoneda = laListaPrecio.id_moneda;
+                ListaExistente.ValorPorDefecto = laListaPrecio.ValorPorDefecto;
                 _contextoBasedeDatos.ListaPrecioContexto.Update(ListaExistente);
                 int resultadoRegistro = await _contextoBasedeDatos.SaveChangesAsync();
                 await transaction.CommitAsync();

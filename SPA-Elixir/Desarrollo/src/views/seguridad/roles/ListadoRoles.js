@@ -2,7 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     Box,
     Button,
+    Chip,
     Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Typography,
     Table,
     TableBody,
     TableCell,
@@ -18,6 +23,7 @@ import {
     Alert,
 } from '@mui/material';
 import { IconEdit, IconTrash, IconPlus } from '@tabler/icons';
+import { alpha } from '@mui/material/styles';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioRol from './FormularioRol';
 import { obtenerListaDeRoles, eliminarRol } from '../../../requests/roles/RequestsRoles';
@@ -33,6 +39,10 @@ const ListadoRoles = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    // Dialog cambiar estado
+    const [estadoDialog, setEstadoDialog] = useState({ open: false, rol: null });
+    const [loadingEstado, setLoadingEstado] = useState(false);
+
     useEffect(() => {
         cargarRoles();
     }, []);
@@ -41,7 +51,7 @@ const ListadoRoles = () => {
         setLoading(true);
         setError(null);
         const data = await obtenerListaDeRoles();
-        if (data && data.length > 0) {
+        if (Array.isArray(data)) {
             setRoles(data);
         } else {
             setError('No se pudieron cargar los roles');
@@ -71,14 +81,27 @@ const ListadoRoles = () => {
         handleCerrarFormulario();
     };
 
-    const handleEliminarRol = async (rol) => {
-        if (window.confirm(`¿Está seguro de eliminar el rol ${rol.nombre}?`)) {
-            const resultado = await eliminarRol(rol.id);
-            if (resultado.EsCorrecto) {
-                setRoles(roles.filter(r => r.id !== rol.id));
-            } else {
-                setError('Error al eliminar el rol');
-            }
+    const handleEliminarRol = (rol) => {
+        setEstadoDialog({ open: true, rol });
+    };
+
+    const handleCerrarEstadoDialog = () => {
+        setEstadoDialog({ open: false, rol: null });
+    };
+
+    const handleConfirmarEstado = async () => {
+        const { rol } = estadoDialog;
+        const siguienteEstado = !rol.esActivo;
+        setLoadingEstado(true);
+        const resultado = await eliminarRol(rol.id, siguienteEstado);
+        setLoadingEstado(false);
+        if (resultado.EsCorrecto) {
+            handleCerrarEstadoDialog();
+            await cargarRoles();
+        } else {
+            const accion = siguienteEstado ? 'activar' : 'inactivar';
+            setError(resultado.Mensaje || `Error al ${accion} el rol`);
+            handleCerrarEstadoDialog();
         }
     };
 
@@ -137,6 +160,7 @@ const ListadoRoles = () => {
                         <TableRow>
                             <TableCell><strong>Nombre del Rol</strong></TableCell>
                             <TableCell><strong>Descripción</strong></TableCell>
+                            <TableCell align="center"><strong>Estado</strong></TableCell>
                             <TableCell align="center"><strong>Acciones</strong></TableCell>
                         </TableRow>
                     </TableHead>
@@ -147,20 +171,27 @@ const ListadoRoles = () => {
                                     <TableCell>{rol.nombre}</TableCell>
                                     <TableCell>{rol.descripcion || '-'}</TableCell>
                                     <TableCell align="center">
+                                        <Chip
+                                            label={rol.esActivo ? 'Activo' : 'Inactivo'}
+                                            color={rol.esActivo ? 'success' : 'default'}
+                                            size="small"
+                                        />
+                                    </TableCell>
+                                    <TableCell align="center">
                                         <Stack direction="row" spacing={0.5} justifyContent="center">
                                             <IconButton
                                                 size="small"
                                                 color="primary"
                                                 onClick={() => handleAbrirFormulario(rol)}
-                                                title="Editar"
+                                                title="Gestionar permisos"
                                             >
                                                 <IconEdit size={18} />
                                             </IconButton>
                                             <IconButton
                                                 size="small"
-                                                color="error"
+                                                color={rol.esActivo ? 'error' : 'success'}
                                                 onClick={() => handleEliminarRol(rol)}
-                                                title="Eliminar"
+                                                title={rol.esActivo ? 'Inactivar' : 'Activar'}
                                             >
                                                 <IconTrash size={18} />
                                             </IconButton>
@@ -170,7 +201,7 @@ const ListadoRoles = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                                     No hay roles disponibles
                                 </TableCell>
                             </TableRow>
@@ -197,6 +228,46 @@ const ListadoRoles = () => {
                     onGuardar={handleGuardarRol}
                     onCancel={handleCerrarFormulario}
                 />
+            </Dialog>
+
+            {/* Dialog cambiar estado */}
+            <Dialog open={estadoDialog.open} onClose={handleCerrarEstadoDialog} maxWidth="xs" fullWidth>
+                <DialogTitle>
+                    {estadoDialog.rol?.esActivo ? 'Inactivar rol' : 'Activar rol'}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2">
+                        {estadoDialog.rol?.esActivo
+                            ? `¿Está seguro de inactivar el rol "${estadoDialog.rol?.nombre}"?`
+                            : `¿Está seguro de activar el rol "${estadoDialog.rol?.nombre}"?`}
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={handleCerrarEstadoDialog}
+                        disabled={loadingEstado}
+                        sx={(theme) => ({
+                            '&:hover': {
+                                borderColor: theme.palette.error.main,
+                                color: theme.palette.error.main,
+                                backgroundColor: alpha(theme.palette.error.main, 0.06),
+                            },
+                        })}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color={estadoDialog.rol?.esActivo ? 'error' : 'success'}
+                        onClick={handleConfirmarEstado}
+                        disabled={loadingEstado}
+                    >
+                        {loadingEstado
+                            ? <CircularProgress size={20} color="inherit" />
+                            : estadoDialog.rol?.esActivo ? 'Inactivar' : 'Activar'}
+                    </Button>
+                </DialogActions>
             </Dialog>
         </ParentCard>
     );

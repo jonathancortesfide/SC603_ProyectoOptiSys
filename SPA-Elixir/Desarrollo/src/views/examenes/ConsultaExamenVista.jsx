@@ -1,14 +1,14 @@
 // ConsultaExamenVista.jsx
 import React, { useState } from "react";
 import {
-  Box, Grid, TextField, Button, List, ListItem, ListItemText, Divider, Alert, CircularProgress
+  Box, Grid, TextField, Button, List, ListItem, ListItemText, Divider
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import PageContainer from "../../components/container/PageContainer";
 import ParentCard from "../../components/shared/ParentCard";
 import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
-import { obtenerExamenes } from "../../requests/examenes/RequestsExamenes";
+import examenesMock from "./examenes.json";
 
 import DatosGenerales from "./DatosGenerales";
 import GraduacionRx from "./GraduacionRx";
@@ -20,18 +20,10 @@ const ConsultaExamenVista = () => {
   const [filtroPaciente, setFiltroPaciente] = useState("");
   const [resultados, setResultados] = useState([]);
   const [examen, setExamen] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
- const buscar = async () => {
-  setLoading(true);
-  setError("");
-  let data = await obtenerExamenes(filtroPaciente || '');
-
-  if (!Array.isArray(data)) {
-    data = [];
-  }
+ const buscar = () => {
+  let data = examenesMock;
 
   if (filtroExamen) {
     data = data.filter(e =>
@@ -46,11 +38,6 @@ const ConsultaExamenVista = () => {
   }
 
   setResultados(data);
-  setExamen(null);
-  if (!data.length) {
-    setError('No se encontraron exámenes con los filtros indicados');
-  }
-  setLoading(false);
 };
 
   const cargarExamen = (item) => {
@@ -61,7 +48,6 @@ const ConsultaExamenVista = () => {
       <Breadcrumb title="Consulta de Exámenes" description="Buscar exámenes anteriores" />
 
       <ParentCard title="Búsqueda">
-        {error && <Alert severity="info" sx={{ mb: 2 }}>{error}</Alert>}
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
             <TextField
@@ -86,10 +72,9 @@ const ConsultaExamenVista = () => {
               fullWidth
               variant="contained"
               onClick={buscar}
-              disabled={loading}
               sx={{ height: "100%" }}
             >
-              {loading ? <CircularProgress size={22} color="inherit" /> : 'Buscar'}
+              Buscar
             </Button>
           </Grid>
           

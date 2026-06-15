@@ -14,7 +14,7 @@ import {
     obtenerMonedasPorIdentificador,
     cambiarEstadoMoneda,
 } from '../../../requests/mantenimientos/moneda/RequestsMonedas';
-import { getSucursalIdentificador } from '../../../utils/sucursal';
+import { getSucursalIdentificador } from '../../../utils/sucursal'; 
 
 // TODO: obtener del usuario loggeado (fallback en utils/sucursal)
 const USUARIO = 'jonathan';
@@ -55,7 +55,7 @@ const Monedas = () => {
         successTimerRef.current = setTimeout(() => setSuccessOpen(false), 3500);
     };
 
-    const cargarMonedas = async () => {
+    const cargarMonedas = async () => { 
         setLoading(true);
         setError(null);
         const resp = await obtenerMonedasPorIdentificador(getSucursalIdentificador());
@@ -145,7 +145,6 @@ const Monedas = () => {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell><strong>#</strong></TableCell>
                                 <TableCell><strong>Descripción</strong></TableCell>
                                 <TableCell><strong>Signo</strong></TableCell>
                                 <TableCell align="center"><strong>Estado</strong></TableCell>
@@ -155,7 +154,6 @@ const Monedas = () => {
                         <TableBody>
                             {monedasActivas.length > 0 ? monedasActivas.map((m) => (
                                 <TableRow key={m.idMoneda} hover>
-                                    <TableCell>{m.numeroDeMoneda}</TableCell>
                                     <TableCell>{m.descripcion}</TableCell>
                                     <TableCell>{m.signo}</TableCell>
                                     <TableCell align="center">
@@ -180,7 +178,7 @@ const Monedas = () => {
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} align="center">No hay monedas</TableCell>
+                                    <TableCell colSpan={4} align="center">No hay monedas</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>

@@ -20,6 +20,8 @@ namespace Softlithe.ERP.Api.Inyeccion
 			//Inyeccion de Examenes 
 			services.AddScoped<IAgregarExamenDA, AgregarExamenDA>();
 			services.AddScoped<IAgregarExamenBW, AgregarExamenBW>();
+		services.AddScoped<Softlithe.ERP.Abstracciones.DA.Examenes.IObtenerExamenGraduacionesAD, Softlithe.ERP.DA.Examenes.ObtenerExamenGraduaciones.ObtenerExamenGraduacionesAD>();
+		services.AddScoped<Softlithe.ERP.Abstracciones.BW.Examenes.IObtenerExamenCompletoBW, Softlithe.ERP.BW.Examenes.ObtenerExamenCompleto.ObtenerExamenCompletoBW>();
 
 			return services;
 		}

@@ -25,7 +25,8 @@ namespace Softlithe.ERP.DA.Marcas
                 Marca marca = new Marca
                 {
                     NoEmpresa = elMarca.NoEmpresa,
-                    Descripcion = elMarca.Descripcion
+                    Descripcion = elMarca.Descripcion,
+                    Activo = elMarca.EsActivo
                 };
 
                 await _contextoBasedeDatos.Marcas.AddAsync(marca);

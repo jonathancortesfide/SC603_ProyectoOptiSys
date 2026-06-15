@@ -3,9 +3,8 @@ const apiBase = import.meta.env.VITE_ApiBase;
 const apiListasPrecios = `${apiBase}/ListaPrecio/`;
 const apiListaPrecioPorId = `${apiBase}/ListaPrecio/`;
 const apiCrearListaPrecio = `${apiBase}/ListaPrecio/Agregar`;
-const apiActualizarListaPrecio = `${apiBase}/ListaPrecio/`;
-const apiEliminarListaPrecio = `${apiBase}/ListaPrecio/`;
-const apiListasPreciosPorMoneda = `${apiBase}/ListaPrecio/Obtener?id_moneda=`;
+const apiActualizarListaPrecio = `${apiBase}/ListaPrecio/Modificar`;
+const apiListasPreciosPorDescripcion = `${apiBase}/ListaPrecio/Obtener?descripcion=`;
 const apiModificarEstadoListaPrecio = `${apiBase}/ListaPrecio/ModificarEstado/`;
 
 export {
@@ -13,7 +12,6 @@ export {
   apiListaPrecioPorId,
   apiCrearListaPrecio,
   apiActualizarListaPrecio,
-  apiEliminarListaPrecio,
-  apiListasPreciosPorMoneda,
+  apiListasPreciosPorDescripcion,
   apiModificarEstadoListaPrecio
 };

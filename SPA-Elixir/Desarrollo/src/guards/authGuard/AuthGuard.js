@@ -1,12 +1,16 @@
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import useAuth from './UseAuth';
-import Spinner from '../../views/spinner/Spinner';
+import { useEffect } from 'react';
 
 const AuthGuard = ({ children }) => {
-  const { isAuthenticated, isInitialized } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  if (!isInitialized) return <Spinner />;
-  if (!isAuthenticated) return <Navigate to="/auth/login" replace />;
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth/login', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   return children;
 };

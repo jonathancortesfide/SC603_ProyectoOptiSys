@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
@@ -15,68 +15,96 @@ import {
   Dialog,
   Switch,
   FormControlLabel,
-  TextField
+  TextField,
+  Chip,
+  Collapse,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography
 } from '@mui/material';
-import { IconPlus, IconEdit, IconCheck, IconX } from '@tabler/icons';
+import { alpha } from '@mui/material/styles';
+import { IconPlus, IconEdit, IconToggleLeft, IconToggleRight } from '@tabler/icons';
 import PageContainer from '../../../components/container/PageContainer';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
-import FormularioTipoLente from './FormularioTipoLente';
+import FormularioTipoLente from './FormularioTipoLente'; 
+import { getNoEmpresa } from '../../../utils/sucursal';
+
 import { 
-  obtenerTipoLente,
+  obtenerTipoLentePorDescripcion,
   modificarEstadoTipoLente
 } from '../../../requests/mantenimientos/TipoLente/RequestsTipoLente';
-import { getSucursalIdentificador } from '../../../utils/sucursal';
 
 const TipoLente = () => {
-  const noEmpresaPorDefecto = String(getSucursalIdentificador() ?? '').trim();
-  const [noEmpresa] = useState(noEmpresaPorDefecto);
+  const [descripcion, setDescripcion] = useState('');
   const [tipos, setTipos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [successOpen, setSuccessOpen] = useState(false);
+  const successTimerRef = useRef(null);
   const [soloActivos, setSoloActivos] = useState(true);
   const [noResults, setNoResults] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [tipoSeleccionado, setTipoSeleccionado] = useState(null);
-  const [cambiandoEstado, setCambiandoEstado] = useState(null);
+
+  // Dialog cambiar estado
+  const [estadoDialog, setEstadoDialog] = useState({ open: false, tipo: null });
+  const [loadingEstado, setLoadingEstado] = useState(false);
+  const [errorEstado, setErrorEstado] = useState(null);
 
   const tiposFiltrados = soloActivos ? tipos.filter(t => t.activo === true) : tipos;
 
-  const handleBuscar = async (empresa = noEmpresa) => {
-    const empresaActual = String(empresa ?? '').trim();
-
-    if (!empresaActual) {
-      setError('No se encontro VITE_SUCURSAL_IDENTIFICADOR para cargar los tipos de lente');
-      setTipos([]);
-      setNoResults(false);
-      return;
+  useEffect(() => () => {
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
+      successTimerRef.current = null;
     }
-
-    setError(null);
-    setLoading(true);
-    try {
-      const data = await obtenerTipoLente(empresaActual);
-      if (data && Array.isArray(data)) {
-        setTipos(data);
-        setNoResults(data.length === 0);
-      } else {
-        setError('No se pudieron cargar los tipos de lente');
-        setTipos([]);
-        setNoResults(false);
-      }
-    } catch (err) {
-      setError('Error al buscar tipos de lente');
-      setTipos([]);
-      setNoResults(false);
-    }
-    setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    handleBuscar(noEmpresaPorDefecto);
-  }, [noEmpresaPorDefecto]);
+  handleBuscar();   
+}, []);
+
+  
+  const showSuccess = (payload) => {
+    setSuccess(payload);
+    setSuccessOpen(true);
+
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    // Close slightly before clearing to allow the collapse animation to play.
+    successTimerRef.current = setTimeout(() => setSuccessOpen(false), 3500);
+  };
+
+const handleBuscar = async () => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const identificador = getNoEmpresa();
+    const data = await obtenerTipoLentePorDescripcion(
+      descripcion.trim(),
+      identificador
+    ); 
+
+    if (data && Array.isArray(data)) {
+      setTipos(data);
+      setNoResults(data.length === 0);
+    } else {
+      setError('No se pudieron cargar los tipos de lente');
+      setTipos([]);
+      setNoResults(false);
+    }
+  } catch (err) {
+    setError('Error al buscar tipos de lente');
+    setTipos([]);
+    setNoResults(false);
+  }
+
+  setLoading(false);
+};
 
   const handleOpenDialog = () => {
     setModoEdicion(false);
@@ -97,9 +125,9 @@ const TipoLente = () => {
   };
 
   const handleGuardar = async () => {
-    setSuccess('Operación completada exitosamente');
+    setOpenDialog(false);
+    showSuccess({ message: 'Tipo de lente guardado correctamente', severity: 'info' });
     handleCloseDialog();
-    setTimeout(() => setSuccess(null), 3000);
     // Recargar la tabla
     try {
       await handleBuscar();
@@ -109,53 +137,78 @@ const TipoLente = () => {
   };
 
   const handleCambiarEstado = async (tipo) => {
-    setCambiandoEstado(tipo.no_tipo);
-    try {
-      const nuevoEstado = !tipo.activo;
-      const response = await modificarEstadoTipoLente(tipo.no_tipo, nuevoEstado);
-      console.log('Respuesta al cambiar estado:', response);
-      
-      if (response && response.esCorrecto !== false) {
-        setSuccess(`Estado actualizado a ${nuevoEstado ? 'Activo' : 'Inactivo'}`);
-        setTimeout(() => setSuccess(null), 3000);
-        // Recargar la tabla
-        await handleBuscar();
-      } else {
-        setError(response?.mensaje || 'Error al cambiar el estado');
-        setTimeout(() => setError(null), 3000);
-      }
-    } catch (err) {
-      console.error('Error al cambiar estado:', err);
-      setError('Error al cambiar el estado del tipo de lente');
-      setTimeout(() => setError(null), 3000);
-    } finally {
-      setCambiandoEstado(null);
+    setEstadoDialog({ open: true, tipo });
+    setErrorEstado(null);
+  };
+
+  const handleCerrarCambioEstado = () => {
+    setEstadoDialog({ open: false, tipo: null });
+    setErrorEstado(null);
+  };
+
+  const handleConfirmarCambioEstado = async () => {
+    const { tipo } = estadoDialog;
+    setLoadingEstado(true);
+    setErrorEstado(null);
+
+    const nuevoEstado = !tipo.activo;
+    const res = await modificarEstadoTipoLente(tipo.no_tipo, nuevoEstado);
+
+    if (res && res.esCorrecto !== false) {
+      handleCerrarCambioEstado();
+      showSuccess({
+        message: `Tipo de lente ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`,
+        severity: 'info',
+      });
+      await handleBuscar();
+    } else {
+      setErrorEstado(res?.mensaje || 'No se pudo cambiar el estado');
     }
+    setLoadingEstado(false);
   };
 
   return (
     <PageContainer title="Tipo de lente" description="Mantenimiento de tipo de lente">
       <Breadcrumb title="Tipo de lente" items={[{ title: 'Mantenimientos' }, { title: 'Tipo de lente' }]} />
       <ParentCard title="Tipo de lente">
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+        {success && (
+          <Collapse
+            in={successOpen}
+            timeout={250}
+            onExited={() => setSuccess(null)}
+          >
+            <Alert
+              severity={success.severity ?? 'success'}
+              sx={{ mb: 2 }}
+              onClose={() => setSuccessOpen(false)}
+            >
+              {success.message ?? String(success)}
+            </Alert>
+          </Collapse>
+        )}
         
         <Box>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+            <Stack direction="row" spacing={2}>
+              <TextField
+                placeholder="Descripción"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                 sx={{ flex: 1 }}
+              />
               <Button
                 variant="contained"
                 onClick={handleBuscar}
                 disabled={loading}
               >
-                Recargar
+                {loading ? <CircularProgress size={20} /> : 'Buscar'}
               </Button>
               <Button
                 variant="contained"
                 color="success"
                 startIcon={<IconPlus />}
                 onClick={handleOpenDialog}
-                disabled={tipos.length === 0}
               >
                 Agregar
               </Button>
@@ -173,37 +226,42 @@ const TipoLente = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Descripción</TableCell>
-                    <TableCell>Activo</TableCell>
-                    <TableCell>Acciones</TableCell>
+                    <TableCell><strong>Descripción</strong></TableCell>
+                    <TableCell align="center"><strong>Estado</strong></TableCell>
+                    <TableCell align="center"><strong>Acciones</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {tiposFiltrados.map((tipo) => (
-                    <TableRow key={tipo.no_tipo}>
+                    <TableRow key={tipo.no_tipo} hover>
                       <TableCell>{tipo.descripcion}</TableCell>
-                      <TableCell>{tipo.activo ? 'Sí' : 'No'}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={1}>
-                          <Button 
-                            variant="outlined" 
-                            size="small" 
-                            startIcon={<IconEdit />}
-                            onClick={() => handleEdit(tipo)}
-                          >
-                            Editar
-                          </Button>
-                          <Button 
-                            variant={tipo.activo ? "outlined" : "contained"}
-                            color={tipo.activo ? "error" : "success"}
-                            size="small" 
-                            startIcon={tipo.activo ? <IconX /> : <IconCheck />}
-                            onClick={() => handleCambiarEstado(tipo)}
-                            disabled={cambiandoEstado === tipo.no_tipo}
-                          >
-                            {cambiandoEstado === tipo.no_tipo ? '...' : (tipo.activo ? 'Desactivar' : 'Activar')}
-                          </Button>
-                        </Stack>
+                      <TableCell align="center">
+                        <Chip
+                          label={tipo.activo ? 'Activo' : 'Inactivo'}
+                          color={tipo.activo ? 'success' : 'default'}
+                          size="small"
+                          variant={tipo.activo ? 'filled' : 'outlined'}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          color="info"
+                          variant={tipo.activo ? 'outlined' : 'contained'}
+                          startIcon={tipo.activo ? <IconToggleLeft /> : <IconToggleRight />}
+                          onClick={() => handleCambiarEstado(tipo)}
+                        >
+                          {tipo.activo ? 'Desactivar' : 'Activar'}
+                        </Button>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          startIcon={<IconEdit />}
+                          onClick={() => handleEdit(tipo)}
+                          sx={{ ml: 1 }}
+                        >
+                          Editar
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -232,8 +290,46 @@ const TipoLente = () => {
             modoEdicion={modoEdicion}
             onGuardar={handleGuardar}
             onCancel={handleCloseDialog}
-            noEmpresa={noEmpresa}
           />
+        </Dialog>
+
+        {/* ── Dialog: Cambiar estado ── */}
+        <Dialog open={estadoDialog.open} onClose={handleCerrarCambioEstado} maxWidth="xs" fullWidth>
+          <DialogTitle>
+            {estadoDialog.tipo?.activo ? 'Desactivar tipo de lente' : 'Activar tipo de lente'}
+          </DialogTitle>
+          <DialogContent>
+            {errorEstado && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{errorEstado}</Alert>}
+            <Typography variant="body2">
+              {estadoDialog.tipo?.activo
+                ? `¿Desactivar "${estadoDialog.tipo?.descripcion}"?`
+                : `¿Activar "${estadoDialog.tipo?.descripcion}"?`}
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={handleCerrarCambioEstado}
+              disabled={loadingEstado}
+              sx={(theme) => ({
+                '&:hover': {
+                  borderColor: theme.palette.error.main,
+                  color: theme.palette.error.main,
+                  backgroundColor: alpha(theme.palette.error.main, 0.06),
+                },
+              })}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              color="info"
+              onClick={handleConfirmarCambioEstado}
+              disabled={loadingEstado}
+            >
+              {loadingEstado ? <CircularProgress size={20} color="inherit" /> : 'Confirmar'}
+            </Button>
+          </DialogActions>
         </Dialog>
       </ParentCard>
     </PageContainer>
