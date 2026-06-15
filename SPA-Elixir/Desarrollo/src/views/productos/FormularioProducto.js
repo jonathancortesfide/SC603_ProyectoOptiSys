@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Grid, TextField, Button, Checkbox, FormControlLabel, MenuItem, Accordion, AccordionSummary, AccordionDetails, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, InputAdornment, IconButton } from '@mui/material';
 import { IconChevronDown, IconSearch } from '@tabler/icons';
 import { AgregarProducto } from '../../requests/mantenimientos/producto/RequestsProductos';
-import { obtenerListaDeTipoLentes } from '../../requests/mantenimientos/TipoLente/RequestsTipoLente';
+import { obtenerTipoLente } from '../../requests/mantenimientos/TipoLente/RequestsTipoLente';
 
 const tiposArticulo = [ 'Material', 'Servicio', 'Servicio-Externo' ];
 const tiposImpuesto = [ 'Exento', 'IVA', 'Otro' ];
@@ -50,7 +50,7 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
   }, [producto]);
 
   const cargarTiposLente = async () => {
-    const data = await obtenerListaDeTipoLentes();
+    const data = await obtenerTipoLente();
     if (data && Array.isArray(data) && data.length > 0) {
       setTiposLente(data.filter(t => t.activo).map(t => ({ value: t.no_tipo, label: t.descripcion })));
     } else {
