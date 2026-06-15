@@ -1,0 +1,16 @@
+**/.git
+**/.gitignore
+**/.vs
+**/bin
+**/obj
+**/*.user
+**/node_modules
+**/.env
+**/.env.local
+**/appsettings.Development.json
+**/.DS_Store
+.git
+.gitignore
+README.md
+.vscode
+.idea
