@@ -1,9 +1,9 @@
 import axios from '../../utils/axios';
-import { getNoEmpresa, getSucursalIdentificador } from '../../utils/empresa';
+import { getNoEmpresa } from '../../utils/empresa';
 
 const apiBase = import.meta.env.VITE_ApiBase;
 
-const apiObtenerTiposLente       = `${apiBase}/TipoLente/Obtener`;
+const apiObtenerTiposLente        = `${apiBase}/TipoLente/Obtener`;
 const apiObtenerMaterialesPorTipo = `${apiBase}/Productos/ObtenerProductosMT`;
 const apiObtenerProductosAro      = `${apiBase}/Productos/ObtenerProductosAR`;
 const apiObtenerLaboratorios      = `${apiBase}/Proveedores/ObtenerLaboratorios`;
@@ -44,7 +44,7 @@ const obtenerTiposLente = async (identificador) => {
   }
 };
 
-const obtenerMaterialesPorTipo = async (noTipo, identificador) => {
+const obtenerMaterialesPorTipo = async (identificador, noTipo) => {
   const id = identificador ?? getNoEmpresa();
 
   try {
@@ -89,7 +89,7 @@ const obtenerProductosAro = async (descripcion, identificador) => {
 };
 
 const obtenerLaboratorios = async (identificador) => {
-  const id = identificador ?? getSucursalIdentificador();
+  const id = identificador ?? getNoEmpresa();
 
   try {
     const response = await axios.get(

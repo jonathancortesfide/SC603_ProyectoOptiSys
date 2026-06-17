@@ -383,7 +383,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
                     size="small"
                     onFocus={() => {
                       if (aroOptions.length > 0) setAroComboOpen(true);
-                    }}
+                    }} 
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
