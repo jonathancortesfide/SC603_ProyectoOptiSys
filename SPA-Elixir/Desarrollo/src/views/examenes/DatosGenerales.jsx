@@ -43,12 +43,10 @@ const DatosGenerales = ({ examen, setExamen }) => (
       <Box mb={2}>
       <BusquedaDePaciente
         noPaciente={examen.NoPaciente}
-        onPacienteChange={(paciente) => {
-          console.log("Paciente recibido en DatosGenerales:", paciente);
-          setExamen(prev => ({
+        onPacienteChange={(paciente) => {setExamen(prev => ({
             ...prev,
             NoPaciente: paciente?.noPaciente ?? 0,
-            NombrePaciente: paciente?.nombre ?? prev.NombrePaciente ?? "",
+            NombrePaciente: paciente?.nombre ?? paciente?.Nombre ?? prev.NombrePaciente ?? "",
             Paciente: paciente ?? null,
           }));
         }}

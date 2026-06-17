@@ -12,7 +12,7 @@ const parseOptionalInt = (value) => {
 };
 
 /** Persiste la empresa elegida (selección explícita o única empresa detectada). */
-export const setNoEmpresaSeleccionada = (noEmpresa) => {
+export const setNoEmpresaSeleccionada = (noEmpresa) => { 
     const n = Number.parseInt(String(noEmpresa), 10);
     if (!Number.isFinite(n)) return;
     window.localStorage.setItem(STORAGE_NO_EMPRESA, String(n));
