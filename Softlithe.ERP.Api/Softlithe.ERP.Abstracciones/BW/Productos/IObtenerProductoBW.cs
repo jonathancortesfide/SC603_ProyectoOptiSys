@@ -7,5 +7,8 @@ namespace Softlithe.ERP.Abstracciones.BW.Productos
         Task<ProductoConModeloDeValidacion> ObtenerProductos(ParametroConsultaProducto parametroConsultaProducto);
 
         Task<ProductoDetalleConModeloDeValidacion> ObtenerProductoPorId(ParametroConsultaProductoPorId parametro);
+        Task<ProductoConModeloDeValidacion> ObtenerProductosMT(int noEmpresa, int noTipo);
+        Task<ProductoConModeloDeValidacion> ObtenerProductosAR(int noEmpresa, string descripcion);
     }
 }
+ 
