@@ -98,7 +98,10 @@ namespace Softlithe.ERP.DA.Productos
                         CodigoMaterial = GetString("codigo_material"),
                         CodigoImpuesto = GetString("codigo_impuesto"),
                         NoTarifa = GetString("no_tarifa"),
-                        CodigoCabys = GetString("codigo_cabys")
+                        CodigoCabys = GetString("codigo_cabys"),
+                        // Precios: algunos stored procedures devuelven distintos alias; intentamos varias claves
+                        PrecioSinImpuesto = GetDecimal("precio_sin_impuesto") ?? GetDecimal("precio_venta") ?? GetDecimal("precio_neto"),
+                        PrecioConImpuesto = GetDecimal("precio_con_impuesto") ?? GetDecimal("precio_neto") ?? GetDecimal("precio_venta")
                     };
 
                     producto.Identificador = 0;
@@ -199,7 +202,9 @@ namespace Softlithe.ERP.DA.Productos
                         CodigoMaterial = GetString("codigo_material"),
                         CodigoImpuesto = GetString("codigo_impuesto"),
                         NoTarifa = GetString("no_tarifa"),
-                        CodigoCabys = GetString("codigo_cabys")
+                        CodigoCabys = GetString("codigo_cabys"),
+                        PrecioSinImpuesto = GetDecimal("precio_sin_impuesto") ?? GetDecimal("precio_venta") ?? GetDecimal("precio_neto"),
+                        PrecioConImpuesto = GetDecimal("precio_con_impuesto") ?? GetDecimal("precio_neto") ?? GetDecimal("precio_venta")
                     };
 
                     // Campos obligatorios de DTO que no devuelve el SP: Identificador y Usuario

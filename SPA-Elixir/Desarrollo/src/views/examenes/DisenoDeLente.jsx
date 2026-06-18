@@ -93,16 +93,14 @@ export default function DisenoDeLente({ examen, setExamen }) {
     cargarTiposLente();
   }, []);
 
-  // ── Cargar materiales cuando cambia el tipo de lente ───────────────────────
   useEffect(() => {
     const cargarMateriales = async () => {
       if (!tipoLente?.no_tipo) {
         setMateriales([]);
         return;
       }
-
-      const productos = await obtenerMaterialesPorTipo(tipoLente.no_tipo);
-
+      const productos = await obtenerMaterialesPorTipo(tipoLente.no_tipo, null);
+      console.log('Materiales obtenidos para tipo', tipoLente.no_tipo, ':', productos);
       const lista = productos.map((item) => ({
         idProducto: item.idProducto,
         descripcion: item.descripcion || "",
