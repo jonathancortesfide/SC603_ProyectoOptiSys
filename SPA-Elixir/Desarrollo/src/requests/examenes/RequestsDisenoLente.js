@@ -92,11 +92,12 @@ const obtenerProductosAro = async (descripcion, identificador) => {
 
 const obtenerLaboratorios = async (identificador) => {
   const id = identificador ?? getNoEmpresa();
-
+  const url = `${apiObtenerLaboratorios}/${encodeURIComponent(id)}`;
+  
+  console.log('apiObtenerLaboratorios URL:', url);
+  
   try {
-    const response = await axios.get(
-      `${apiObtenerLaboratorios}/${encodeURIComponent(id)}`
-    );
+    const response = await axios.get(url);
 
     const data = response.data;
 

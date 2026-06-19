@@ -24,5 +24,11 @@ namespace Softlithe.ERP.Api.Controllers
 			ModeloValidacion elModeloDeValidacion = await _agregarExamenBW.Agregar(datos);
 			return elModeloDeValidacion;
 		}
-	}
+        [HttpGet("ObtenerProximoNumeroExamen/{identificador}")]
+        public async Task<int> ObtenerProximoNumeroExamen([FromRoute] int identificador)
+        {
+            int resultado = await _agregarExamenBW.ObtenerProximoNumeroExamen(identificador);
+            return resultado;
+        }
+    }
 }

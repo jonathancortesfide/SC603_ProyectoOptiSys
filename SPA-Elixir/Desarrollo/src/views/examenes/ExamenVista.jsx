@@ -122,7 +122,6 @@ const ExamenVista = () => {
     const obtenerProximoNumeroExamen = async () => {
       try {
         const identificadorSucursal = getSucursalIdentificador();
-        console.log("Identificador de sucursal:", identificadorSucursal);
         
         if (!identificadorSucursal) {
           console.warn("No se encontró identificador de sucursal en sesión");

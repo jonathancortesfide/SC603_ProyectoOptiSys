@@ -23,8 +23,23 @@ namespace Softlithe.ERP.DA.Examenes.AgregarExamen
 			_conexionABaseDeDatos = conexionABaseDeDatos;
 			_logger = logger;
 		}
-
-		public async Task<int> Agregar(AgregarExamenDto datos)
+        public async Task<int> ObtenerProximoNumeroExamen(int identificador)
+        {
+            try
+            {
+                using (IDbConnection dbConnection = new SqlConnection(_conexionABaseDeDatos.ObtenerCadenaDeConexion()))
+                {
+                    string sql = "SELECT ISNULL(MAX(no_examen), 0) FROM Examen WHERE identificador = @identificador";
+                    int maximo = await dbConnection.QuerySingleAsync<int>(sql, new { identificador });
+                    return maximo + 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+        }
+        public async Task<int> Agregar(AgregarExamenDto datos)
 		{
 			try
 			{

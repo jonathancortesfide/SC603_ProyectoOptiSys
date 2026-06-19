@@ -124,7 +124,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
       setLabSearchLoading(true);
 
       const data = await obtenerLaboratorios();
-
+      console.log('Laboratorios obtenidos:', data);
       const options = data
         .map((item) => ({
           id: item.idProveedor ?? item.id ?? item.Id ?? null,
@@ -246,7 +246,14 @@ export default function DisenoDeLente({ examen, setExamen }) {
                 option.idProducto === value.idProducto
               }
               value={material}
-              onChange={(_, newValue) => setMaterial(newValue)}
+              onChange={(_, newValue) => {
+                setMaterial(newValue);
+                const precio = getPrecioDeItem(newValue);
+                setExamen((prev) => ({
+                  ...prev,
+                  CostoMaterial: precio !== null ? precio : "",
+                }));
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}
