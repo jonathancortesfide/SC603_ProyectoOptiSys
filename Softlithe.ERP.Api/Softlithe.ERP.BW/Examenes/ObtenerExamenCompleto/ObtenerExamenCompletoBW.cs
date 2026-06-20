@@ -34,7 +34,7 @@ namespace Softlithe.ERP.BW.Examenes.ObtenerExamenCompleto
             {
                 var graduaciones = await _obtenerExamenGraduacionesAD.Obtener(noPaciente);
 
-                respuesta.EsCorrecto = true;                                                                      
+                respuesta.EsCorrecto = true;
                 respuesta.Mensaje = "OK";
                 respuesta.Datos = graduaciones;
                 return respuesta;
@@ -42,60 +42,6 @@ namespace Softlithe.ERP.BW.Examenes.ObtenerExamenCompleto
             catch (System.Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener examen completo por paciente");
-                respuesta.EsCorrecto = false;
-                respuesta.Mensaje = "Error interno al obtener examen.";
-                respuesta.Datos = new List<ExamenGraduacionDto>();
-                return respuesta;
-            }
-        }
-
-        public async Task<ModeloValidacionConDatos<List<ExamenGraduacionDto>>> ObtenerPorNumeroExamen(int noExamen)
-        {
-            var respuesta = new ModeloValidacionConDatos<List<ExamenGraduacionDto>>
-            {
-                Mensaje = string.Empty,
-                EsCorrecto = false,
-                Datos = new List<ExamenGraduacionDto>()
-            };
-            try
-            {
-                var graduaciones = await _obtenerExamenGraduacionesAD.ObtenerPorNumeroExamen(noExamen);
-
-                respuesta.EsCorrecto = true;
-                respuesta.Mensaje = "OK";
-                respuesta.Datos = graduaciones;
-                return respuesta;
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener examen por número");
-                respuesta.EsCorrecto = false;
-                respuesta.Mensaje = "Error interno al obtener examen.";
-                respuesta.Datos = new List<ExamenGraduacionDto>();
-                return respuesta;
-            }
-        }
-
-        public async Task<ModeloValidacionConDatos<List<ExamenGraduacionDto>>> ObtenerPorCriterios(int? noExamen, int? noPaciente)
-        {
-            var respuesta = new ModeloValidacionConDatos<List<ExamenGraduacionDto>>
-            {
-                Mensaje = string.Empty,
-                EsCorrecto = false,
-                Datos = new List<ExamenGraduacionDto>()
-            };
-            try
-            {
-                var graduaciones = await _obtenerExamenGraduacionesAD.ObtenerPorCriterios(noExamen, noPaciente);
-
-                respuesta.EsCorrecto = true;
-                respuesta.Mensaje = "OK";
-                respuesta.Datos = graduaciones;
-                return respuesta;
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener examen por criterios");
                 respuesta.EsCorrecto = false;
                 respuesta.Mensaje = "Error interno al obtener examen.";
                 respuesta.Datos = new List<ExamenGraduacionDto>();
