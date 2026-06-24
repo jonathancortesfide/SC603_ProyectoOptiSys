@@ -15,7 +15,7 @@ namespace Softlithe.ERP.Api.Controllers
         private readonly IObtenerExamenCompletoBW _obtenerExamenCompletoBW;
 
         public ExamenCompletoController(IObtenerExamenCompletoBW obtenerExamenCompletoBW)
-        { 
+        {
             _obtenerExamenCompletoBW = obtenerExamenCompletoBW;
         }
 
@@ -45,19 +45,6 @@ namespace Softlithe.ERP.Api.Controllers
             var resultado = await _obtenerExamenCompletoBW.ObtenerPorNoPaciente(noPaciente);
             return resultado;
         }
-
-        [HttpPost("ObtenerPorNumeroExamen")]
-        public async Task<ModeloValidacionConDatos<System.Collections.Generic.List<ExamenGraduacionDto>>> ObtenerPorNumeroExamen(int noExamen)
-        {
-            var resultado = await _obtenerExamenCompletoBW.ObtenerPorNumeroExamen(noExamen);
-            return resultado;
-        }
-
-        [HttpPost("ObtenerPorCriterios")]
-        public async Task<ModeloValidacionConDatos<System.Collections.Generic.List<ExamenGraduacionDto>>> ObtenerPorCriterios(int? noExamen, int? noPaciente)
-        {
-            var resultado = await _obtenerExamenCompletoBW.ObtenerPorCriterios(noExamen, noPaciente);
-            return resultado;
-        }
     }
 }
+

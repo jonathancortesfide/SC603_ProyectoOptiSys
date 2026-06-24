@@ -10,5 +10,7 @@ namespace Softlithe.ERP.Abstracciones.DA.Examenes.AgregarExamen
 	public interface IAgregarExamenDA
 	{
 		Task<int> Agregar(AgregarExamenDto datos);
-	}
+        Task<int> ObtenerProximoNumeroExamen(int identificador);
+
+    }
 }

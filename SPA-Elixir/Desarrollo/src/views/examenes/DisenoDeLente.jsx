@@ -93,16 +93,14 @@ export default function DisenoDeLente({ examen, setExamen }) {
     cargarTiposLente();
   }, []);
 
-  // ── Cargar materiales cuando cambia el tipo de lente ───────────────────────
   useEffect(() => {
     const cargarMateriales = async () => {
       if (!tipoLente?.no_tipo) {
         setMateriales([]);
         return;
       }
-
-      const productos = await obtenerMaterialesPorTipo(tipoLente.no_tipo);
-
+      const productos = await obtenerMaterialesPorTipo(tipoLente.no_tipo, null);
+      console.log('Materiales obtenidos para tipo', tipoLente.no_tipo, ':', productos);
       const lista = productos.map((item) => ({
         idProducto: item.idProducto,
         descripcion: item.descripcion || "",
@@ -126,7 +124,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
       setLabSearchLoading(true);
 
       const data = await obtenerLaboratorios();
-
+      console.log('Laboratorios obtenidos:', data);
       const options = data
         .map((item) => ({
           id: item.idProveedor ?? item.id ?? item.Id ?? null,
@@ -248,7 +246,14 @@ export default function DisenoDeLente({ examen, setExamen }) {
                 option.idProducto === value.idProducto
               }
               value={material}
-              onChange={(_, newValue) => setMaterial(newValue)}
+              onChange={(_, newValue) => {
+                setMaterial(newValue);
+                const precio = getPrecioDeItem(newValue);
+                setExamen((prev) => ({
+                  ...prev,
+                  CostoMaterial: precio !== null ? precio : "",
+                }));
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}

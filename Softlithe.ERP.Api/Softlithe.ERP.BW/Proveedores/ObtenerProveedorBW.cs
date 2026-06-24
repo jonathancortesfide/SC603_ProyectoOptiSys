@@ -36,7 +36,20 @@ namespace Softlithe.ERP.BW.Proveedores
                 return ConstruirRespuestaExitosa(null);
             }
         }
+        public async Task<ProveedorConModeloDeValidacion> ObtenerProveedoresPorIdentificador(int identificador)
+        {
+            try
+            {
+                List<ProveedorDto> proveedores = await _proveedorRepository.ObtenerProveedoresPorIdentificadorAsync(identificador);
 
+                return ConstruirRespuestaExitosa(proveedores);
+            }
+            catch (Exception ex)
+            {
+                await _logger.RegistrarEventoError(ex);
+                return ConstruirRespuestaExitosa(null);
+            }
+        }
         private ProveedorConModeloDeValidacion ConstruirRespuestaExitosa(List<ProveedorDto>? laListaDeProveedores)
         {
             return new ProveedorConModeloDeValidacion

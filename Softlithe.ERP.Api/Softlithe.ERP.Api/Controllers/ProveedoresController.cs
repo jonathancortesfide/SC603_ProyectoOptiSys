@@ -11,7 +11,7 @@ namespace Softlithe.ERP.Api.Controllers
     {
         private readonly IObtenerProveedorBW _obtenerProveedorBW;
         private readonly IAgregarProveedorBW _agregarProveedorBW;
-        private readonly IModificarProveedorBW _modificarProveedorBW;
+        private readonly IModificarProveedorBW _modificarProveedorBW; 
         private readonly IModificarEstadoProveedorBW _modificarEstadoProveedorBW;
 
         public ProveedoresController(
@@ -88,6 +88,15 @@ namespace Softlithe.ERP.Api.Controllers
         {
             ModeloValidacion resultadoModeloValidacion = await _modificarEstadoProveedorBW.ModificaEstadoProveedor(parametroProveedor);
             return resultadoModeloValidacion;
+        }
+        /// <summary>
+        /// Obtiene laboratorios por identificador (sp_ObtenerLaboratorios).
+        /// </summary>
+        [HttpGet("ObtenerLaboratorios/{identificador}")]
+        public async Task<ProveedorConModeloDeValidacion> ObtenerLaboratorios([FromRoute] int identificador)
+        {
+            ProveedorConModeloDeValidacion resultado = await _obtenerProveedorBW.ObtenerProveedoresPorIdentificador(identificador);
+            return resultado;
         }
     }
 }

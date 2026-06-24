@@ -24,6 +24,7 @@ axios.interceptors.response.use(async (response) => response, function (error) {
 
 const obtenerTiposLente = async (identificador) => {
   const id = identificador ?? getNoEmpresa();
+  
 
   try {
     const response = await axios.get(apiObtenerTiposLente, {
@@ -34,6 +35,7 @@ const obtenerTiposLente = async (identificador) => {
     });
 
     if (response.status === 200 && response.data?.esCorrecto) {
+      console.log('Tipos de lente obtenidos:', response.data.tipoDeLente);
       return response.data.tipoDeLente || [];
     }
 
@@ -44,12 +46,12 @@ const obtenerTiposLente = async (identificador) => {
   }
 };
 
-const obtenerMaterialesPorTipo = async (identificador, noTipo) => {
-  const id = identificador ?? getNoEmpresa();
-
+const obtenerMaterialesPorTipo = async (noTipo, noEmpresa) => {
+  const noEmpresaa = noEmpresa ?? getNoEmpresa();
+  console.log('Obteniendo materiales para noTipo:', noTipo, 'y noEmpresa:', noEmpresaa);
   try {
     const response = await axios.get(
-      `${apiObtenerMaterialesPorTipo}/${encodeURIComponent(id)}/${encodeURIComponent(noTipo)}`
+      `${apiObtenerMaterialesPorTipo}/${encodeURIComponent(noEmpresaa)}/${encodeURIComponent(noTipo)}`
     );
 
     const data = response.data;
@@ -90,11 +92,12 @@ const obtenerProductosAro = async (descripcion, identificador) => {
 
 const obtenerLaboratorios = async (identificador) => {
   const id = identificador ?? getNoEmpresa();
-
+  const url = `${apiObtenerLaboratorios}/${encodeURIComponent(id)}`;
+  
+  console.log('apiObtenerLaboratorios URL:', url);
+  
   try {
-    const response = await axios.get(
-      `${apiObtenerLaboratorios}/${encodeURIComponent(id)}`
-    );
+    const response = await axios.get(url);
 
     const data = response.data;
 

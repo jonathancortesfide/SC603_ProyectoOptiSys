@@ -18,7 +18,12 @@ namespace Softlithe.ERP.BW.Examenes.AgregarExamen
 		{
 			_agregarExamenDA = agregarExamenDA;
 		}
-		public async Task<ModeloValidacion> Agregar(AgregarExamenDto datos)
+        public async Task<int> ObtenerProximoNumeroExamen(int identificador)
+        {
+            int resultado = await _agregarExamenDA.ObtenerProximoNumeroExamen(identificador);
+            return resultado;
+        }
+        public async Task<ModeloValidacion> Agregar(AgregarExamenDto datos)
 		{
 			ModeloValidacion modeloValidacion = GenerarModeloDeValidacion(false, MensajesDeExamenesDto.ExamenNoAgregado);
 			int resultado = await _agregarExamenDA.Agregar(datos);

@@ -8,7 +8,6 @@ namespace Softlithe.ERP.Abstracciones.BW.Examenes
     public interface IObtenerExamenCompletoBW
     {
         Task<ModeloValidacionConDatos<List<ExamenGraduacionDto>>> ObtenerPorNoPaciente(int noPaciente);
-        Task<ModeloValidacionConDatos<List<ExamenGraduacionDto>>> ObtenerPorNumeroExamen(int noExamen);
-        Task<ModeloValidacionConDatos<List<ExamenGraduacionDto>>> ObtenerPorCriterios(int? noExamen, int? noPaciente);
+
     }
 }
