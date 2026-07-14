@@ -11,7 +11,6 @@ import Profile from './Profile';
 
 import Search from './Search';
 import Language from './Language';
-import Navigation from './Navigation';
 import SesionEmpresaSucursalBarra from 'src/layouts/full/shared/sesionEmpresaSucursalBarra/SesionEmpresaSucursalBarra';
 import MobileRightSidebar from './MobileRightSidebar';
 
@@ -56,7 +55,6 @@ const Header = () => {
         <Search />
         {lgUp ? (
           <>
-            <Navigation />
             <SesionEmpresaSucursalBarra />
           </>
         ) : (

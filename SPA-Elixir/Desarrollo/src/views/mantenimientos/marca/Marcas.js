@@ -5,7 +5,6 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioMarca from './FormularioMarca';
 import {
@@ -157,7 +156,6 @@ const Marcas = () => {
 
     return (
         <PageContainer title="Marcas" description="Mantenimiento de marcas">
-            <Breadcrumb title="Marcas" items={[{ title: 'Mantenimientos' }, { title: 'Marcas' }]} />
             <ParentCard title="Marcas">
                 {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
                 {success && (

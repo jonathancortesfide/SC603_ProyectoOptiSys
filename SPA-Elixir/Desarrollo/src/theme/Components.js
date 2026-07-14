@@ -257,6 +257,20 @@ export default function components(theme) {
           '&:last-child td': {
             borderBottom: 0,
           },
+          '&:nth-of-type(even):not(:has(th))': {
+            backgroundColor:
+              theme.palette.mode === 'light' ? '#F5F7FA' : theme.palette.action.hover,
+          },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          borderBottom:
+            theme.palette.mode === 'light'
+              ? `2px solid ${theme.palette.primary.main}`
+              : 'none',
         },
       },
     },
@@ -353,12 +367,16 @@ export default function components(theme) {
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
+          backgroundColor: theme.palette.mode === 'light' ? '#F8FAFC' : 'transparent',
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor:
               theme.palette.mode === 'dark' ? theme.palette.grey[200] : theme.palette.grey[300],
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.palette.grey[300],
+          },
+          '&.Mui-focused': {
+            backgroundColor: '#ffffff',
           },
         },
         input: {
