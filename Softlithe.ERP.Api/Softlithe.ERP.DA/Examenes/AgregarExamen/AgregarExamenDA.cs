@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Softlithe.ERP.DA.Examenes.AgregarExamen
@@ -38,72 +39,107 @@ namespace Softlithe.ERP.DA.Examenes.AgregarExamen
             {
                 return -1;
             }
-        }
-        public async Task<int> Agregar(AgregarExamenDto datos)
-		{
-			try
-			{
-				int numeroDeExamen = 0;
-				using (IDbConnection dbConnection = new SqlConnection(_conexionABaseDeDatos.ObtenerCadenaDeConexion()))
-				{
-					DynamicParameters parameters = ObtenerParametrosDeRegistro(datos);
-					_logger.LogInformation("Ejecutando stored procedure paDMLExamen con parámetros:");
-					_logger.LogInformation($"NoPaciente: {datos.NoPaciente}, Motivo: {datos.Motivo}, Estado: {datos.Estado}");
-					_logger.LogInformation($"XmlGraduaciones: {datos.XmlGraduaciones}");
-					
-					numeroDeExamen = await dbConnection.QuerySingleOrDefaultAsync<int>("[dbo].[paDMLExamen]", parameters, commandType: CommandType.StoredProcedure);
-					_logger.LogInformation($"Resultado del SP: {numeroDeExamen}");
-				}
-				return numeroDeExamen;
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError($"Error al agregar examen: {ex.Message}");
-				_logger.LogError($"Stack trace: {ex.StackTrace}");
-				if (ex.InnerException != null)
-				{
-					_logger.LogError($"Inner exception: {ex.InnerException.Message}");
-				}
-				return -1;
-			}
-		}
+            }
+            public async Task<int> Agregar(AgregarExamenDto datos)
+            {
+                try
+                {
+                    using (IDbConnection dbConnection = new SqlConnection(_conexionABaseDeDatos.ObtenerCadenaDeConexion()))
+                    {
+                        DynamicParameters parameters = ObtenerParametrosDeRegistro(datos);
 
-		private DynamicParameters ObtenerParametrosDeRegistro(AgregarExamenDto datos)
-		{
-			DynamicParameters parameters = new DynamicParameters();
-			parameters.Add("pno_examen", datos.NoExamen);
-			parameters.Add("pno_paciente", datos.NoPaciente);
-			parameters.Add("pfecha_examen", datos.FechaExamen);
-			parameters.Add("pmotivo", datos.Motivo);
-			parameters.Add("ptipo_examen", datos.TipoExamen);
-			parameters.Add("pdp_general", datos.DpGeneral);
-			parameters.Add("pMedio_transp", datos.MedioTransp);
-			parameters.Add("pfo", datos.Fo);
-			parameters.Add("ppio", datos.Pio);
-			parameters.Add("pno_empresa", datos.NumeroEmpresa);
-			parameters.Add("pestado", datos.Estado);
-			parameters.Add("pultimo_examen", datos.UltimoExamen);
-			parameters.Add("ptratamiento_anterior", datos.TratamientoAnterior);
-			parameters.Add("pmodo_uso", datos.ModoUso);
-			parameters.Add("ptipo_patologias", datos.TipoPatologias);
-			parameters.Add("ptiene_diseno", datos.TieneDiseno);
-			parameters.Add("ptiene_aro", datos.TieneAro);
-			parameters.Add("pdiagonal", datos.Diagonal);
-			parameters.Add("pTipoDML", datos.TipoDml);
-			parameters.Add("pvertical", datos.Vertical);
-			parameters.Add("ppuente", datos.Puente);
-			parameters.Add("phorizontal", datos.Horizontal);
-			parameters.Add("pxmlPatologias", datos.XmlPatologias);
-			parameters.Add("pxmlGraduaciones", datos.XmlGraduaciones);
-			parameters.Add("pxmlDisenos", datos.XmlDisenos);
-			parameters.Add("pcodigoAro", datos.CodigoAro);
-			parameters.Add("pimagen", datos.Imagen, DbType.Binary);
-			parameters.Add("pcodigoExamen", datos.CodigoExamen);
-			parameters.Add("pno_proveedor_laboratorio", datos.NumeroProveedorLaboratorio);
-			parameters.Add("pno_orden_laboratorio", datos.NumeroOrdenLaboratorio);
-			parameters.Add("pno_pedido_laboratorio", datos.NumeroPedidoLaboratorio);
-			parameters.Add("pcodigo_lentecontacto", datos.codigoLenteContacto);
-			return parameters;
-		}
-	}
+                        _logger.LogInformation("Ejecutando CrearExamenSP");
+
+                        _logger.LogInformation(
+                            "NoExamen={NoExamen}, NoPaciente={NoPaciente}, Fecha={FechaExamen}",
+                            datos.NoExamen,
+                            datos.NoPaciente,
+                            datos.FechaExamen);
+
+                        _logger.LogInformation(
+                            "Profesional={IdProfesional}, Empresa={NumeroEmpresa}, Identificador={Identificador}",
+                            datos.IdProfesional,
+                            datos.NumeroEmpresa,
+                            datos.Identificador);
+
+                        _logger.LogInformation(
+                            "Motivo={Motivo}, TipoLente={TipoLente}, Material={Material}, Aro={Aro}",
+                            datos.MotivoDeConsulta,
+                            datos.TipoLente,
+                            datos.Material,
+                            datos.Aro);
+
+                        _logger.LogDebug("XmlGraduaciones: {XmlGraduaciones}", datos.XmlGraduaciones);
+
+                        int numeroDeExamen = await dbConnection.QuerySingleOrDefaultAsync<int>(
+                            "[dbo].[CrearExamenSP]",
+                            parameters,
+                            commandType: CommandType.StoredProcedure);
+
+                        _logger.LogInformation("Examen creado correctamente. Resultado={NumeroExamen}", numeroDeExamen);
+
+                        return numeroDeExamen;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error al agregar examen");
+
+                    throw;
+                }
+            }
+
+        private DynamicParameters ObtenerParametrosDeRegistro(AgregarExamenDto datos)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+
+            parameters.Add("@NoExamen", datos.NoExamen);
+            parameters.Add("@FechaExamen", datos.FechaExamen);
+            parameters.Add("@NoPaciente", datos.NoPaciente);
+
+            parameters.Add("@MotivoDeConsulta", datos.MotivoDeConsulta);
+
+            parameters.Add("@CodigoProfesional", datos.CodigoProfesional);
+
+            parameters.Add("@ObservacionesGenerales", datos.ObservacionesGenerales);
+            parameters.Add("@XmlGraduaciones", datos.XmlGraduaciones);
+
+            // Lentes
+            parameters.Add("@TipoLente", datos.TipoLente);
+            parameters.Add("@TipoLenteId", datos.TipoLenteId);
+
+            parameters.Add("@Material", datos.Material);
+            parameters.Add("@MaterialId", datos.MaterialId);
+
+            parameters.Add("@Aro", datos.Aro);
+            parameters.Add("@CodigoAro", datos.CodigoAro);
+
+            // Laboratorio
+            parameters.Add("@Laboratorio", datos.Laboratorio);
+            parameters.Add("@NumeroOrdenLaboratorio", datos.NumeroOrdenLaboratorio);
+            parameters.Add("@NumeroPedidoLaboratorio", datos.NumeroPedidoLaboratorio);
+
+            // Diseño
+            parameters.Add("@Disposicion", datos.Disposicion);
+            parameters.Add("@Tratamiento", datos.Tratamiento);
+
+            // Costos
+            parameters.Add("@CostoAro", datos.CostoAro);
+            parameters.Add("@CostoLente", datos.CostoLente);
+            parameters.Add("@CostoMaterial", datos.CostoMaterial);
+            parameters.Add("@CostoExamen", datos.CostoExamen);
+            parameters.Add("@PrecioFinal", datos.PrecioFinal);
+
+            // Generales
+            parameters.Add("@IdProfesional", datos.IdProfesional);
+            parameters.Add("@Identificador", datos.Identificador);
+
+            parameters.Add("@NombrePaciente", datos.NombrePaciente);
+            parameters.Add("@NombreProfesional", datos.NombreProfesional);
+
+            parameters.Add("@NumeroEmpresa", datos.NumeroEmpresa);
+
+            return parameters;
+        }
+    }
 }
