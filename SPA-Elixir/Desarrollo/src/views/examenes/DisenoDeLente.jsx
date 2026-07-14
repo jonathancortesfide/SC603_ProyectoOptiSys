@@ -169,7 +169,11 @@ export default function DisenoDeLente({ examen, setExamen }) {
     if (!file) return;
     setAroFileName(file.name);
     const reader = new FileReader();
-    reader.onload = (ev) => setAroPreview(ev.target.result);
+    reader.onload = (ev) => {
+      const base64 = ev.target.result;
+      setAroPreview(base64);
+      setExamen((prev) => ({ ...prev, Imagen: base64 }));
+    };
     reader.readAsDataURL(file);
   };
 
@@ -223,6 +227,11 @@ export default function DisenoDeLente({ examen, setExamen }) {
                   (t) => t.no_tipo === e.target.value
                 );
                 setTipoLente(seleccionado || null);
+                setExamen((prev) => ({
+                  ...prev,
+                  TipoLente: seleccionado?.descripcion || "",
+                  TipoLenteId: seleccionado?.no_tipo ?? null,
+                }));
               }}
               fullWidth
               size="small"
@@ -251,6 +260,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
                 const precio = getPrecioDeItem(newValue);
                 setExamen((prev) => ({
                   ...prev,
+                  Material: newValue?.descripcion || "",
                   CostoMaterial: precio !== null ? precio : "",
                 }));
               }}
@@ -346,6 +356,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
                   setAroMaterial(newInputValue);
                   setAroSelected(null);
                   setAroProductoId(null);
+                  setExamen((prev) => ({ ...prev, Aro: newInputValue }));
 
                   if (!newInputValue) {
                     setAroOptions([]);
@@ -356,7 +367,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
                   if (!newValue) {
                     setAroSelected(null);
                     setAroProductoId(null);
-                    setExamen((prev) => ({ ...prev, CostoAro: "" }));
+                    setExamen((prev) => ({ ...prev, Aro: "", CodigoAro: "", CostoAro: "" }));
                     return;
                   }
 
@@ -373,6 +384,8 @@ export default function DisenoDeLente({ examen, setExamen }) {
                   const precio = getPrecioDeItem(newValue);
                   setExamen((prev) => ({
                     ...prev,
+                    Aro: newValue.descripcion || "",
+                    CodigoAro: newValue.idProducto ?? "",
                     CostoAro: precio !== null ? precio : "",
                   }));
                 }}
@@ -434,6 +447,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
               onChange={(_, newValue) => {
                 setLabSelected(newValue);
                 setLaboratorio(newValue?.nombre || "");
+                setExamen((prev) => ({ ...prev, Laboratorio: newValue?.nombre || "" }));
               }}
               renderInput={(params) => (
                 <TextField
@@ -450,7 +464,10 @@ export default function DisenoDeLente({ examen, setExamen }) {
             <TextField
               label="N° de orden"
               value={numOrden}
-              onChange={(e) => setNumOrden(e.target.value)}
+              onChange={(e) => {
+                setNumOrden(e.target.value);
+                setExamen((prev) => ({ ...prev, NumeroOrdenLaboratorio: e.target.value }));
+              }}
               placeholder="000-0000"
               fullWidth
               size="small"
@@ -461,7 +478,10 @@ export default function DisenoDeLente({ examen, setExamen }) {
             <TextField
               label="N° de laboratorio"
               value={numLaboratorio}
-              onChange={(e) => setNumLaboratorio(e.target.value)}
+              onChange={(e) => {
+                setNumLaboratorio(e.target.value);
+                setExamen((prev) => ({ ...prev, NumeroPedidoLaboratorio: e.target.value }));
+              }}
               placeholder="LAB-000"
               fullWidth
               size="small"
@@ -477,7 +497,10 @@ export default function DisenoDeLente({ examen, setExamen }) {
             <TextField
               label="Disposición"
               value={disposicion}
-              onChange={(e) => setDisposicion(e.target.value)}
+              onChange={(e) => {
+                setDisposicion(e.target.value);
+                setExamen((prev) => ({ ...prev, Disposicion: e.target.value }));
+              }}
               placeholder="Agregar disposición..."
               fullWidth
               size="small"
@@ -487,7 +510,10 @@ export default function DisenoDeLente({ examen, setExamen }) {
             <TextField
               label="Tratamiento"
               value={tratamiento}
-              onChange={(e) => setTratamiento(e.target.value)}
+              onChange={(e) => {
+                setTratamiento(e.target.value);
+                setExamen((prev) => ({ ...prev, Tratamiento: e.target.value }));
+              }}
               placeholder="Agregar tratamiento..."
               fullWidth
               size="small"

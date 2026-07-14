@@ -1,9 +1,8 @@
 // ExamenVista.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
 import { Box, Button, Stepper, Step, StepButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Paper } from "@mui/material";
 import PageContainer from "../../components/container/PageContainer";
-
+import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
 import ParentCard from "../../components/shared/ParentCard";
 import { Snackbar, Alert } from "@mui/material";
 import axiosServices from "../../utils/axios";
@@ -22,12 +21,62 @@ const steps = ["Datos Generales", "Graduación RX", "Diseño de Lente", "Detalle
 const apiBase = import.meta.env.VITE_ApiBase;
 const EXAMEN_STORAGE_KEY = "examenDraft";
 
-const initialExamenState = {
-  NoExamen: 0, // se obtiene desde la API en el useEffect
+const createInitialExamenState = () => ({
+  NoExamen: 0,
   NoPaciente: 0,
   FechaExamen: new Date().toISOString().split("T")[0],
   Motivo: "",
-};
+  NombrePaciente: "",
+  Paciente: null,
+  NombreProfesional: "",
+  CodigoProfesional: "",
+  IdProfesional: null,
+  RxBase: { OD: {}, OI: {}, observaciones: "" },
+  RxActual: { OD: {}, OI: {}, observaciones: "" },
+  RxCerca: { OD: {}, OI: {}, observaciones: "" },
+  RxContacto: { OD: {}, OI: {}, observaciones: "" },
+  observacionesGenerales: "",
+  TipoLente: "",
+  TipoLenteId: null,
+  Material: "",
+  Aro: "",
+  CodigoAro: "",
+  Laboratorio: "",
+  NumeroOrdenLaboratorio: "",
+  NumeroPedidoLaboratorio: "",
+  Disposicion: "",
+  Tratamiento: "",
+  CostoAro: "",
+  CostoLente: "",
+  CostoMaterial: "",
+  CostoExamen: "",
+  PrecioFinal: 0,
+  Imagen: null,
+  TieneDiseno: "N",
+  TieneAro: "N",
+  TipoDml: "I",
+  Diagonal: 0,
+  Vertical: 0,
+  Puente: 0,
+  Horizontal: 0,
+  Estado: "Activo",
+  TipoExamen: "Refracción",
+  DpGeneral: "",
+  MedioTransp: "Claro",
+  Fo: "",
+  Pio: "",
+  UltimoExamen: null,
+  TratamientoAnterior: "",
+  ModoUso: "",
+  TipoPatologias: "",
+  XmlPatologias: "",
+  XmlGraduaciones: "",
+  XmlDisenos: "",
+  CodigoExamen: "",
+  Identificador: null,
+});
+
+const initialExamenState = createInitialExamenState();
 
 const loadDraft = () => {
   try {
@@ -42,22 +91,10 @@ const loadDraft = () => {
 };
 
 const ExamenVista = () => {
-  const location = useLocation();
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [validationError, setValidationError] = useState("");
-  const [examen, setExamen] = useState(() => {
-    const pacienteDesdeRuta = location.state?.paciente;
-    if (pacienteDesdeRuta) {
-      return {
-        ...initialExamenState,
-        NoPaciente: pacienteDesdeRuta.noPaciente || pacienteDesdeRuta.numeroDePaciente || 0,
-        NombrePaciente: pacienteDesdeRuta.nombre || '',
-        Paciente: pacienteDesdeRuta,
-      };
-    }
-    return loadDraft();
-  });
+  const [examen, setExamen] = useState(loadDraft);
   const [activeStep, setActiveStep] = useState(0);
 
   const examenResumen = useMemo(() => {
@@ -110,7 +147,6 @@ const ExamenVista = () => {
 
   const handleSendExam = async () => {
     try {
-      console.log("Enviando examen:", examen);
       const response = await AgregarExamen(examen);
       console.log("Respuesta del servidor:", response);
 
@@ -119,7 +155,7 @@ const ExamenVista = () => {
         setOpenSnackbar(true);
         // Limpiar el draft después de guardar exitosamente
         sessionStorage.removeItem(EXAMEN_STORAGE_KEY);
-        setExamen(initialExamenState);
+        setExamen(createInitialExamenState());
       } else {
         console.error('Error al guardar examen:', response?.mensaje);
         setValidationError(response?.mensaje || 'Error al guardar el examen');
@@ -263,6 +299,8 @@ const ExamenVista = () => {
 
   return (
     <PageContainer>
+      <Breadcrumb title="Examen" description="Registrar nuevo examen" />
+
       <ParentCard title="Crear nuevo examen">
         <Box width="100%">
           {/* STEP INDICATOR */}

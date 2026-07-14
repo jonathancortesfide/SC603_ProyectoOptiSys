@@ -68,10 +68,26 @@ const convertRxToXml = (rxData, tipoRx) => {
  * @param {Object} examen - Datos del examen del frontend
  * @returns {Object} DTO formateado para el backend
  */
-const buildAgregarExamenDto = (examen) => {
+const sanitizeValue = (value) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return trimmed === '' ? undefined : trimmed;
+    }
+    return value;
+};
+
+const ordenarDto = (dto) => {
+    return Object.fromEntries(
+        Object.entries(dto)
+            .filter(([, value]) => value !== undefined)
+            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    );
+};
+
+const buildAgregarExamenDto = (examen = {}) => {
     const identificador = getSucursalIdentificador();
 
-    // Convertir fecha string a ISO string
     let fechaExamen = new Date().toISOString();
     if (examen.FechaExamen) {
         if (typeof examen.FechaExamen === 'string') {
@@ -81,16 +97,12 @@ const buildAgregarExamenDto = (examen) => {
         }
     }
 
-    // Convertir datos RX a XML - SIEMPRE crear XML válido
     const xmlBase = convertRxToXml(examen.RxBase || { OD: {}, OI: {} }, 'Base');
     const xmlActual = convertRxToXml(examen.RxActual || { OD: {}, OI: {} }, 'Actual');
     const xmlCerca = convertRxToXml(examen.RxCerca || { OD: {}, OI: {} }, 'Cerca');
     const xmlContacto = convertRxToXml(examen.RxContacto || { OD: {}, OI: {} }, 'Contacto');
-    
-    // Construir XML de graduaciones con estructura válida
     const xmlGraduaciones = `<Graduaciones>${xmlBase}${xmlActual}${xmlCerca}${xmlContacto}</Graduaciones>`;
 
-    // Crear XML de diseños si existen
     let xmlDisenos = '';
     if (examen.DisenioLente && examen.DisenioLente.length > 0) {
         xmlDisenos = '<Disenos>';
@@ -106,55 +118,49 @@ const buildAgregarExamenDto = (examen) => {
         xmlDisenos += '</Disenos>';
     }
 
-    const dto = {
-        // Campos requeridos por el DTO - NUNCA null
-        NoExamen: examen.NoExamen || 0,
-        NoPaciente: examen.NoPaciente || 0,
+    const dto = ordenarDto({
+        NoExamen: sanitizeValue(examen.NoExamen) ?? 0,
         FechaExamen: fechaExamen,
-        Motivo: examen.Motivo || '',
+        Paciente: sanitizeValue(examen.Paciente),
+        MotivoDeConsulta: sanitizeValue(examen.Motivo) ?? '',
+        CodigoProfesional: sanitizeValue(examen.CodigoProfesional),
 
-        // Campos de datos clínicos (con valores por defecto si no están presentes)
-        TipoExamen: examen.TipoExamen || 'Refracción',
-        DpGeneral: examen.DpGeneral || '',
-        MedioTransp: examen.MedioTransp || 'Claro',
-        Fo: examen.Fo || '',
-        Pio: examen.Pio || '',
-        NumeroEmpresa: identificador || 1,
-        Estado: examen.Estado || 'Activo',
-        UltimoExamen: examen.UltimoExamen ? new Date(examen.UltimoExamen).toISOString() : new Date().toISOString(),
-        TratamientoAnterior: examen.TratamientoAnterior || '',
-        ModoUso: examen.ModoUso || '',
-        TipoPatologias: examen.TipoPatologias || '',
+        ObservacionesGenerales: sanitizeValue(examen.observacionesGenerales),
+        XmlGraduaciones: xmlGraduaciones, // aca enviamos todas las graduaciones en un solo campo
 
-        // Campos de diseño
-        TieneDiseno: (examen.TieneDiseno === true || examen.TieneDiseno === 'S') ? 'S' : 'N',
-        TieneAro: (examen.TieneAro === true || examen.TieneAro === 'S') ? 'S' : 'N',
-        TipoDml: 'I', // I = Insert (siempre crear nuevo)
+        TipoLente: sanitizeValue(examen.TipoLente),
+        TipoLenteId: sanitizeValue(examen.TipoLenteId),
+        Material: sanitizeValue(examen.Material),
+        MaterialId: sanitizeValue(examen.MaterialId),
+        Aro: sanitizeValue(examen.Aro) ?? '',
+        CodigoAro: sanitizeValue(examen.CodigoAro) ?? '',
+        Laboratorio: sanitizeValue(examen.Laboratorio),
+        NumeroOrdenLaboratorio: sanitizeValue(examen.NumeroOrdenLaboratorio),
+        NumeroPedidoLaboratorio: sanitizeValue(examen.NumeroPedidoLaboratorio),
+        Disposicion: sanitizeValue(examen.Disposicion),
+        Tratamiento: sanitizeValue(examen.Tratamiento),
 
-        // Medidas de lente
-        Diagonal: parseFloat(examen.Diagonal) || 0,
-        Vertical: parseFloat(examen.Vertical) || 0,
-        Puente: parseFloat(examen.Puente) || 0,
-        Horizontal: parseFloat(examen.Horizontal) || 0,
+        CostoAro: sanitizeValue(examen.CostoAro),
+        CostoLente: sanitizeValue(examen.CostoLente),
+        CostoMaterial: sanitizeValue(examen.CostoMaterial),
+        CostoExamen: sanitizeValue(examen.CostoExamen),
+        PrecioFinal: sanitizeValue(examen.PrecioFinal),
+       
 
-        // XML de datos complejos - SIEMPRE válido
-        XmlPatologias: examen.XmlPatologias || '',
-        XmlGraduaciones: xmlGraduaciones,
-        XmlDisenos: xmlDisenos,
 
-        // Información de laboratorio
-        CodigoAro: examen.CodigoAro || '',
-        NumeroProveedorLaboratorio: examen.NumeroProveedorLaboratorio || 0,
-        NumeroOrdenLaboratorio: examen.NumeroOrdenLaboratorio || '',
-        NumeroPedidoLaboratorio: examen.NumeroPedidoLaboratorio || '',
-
-        // Información de lente de contacto
-        codigoLenteContacto: examen.codigoLenteContacto || '',
-
-        // Imagen (opcional)
-        Imagen: examen.Imagen || null,
-        CodigoExamen: examen.CodigoExamen || ''
-    };
+        Estado: sanitizeValue(examen.Estado) ?? 'Activo',
+        Fo: sanitizeValue(examen.Fo),
+        IdProfesional: sanitizeValue(examen.IdProfesional) ?? null,
+        Identificador: sanitizeValue(examen.Identificador) ?? identificador ?? null,
+        Material: sanitizeValue(examen.Material),
+        NoPaciente: sanitizeValue(examen.NoPaciente) ?? 0,
+        NombrePaciente: sanitizeValue(examen.NombrePaciente),
+        NombreProfesional: sanitizeValue(examen.NombreProfesional),
+        NumeroEmpresa: sanitizeValue(examen.NumeroEmpresa) ?? identificador ?? 1,
+        
+        
+        
+    });
 
     return dto;
 };
@@ -167,7 +173,7 @@ const AgregarExamen = async (examen) => {
     };
     try {
         const dto = buildAgregarExamenDto(examen);
-        console.log('DTO enviado al backend:', dto);
+        console.log('DTO enviado al backend para el', dto);
 
         return axios.post(urlApi, dto)
             .then(respuesta => {
