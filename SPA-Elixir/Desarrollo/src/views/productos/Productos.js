@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Dialog, Stack, TextField, CircularProgress, Alert, TablePagination } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
-import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../components/shared/ParentCard';
 import FormularioProducto from './FormularioProducto';
 import { obtenerListaDeProductos, eliminarProducto } from '../../requests/mantenimientos/producto/RequestsProductos';
@@ -65,7 +64,6 @@ const Productos = () => {
 
   return (
     <PageContainer title="Productos" description="Listado de productos">
-      <Breadcrumb title="Productos" items={[{ title: 'Mantenimientos' }, { title: 'Productos' }]} />
       <ParentCard title="Productos">
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>

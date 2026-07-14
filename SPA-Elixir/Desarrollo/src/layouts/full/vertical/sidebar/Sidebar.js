@@ -62,10 +62,11 @@ const Sidebar = () => {
           <Box
             sx={{
               backgroundColor:
-                customizer.activeSidebarBg === '#ffffff' && customizer.activeMode === 'dark'
-                  ? customizer.darkBackground900
-                  : customizer.activeSidebarBg,
-              color: customizer.activeSidebarBg === '#ffffff' ? '' : 'white',
+                customizer.activeMode === 'dark'
+                  ? (customizer.activeSidebarBg === '#ffffff'
+                      ? customizer.darkBackground900
+                      : customizer.activeSidebarBg)
+                  : '#E8EDF4',
               height: '100%',
             }}
           >
@@ -100,8 +101,7 @@ const Sidebar = () => {
           backgroundColor:
             customizer.activeMode === 'dark'
               ? customizer.darkBackground900
-              : customizer.activeSidebarBg,
-          color: customizer.activeSidebarBg === '#ffffff' ? '' : 'white',
+              : '#E8EDF4',
           border: '0 !important',
           boxShadow: (theme) => theme.shadows[8],
         },

@@ -17,7 +17,6 @@ import {
     TablePagination
 } from '@mui/material';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioClasificacionPacientes from './FormularioClasificacionPacientes';
 import {
@@ -81,7 +80,6 @@ const ClasificacionPacientes = () => {
 
     return (
         <PageContainer title="Clasificación de pacientes" description="Mantenimiento de clasificación de pacientes">
-            <Breadcrumb title="Clasificación de pacientes" items={[{ title: 'Mantenimientos' }, { title: 'Clasificación de pacientes' }]} />
             <ParentCard title="Clasificación de pacientes">
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>

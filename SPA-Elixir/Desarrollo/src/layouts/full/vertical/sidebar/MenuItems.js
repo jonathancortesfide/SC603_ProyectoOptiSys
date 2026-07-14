@@ -32,11 +32,9 @@ const Menuitems = [
 
   {
     id: uniqueId(),
-    title: 'Sample Page',
+    title: 'Inicio',
     icon: IconAperture,
     href: '/sample-page',
-    chip: 'New',
-    chipColor: 'secondary',
   },
   {
     navlabel: true,

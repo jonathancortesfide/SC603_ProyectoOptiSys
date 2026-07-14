@@ -35,13 +35,29 @@ const followerCard = [
 ];
 
 
-const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, onPacienteChange }) => {
+const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente = null, onPacienteChange }) => {
   const [options, setOptions] = React.useState([]);
   const [pacientes, setPacientes] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [selectedPaciente, setSelectedPaciente] = React.useState(null);
+  const [selectedOption, setSelectedOption] = React.useState(null);
   const [noPaciente, setNoPaciente] = React.useState(initialNoPaciente);
   const [isVisible, setIsVisible] = React.useState(false);
+
+  // Pre-seleccionar paciente si viene desde fuera (ej: desde /pacientes)
+  useEffect(() => {
+    if (initialPaciente) {
+      const nro = initialPaciente.noPaciente || initialPaciente.numeroDePaciente;
+      const opcion = {
+        label: `${initialPaciente.cedula}-${initialPaciente.nombre}`,
+        value: nro,
+      };
+      setSelectedPaciente(initialPaciente);
+      setSelectedOption(opcion);
+      setNoPaciente(nro);
+      setIsVisible(true);
+    }
+  }, []);
   // Cargar opciones por defecto
   const loadDefaultData = async (inputValue, callback) => {
     if(inputValue.length === 0) {
@@ -106,6 +122,7 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, onPacienteChang
     if (numeroDePaciente) {
       const paciente = pacientes.find(p => (p.noPaciente || p.numeroDePaciente) === numeroDePaciente.value);
       setSelectedPaciente(paciente);
+      setSelectedOption(numeroDePaciente);
       setNoPaciente(numeroDePaciente.value);
       if (onPacienteChange) {
         onPacienteChange(paciente || { noPaciente: numeroDePaciente.value });
@@ -116,6 +133,7 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, onPacienteChang
     } else {
       setIsVisible(false);
       setSelectedPaciente(null);
+      setSelectedOption(null);
       setNoPaciente(null);
       if (onPacienteChange) {
         onPacienteChange(null);
@@ -140,6 +158,7 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, onPacienteChang
           cacheOptions
           defaultOptions
           loadOptions={loadOptions} // Usamos `promiseOptions` para cargar datos asíncronos
+          value={selectedOption}
           placeholder="Ingrese la identificación o nombre del paciente"
           noOptionsMessage={() => "No se encontraron resultados"} // Mensaje cuando no hay resultados
           menuPortalTarget={document.body} // Esto mueve el dropdown fuera del contenedor

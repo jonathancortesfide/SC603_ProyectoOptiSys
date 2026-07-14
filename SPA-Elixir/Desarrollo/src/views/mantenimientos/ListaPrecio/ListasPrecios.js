@@ -25,7 +25,6 @@ import { alpha } from '@mui/material/styles';
 import { Switch, FormControlLabel } from '@mui/material';
 import { IconPlus, IconEdit, IconToggleLeft, IconToggleRight } from '@tabler/icons';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import { getSucursalIdentificador } from '../../../utils/sucursal';
 import FormularioListaPrecio from './FormularioListaPrecio';
@@ -240,7 +239,6 @@ const ListasPrecios = () => {
 
   return (
     <PageContainer title="Listas de precio" description="Mantenimiento de listas de precios">
-      <Breadcrumb title="Listas de precio" items={[{ title: 'Mantenimientos' }, { title: 'Listas de precio' }]} />
       <ParentCard title="Listas de precio">
         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
         {success && (
