@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -35,6 +36,7 @@ import InformacionBasica from './tabs/InformacionBasica';
 const BCrumb = [{ title: 'Gestión de Pacientes' }];
 
 const PacientesUnificado = () => {
+  const navigate = useNavigate();
   const [listaDePacientes, setListaDePacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -122,7 +124,7 @@ const PacientesUnificado = () => {
       alert('Seleccione un paciente primero');
       return;
     }
-    alert(`Agregar examen para ${pacienteSeleccionado.nombre}`);
+    navigate('/crearexamen', { state: { paciente: pacienteSeleccionado } });
   };
 
   const handleAgregarFactura = () => {

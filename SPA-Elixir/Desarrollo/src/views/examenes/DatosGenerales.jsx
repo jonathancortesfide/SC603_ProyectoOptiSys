@@ -43,6 +43,7 @@ const DatosGenerales = ({ examen, setExamen }) => (
       <Box mb={2}>
       <BusquedaDePaciente
         noPaciente={examen.NoPaciente}
+        initialPaciente={examen.Paciente ?? null}
         onPacienteChange={(paciente) => {setExamen(prev => ({
             ...prev,
             NoPaciente: paciente?.noPaciente ?? 0,
