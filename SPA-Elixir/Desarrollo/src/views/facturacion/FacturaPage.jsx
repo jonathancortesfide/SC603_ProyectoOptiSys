@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PageContainer from 'src/components/container/PageContainer';
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import {
   useFactura,
@@ -24,11 +23,6 @@ import {
   FacturaTotales,
   FacturaPagos,
 } from 'src/modules/facturacion';
-
-const BCrumb = [
-  { to: '/', title: 'Inicio' },
-  { title: 'Facturación' },
-];
 
 /** Página de factura (POS / ERP). Estado centralizado en useFactura. Reutilizable para otros documentos. */
 const FacturaPage = () => {
@@ -64,8 +58,6 @@ const FacturaPage = () => {
 
   return (
     <PageContainer title="Facturación" description="Registro de factura">
-      <Breadcrumb title="Facturación" subtitle="Documento de venta" items={BCrumb} />
-
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <ParentCard title="Cliente y condiciones">

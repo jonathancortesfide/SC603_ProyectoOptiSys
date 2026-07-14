@@ -8,7 +8,7 @@ import { uniqueId } from 'lodash';
 const Menuitems = [
   {
     id: uniqueId(),
-    title: 'Sample Page',
+    title: 'Inicio',
     icon: IconAperture,
     href: '/sample-page',
   },

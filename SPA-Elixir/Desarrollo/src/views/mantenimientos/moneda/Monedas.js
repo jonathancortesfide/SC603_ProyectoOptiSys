@@ -7,7 +7,6 @@ import {
 import { alpha } from '@mui/material/styles';
 import { IconPlus, IconToggleLeft, IconToggleRight } from '@tabler/icons';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioMoneda from './FormularioMoneda';
 import {
@@ -116,7 +115,6 @@ const Monedas = () => {
 
     return (
         <PageContainer title="Monedas" description="Mantenimiento de monedas">
-            <Breadcrumb title="Monedas" items={[{ title: 'Mantenimientos' }, { title: 'Monedas' }]} />
             <ParentCard title="Monedas">
                 {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
                 {success && (

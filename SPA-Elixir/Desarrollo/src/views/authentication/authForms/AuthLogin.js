@@ -16,7 +16,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import AuthSocialButtons from './AuthSocialButtons';
 import useAuth from 'src/guards/authGuard/UseAuth';
 import useMounted from 'src/guards/authGuard/UseMounted';
 import authServices from "../../../guards/oidc/AuthService";
@@ -86,21 +85,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
         </Box>
       ) : null}
 
-      <AuthSocialButtons title="Sign in with" />
-      <Box mt={3}>
-        <Divider>
-          <Typography
-            component="span"
-            color="textSecondary"
-            variant="h6"
-            fontWeight="400"
-            position="relative"
-            px={2}
-          >
-            or sign in with
-          </Typography>
-        </Divider>
-      </Box>
       {errors.submit && (
         <Box mt={2}>
           <Alert severity="error">{errors.submit}</Alert>

@@ -26,7 +26,6 @@ import {
 import { alpha } from '@mui/material/styles';
 import { IconPlus, IconEdit, IconToggleLeft, IconToggleRight } from '@tabler/icons';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioTipoLente from './FormularioTipoLente'; 
 import { getNoEmpresa } from '../../../utils/empresa';
@@ -169,7 +168,6 @@ const handleBuscar = async () => {
 
   return (
     <PageContainer title="Tipo de lente" description="Mantenimiento de tipo de lente">
-      <Breadcrumb title="Tipo de lente" items={[{ title: 'Mantenimientos' }, { title: 'Tipo de lente' }]} />
       <ParentCard title="Tipo de lente">
         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
         {success && (

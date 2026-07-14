@@ -6,7 +6,6 @@ import * as Yup from 'yup';
 
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
-import AuthSocialButtons from './AuthSocialButtons';
 import useAuth from 'src/guards/authGuard/UseAuth';
 import useMounted from 'src/guards/authGuard/UseMounted';
 
@@ -63,22 +62,6 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
       ) : null}
 
       {subtext}
-      <AuthSocialButtons title="Sign up with" />
-
-      <Box mt={3}>
-        <Divider>
-          <Typography
-            component="span"
-            color="textSecondary"
-            variant="h6"
-            fontWeight="400"
-            position="relative"
-            px={2}
-          >
-            or sign up with
-          </Typography>
-        </Divider>
-      </Box>
 
       <Box>
         {errors.submit && (

@@ -27,13 +27,10 @@ import {
   DialogActions,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParendCard';
 import { obtenerListaDePacientes, AgregarPaciente, ModificarPaciente, ModificarEstadoPaciente } from '../../requests/pacientes/RequestsPacientes';
 import InformacionBasica from './tabs/InformacionBasica';
-
-const BCrumb = [{ title: 'Gestión de Pacientes' }];
 
 const PacientesUnificado = () => {
   const navigate = useNavigate();
@@ -306,7 +303,6 @@ const PacientesUnificado = () => {
   if (loading) {
     return (
       <PageContainer title="Gestión de Pacientes" description="Gestión de pacientes">
-        <Breadcrumb title="Gestión de Pacientes" items={BCrumb} />
         <ParentCard title="Gestión de Pacientes">
           <Box display="flex" justifyContent="center" p={3}>
             <CircularProgress />

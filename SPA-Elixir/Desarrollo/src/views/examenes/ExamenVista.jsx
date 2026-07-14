@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Box, Button, Stepper, Step, StepButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Paper } from "@mui/material";
 import PageContainer from "../../components/container/PageContainer";
-import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
+
 import ParentCard from "../../components/shared/ParentCard";
 import { Snackbar, Alert } from "@mui/material";
 import axiosServices from "../../utils/axios";
@@ -263,8 +263,6 @@ const ExamenVista = () => {
 
   return (
     <PageContainer>
-      <Breadcrumb title="Examen" description="Registrar nuevo examen" />
-
       <ParentCard title="Crear nuevo examen">
         <Box width="100%">
           {/* STEP INDICATOR */}

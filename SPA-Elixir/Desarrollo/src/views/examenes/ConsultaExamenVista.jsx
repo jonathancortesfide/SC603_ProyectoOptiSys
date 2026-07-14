@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 import PageContainer from "../../components/container/PageContainer";
 import ParentCard from "../../components/shared/ParentCard";
-import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
+
 import axiosServices from "../../utils/axios";
 const apiBase = import.meta.env.VITE_ApiBase;
 
@@ -100,8 +100,6 @@ const ConsultaExamenVista = () => {
   };
   return (
     <PageContainer>
-      <Breadcrumb title="Consulta de Exámenes" description="Buscar exámenes anteriores" />
-
       <ParentCard title="Búsqueda">
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>

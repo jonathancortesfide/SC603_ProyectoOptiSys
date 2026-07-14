@@ -17,7 +17,6 @@ import {
     TablePagination
 } from '@mui/material';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioGrupoProductos from './FormularioGrupoProductos';
 import {
@@ -81,7 +80,6 @@ const GrupoProductos = () => {
 
     return (
         <PageContainer title="Grupos de productos" description="Mantenimiento de grupos de productos">
-            <Breadcrumb title="Grupos de productos" items={[{ title: 'Mantenimientos' }, { title: 'Grupos de productos' }]} />
             <ParentCard title="Grupos de productos">
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>

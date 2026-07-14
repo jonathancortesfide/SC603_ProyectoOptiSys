@@ -23,7 +23,6 @@ import {
 import { alpha } from '@mui/material/styles';
 import { IconPlus, IconToggleLeft, IconToggleRight } from '@tabler/icons';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import {
     cambiarEstadoEnfermedad,
@@ -138,7 +137,6 @@ const Enfermedades = () => {
 
     return (
         <PageContainer title="Enfermedades" description="Mantenimiento de enfermedades">
-            <Breadcrumb title="Enfermedades" items={[{ title: 'Mantenimientos' }, { title: 'Enfermedades' }]} />
             <ParentCard title="Enfermedades por sucursal">
                 {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
                 {success && (

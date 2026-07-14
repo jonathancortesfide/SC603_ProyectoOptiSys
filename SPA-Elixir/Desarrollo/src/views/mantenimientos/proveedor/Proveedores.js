@@ -7,7 +7,6 @@ import {
 import { alpha } from '@mui/material/styles';
 import { IconPlus, IconToggleLeft, IconToggleRight, IconEdit } from '@tabler/icons';
 import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioProveedor from './FormularioProveedor';
 import {
@@ -186,7 +185,6 @@ const Proveedores = () => {
 
     return (
         <PageContainer title="Proveedores" description="Mantenimiento de proveedores">
-            <Breadcrumb title="Proveedores" items={[{ title: 'Mantenimientos' }, { title: 'Proveedores' }]} />
             <ParentCard title="Proveedores">
                 {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
                 {success && (
