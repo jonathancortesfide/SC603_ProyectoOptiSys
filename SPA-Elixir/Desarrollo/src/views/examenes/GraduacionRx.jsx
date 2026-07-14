@@ -12,9 +12,11 @@ import {
   TableBody,
   TableContainer,
   Paper,
-  TextField
+  TextField,
+  CircularProgress
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { obtenerExamenCompletoPorNoPaciente } from "../../requests/examenes/RequestsExamenes";
 
 // Constantes de campos RX a manejar en la tabla
 const CAMPOS_POR_RX = {
@@ -23,6 +25,15 @@ const CAMPOS_POR_RX = {
   RxCerca: ["Esfera", "Cilindro", "Eje", "DNP", "AVC"],
   RxContacto: ["Esfera", "Cilindro", "Eje", "Adicción"]
 };
+
+// Mapa abreviatura (tal como la devuelve el backend en ObtenerPorNoPaciente) -> campo de RxBase ("RX en Uso").
+// El orden de CAMPOS_POR_RX.RxBase coincide con el orden de abreviaturas que manda el backend,
+// así que solo se emparejan 1 a 1.
+const ABREVIATURAS_RXBASE = ["ESF", "CIL", "EJE", "ADD", "DNP", "AVC", "AVL", "ALT", "BASE", "PR", "CB", "DIAM", "AVSC", "PIO", "LH"];
+const ABREV_TO_CAMPO_RXBASE = ABREVIATURAS_RXBASE.reduce((acc, abrev, i) => {
+  acc[abrev] = CAMPOS_POR_RX.RxBase[i];
+  return acc;
+}, {});
 
 // Función para inicializar una estructura RX vacía
 const initRX = () => ({
@@ -42,22 +53,95 @@ function normalizeId(tipo, ojo, campo) {
   return `${String(tipo).toLowerCase()}_${String(ojo).toLowerCase()}_${safeCampo}`;
 }
 
+// Helper: "D "/"Derecho" -> "OD", "I "/"Izquierdo" -> "OI"
+function posicionToOjo(posicion) {
+  if (!posicion) return null;
+  const valor = String(posicion).trim().toUpperCase();
+  if (valor.startsWith("D") || valor.includes("DER")) return "OD";
+  if (valor.startsWith("I") || valor.includes("IZQ")) return "OI";
+  return null;
+}
+
+// Construye { OD: {...}, OI: {...} } para RxBase a partir de las filas que devuelve
+// api/ExamenCompleto/ObtenerPorNoPaciente
+function construirRxBaseDesdeApi(rows) {
+  const resultado = { OD: {}, OI: {} };
+  if (!Array.isArray(rows)) return resultado;
+
+  for (const row of rows) {
+    const ojo = posicionToOjo(row.posicion ?? row.posicion_nombre);
+    if (!ojo) continue;
+
+    const abrev = String(row.abreviatura ?? "").trim().toUpperCase();
+    const campo = ABREV_TO_CAMPO_RXBASE[abrev];
+    if (!campo) continue; // abreviatura desconocida, se ignora
+
+    const valor = row.resultado_valor ?? row.resultadoValor ?? row.resultado ?? "";
+    resultado[ojo][campo] = valor;
+  }
+
+  return resultado;
+}
+
 // Componente principal de Graduación RX
 export default function GraduacionRX({ examen, setExamen }) {
   const inicializado = React.useRef(false);
- React.useEffect(() => {
-  if (!examen || inicializado.current) return;
-  inicializado.current = true;
+  React.useEffect(() => {
+    if (!examen || inicializado.current) return;
+    inicializado.current = true;
 
-  setExamen(prev => ({
-    ...prev,
-    RxBase: prev.RxBase ?? initRX(),
-    RxActual: prev.RxActual ?? initRX(),
-    RxCerca: prev.RxCerca ?? initRX(),
-    RxContacto: prev.RxContacto ?? initRX(),
-    observacionesGenerales: prev.observacionesGenerales ?? ""
-  }));
-}, []);
+    setExamen(prev => ({
+      ...prev,
+      RxBase: prev.RxBase ?? initRX(),
+      RxActual: prev.RxActual ?? initRX(),
+      RxCerca: prev.RxCerca ?? initRX(),
+      RxContacto: prev.RxContacto ?? initRX(),
+      observacionesGenerales: prev.observacionesGenerales ?? ""
+    }));
+  }, []);
+
+  // Carga del RX anterior del paciente (RX en Uso) desde el backend.
+  // Se dispara cuando examen.NoPaciente está disponible, y solo una vez por paciente
+  // (evita pisar lo que el usuario esté escribiendo si el componente se re-renderiza).
+  const [cargandoRxAnterior, setCargandoRxAnterior] = React.useState(false);
+  const noPacienteCargadoRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const noPacienteId = examen?.NoPaciente;
+    if (!noPacienteId) return;
+    if (noPacienteCargadoRef.current === noPacienteId) return;
+
+    let cancelado = false;
+    setCargandoRxAnterior(true);
+
+    const cargar = async () => {
+      try {
+        const data = await obtenerExamenCompletoPorNoPaciente(noPacienteId);
+        if (cancelado) return;
+
+        const rows = Array.isArray(data) ? data : Array.isArray(data?.datos) ? data.datos : [];
+        const rxBaseDesdeApi = construirRxBaseDesdeApi(rows);
+
+        noPacienteCargadoRef.current = noPacienteId;
+        setExamen(prev => ({
+          ...prev,
+          RxBase: {
+            OD: { ...(prev.RxBase?.OD ?? {}), ...rxBaseDesdeApi.OD },
+            OI: { ...(prev.RxBase?.OI ?? {}), ...rxBaseDesdeApi.OI },
+            observaciones: prev.RxBase?.observaciones ?? ""
+          }
+        }));
+      } catch (e) {
+        if (cancelado) return;
+        console.error("Error al cargar RX en Uso por NoPaciente:", e);
+      } finally {
+        if (!cancelado) setCargandoRxAnterior(false);
+      }
+    };
+
+    cargar();
+    return () => { cancelado = true; };
+  }, [examen?.NoPaciente, setExamen]);
 
   if (!examen) return null;
 
@@ -104,9 +188,7 @@ export default function GraduacionRX({ examen, setExamen }) {
     };
   }, []);
 
-// Componente para renderizar la tabla RX que es la que contiene los campos editables de cada ojo
-  // Inputs manejan su propio estado local y sincronizan al padre en onBlur — evita re-renders por cada tecla
-  // Ahora aceptan un `externalRef` (pasado por la tabla) para navegación robusta por Tab incluso después de re-renders
+  // Componente para renderizar la tabla RX que es la que contiene los campos editables de cada ojo
   const CellInput = React.memo(function CellInput({ value, onCommit, id, externalRef }) {
     const [local, setLocal] = React.useState(value ?? "");
     const innerRef = React.useRef(null);
@@ -115,14 +197,12 @@ export default function GraduacionRX({ examen, setExamen }) {
     React.useEffect(() => setLocal(value ?? ""), [value]);
     const blurTimerRef = React.useRef(null);
     const handleBlur = React.useCallback(() => {
-      // Si estamos en navegación por Tab o por Mouse, registrar el commit pendiente
-      // en lugar de aplicarlo inmediatamente para evitar races que rompen el foco.
       if (tabbingRef.current || mouseNavRef.current) {
         registerPendingCommit(id, onCommit, local);
         return;
       }
 
-      const delay = 0; // commit inmediato cuando no hay navegación programática
+      const delay = 0;
       if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
       blurTimerRef.current = setTimeout(() => {
         blurTimerRef.current = null;
@@ -132,8 +212,6 @@ export default function GraduacionRX({ examen, setExamen }) {
     React.useEffect(() => () => { if (blurTimerRef.current) clearTimeout(blurTimerRef.current); }, []);
 
     const handleMouseDown = React.useCallback((e) => {
-      // Marcar navegación por mouse para que el onBlur del input anterior registre
-      // un pending commit en lugar de aplicar un setState inmediato.
       mouseNavRef.current = true;
       if (mouseNavTimerRef.current) clearTimeout(mouseNavTimerRef.current);
       mouseNavTimerRef.current = setTimeout(() => { mouseNavRef.current = false; mouseNavTimerRef.current = null; }, 200);
@@ -141,7 +219,6 @@ export default function GraduacionRX({ examen, setExamen }) {
       e.stopPropagation();
       if (inputRef.current && document.activeElement !== inputRef.current) {
         e.preventDefault();
-        // focus inmediato y asegurar focus en el siguiente frame
         inputRef.current.focus();
         requestAnimationFrame(() => { try { inputRef.current.focus(); } catch (_) {} });
       }
@@ -149,19 +226,13 @@ export default function GraduacionRX({ examen, setExamen }) {
 
     const handleFocus = React.useCallback((e) => {
       try { e.target.select(); } catch (err) { /* no crítico */ }
-      // Cuando un input recibe foco tras una navegación por Tab, flushar commits pendientes
-      // en la siguiente animation frame — así evitamos que un commit anterior remonte la UI
-      // antes de que el nuevo input acepte teclado.
       requestAnimationFrame(() => {
         flushPendingCommits();
       });
     }, [flushPendingCommits]);
 
-    // Mantener un handler ligero por si el table-level handler no está presente
     const handleKeyDown = React.useCallback((e) => {
       if (e.key !== 'Tab') return;
-      // Si la tabla maneja Tab, este handler no interferirá; dejamos la lógica principal en TablaRX
-      // Pero prevenimos el comportamiento por defecto momentáneamente para evitar races locales
       e.stopPropagation();
     }, []);
 
@@ -180,95 +251,12 @@ export default function GraduacionRX({ examen, setExamen }) {
     );
   });
 
-  const handleTableKeyDownCapture = React.useCallback((e) => {
-    if (e.key !== 'Tab') return;
-    const active = document.activeElement;
-    if (!active) return;
-
-    const isFocusable = (n) => !!(n && typeof n.focus === 'function' && !n.disabled && n.tabIndex !== -1);
-    const doFocus = (n) => {
-      if (!n) return false;
-      try { n.focus(); n.select?.(); } catch (_) { /* ignore */ }
-      requestAnimationFrame(() => { try { n.focus(); } catch (_) {} });
-      return true;
-    };
-
-    // Secuencia RX basada en IDs normalizados
-    const secciones = ["RxBase", "RxActual", "RxCerca", "RxContacto"];
-    const ojosOrder = ["OD", "OI"];
-    const seq = [];
-    for (const s of secciones) {
-      const camposS = CAMPOS_POR_RX[s] || [];
-      for (const o of ojosOrder) {
-        for (const c of camposS) seq.push(normalizeId(s, o, c));
-      }
-    }
-
-    const currentAria = active.getAttribute?.('aria-label') ?? '';
-    const idx = seq.indexOf(currentAria);
-    const forward = !e.shiftKey;
-
-    if (idx !== -1) {
-      const nextIdx = forward ? idx + 1 : idx - 1;
-      if (nextIdx >= 0 && nextIdx < seq.length) {
-        const nextEl = document.querySelector(`[aria-label="${seq[nextIdx]}"]`);
-        if (isFocusable(nextEl)) {
-          e.preventDefault();
-          e.stopPropagation();
-          tabbingRef.current = true;
-          if (tabbingTimerRef.current) clearTimeout(tabbingTimerRef.current);
-          tabbingTimerRef.current = setTimeout(() => { tabbingRef.current = false; tabbingTimerRef.current = null; }, 150);
-          doFocus(nextEl);
-          return;
-        }
-      }
-    }
-
-    // Fallback: buscar dentro de la misma tabla en orden DOM
-    const table = active.closest('table');
-    if (table) {
-      const inputs = Array.from(table.querySelectorAll('input, textarea, [tabindex]:not([tabindex="-1"])')).filter(isFocusable);
-      const cur = inputs.indexOf(active);
-      const next = inputs[forward ? cur + 1 : cur - 1];
-      if (next) {
-        e.preventDefault();
-        e.stopPropagation();
-        tabbingRef.current = true;
-        if (tabbingTimerRef.current) clearTimeout(tabbingTimerRef.current);
-        tabbingTimerRef.current = setTimeout(() => { tabbingRef.current = false; tabbingTimerRef.current = null; }, 150);
-        doFocus(next);
-        return;
-      }
-
-      // Si estamos al final de esta tabla, intentar enfoc ar el siguiente campo RX usando la secuencia global
-      if (idx !== -1) {
-        const nextIdx = forward ? idx + 1 : idx - 1;
-        if (nextIdx >= 0 && nextIdx < seq.length) {
-          const nextEl = document.querySelector(`[aria-label="${seq[nextIdx]}"]`);
-          if (isFocusable(nextEl)) {
-            e.preventDefault();
-            e.stopPropagation();
-            tabbingRef.current = true;
-            if (tabbingTimerRef.current) clearTimeout(tabbingTimerRef.current);
-            tabbingTimerRef.current = setTimeout(() => { tabbingRef.current = false; tabbingTimerRef.current = null; }, 150);
-            doFocus(nextEl);
-            return;
-          }
-        }
-      }
-    }
-
-    // No se encontró un objetivo RX válido — dejar comportamiento por defecto
-  }, []);
-
   const TablaRX = React.memo(function TablaRX({ tipo }) {
     const campos = React.useMemo(() => CAMPOS_POR_RX[tipo] || [], [tipo]);
     const ojos = React.useMemo(() => ["OD", "OI"], []);
 
-    // Registro local de refs por celda (order-preserving)
     const cellRefs = React.useRef({});
 
-    // Handler de Tab robusto que consulta `cellRefs` (no depende de querySelector global)
     const handleTableKeyDownCaptureLocal = React.useCallback((e) => {
       if (e.key !== 'Tab') return;
       const active = document.activeElement;
@@ -282,7 +270,6 @@ export default function GraduacionRX({ examen, setExamen }) {
         return true;
       };
 
-      // Secuencia RX basada en los IDs normalizados
       const secciones = ["RxBase", "RxActual", "RxCerca", "RxContacto"];
       const ojosOrder = ["OD", "OI"];
       const seq = [];
@@ -297,7 +284,6 @@ export default function GraduacionRX({ examen, setExamen }) {
       const idx = seq.indexOf(currentAria);
       const forward = !e.shiftKey;
 
-      // Intentar usar cellRefs (más fiable que querySelector cuando hay re-renders)
       if (idx !== -1) {
         const nextIdx = forward ? idx + 1 : idx - 1;
         if (nextIdx >= 0 && nextIdx < seq.length) {
@@ -315,7 +301,6 @@ export default function GraduacionRX({ examen, setExamen }) {
         }
       }
 
-      // FALLBACK: recorrer los refs locales en DOM order
       const localOrder = [];
       for (const s of [tipo]) {
         for (const o of ojos) {
@@ -338,8 +323,6 @@ export default function GraduacionRX({ examen, setExamen }) {
         doFocus(next);
         return;
       }
-
-      // Si no encontramos en esta tabla, dejar que el comportamiento por defecto ocurra
     }, [campos, ojos, tipo]);
 
     return (
@@ -385,15 +368,12 @@ export default function GraduacionRX({ examen, setExamen }) {
     );
   });
 
-
-  // Componente aislado para Observaciones: estado local + debounce, sincroniza en onBlur y en debounce
   const ObservacionesField = React.memo(function ObservacionesField({ value, onCommit }) {
     const [local, setLocal] = React.useState(value ?? "");
     const timerRef = React.useRef(null);
 
     React.useEffect(() => setLocal(value ?? ""), [value]);
 
-    // Debounced auto-commit (suave, para evitar actualizar el padre en cada tecla)
     React.useEffect(() => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
@@ -422,11 +402,11 @@ export default function GraduacionRX({ examen, setExamen }) {
     );
   });
 
-  // Memoizar SeccionRX para que no se re-renderice cuando cambie sólo `observaciones` en el padre
-  const SeccionRX = React.memo(({ titulo, tipo, abierto = true }) => ( // Componente para cada sección de RX con acordeón, como RX en Uso, RX Base, RX Cerca
+  const SeccionRX = React.memo(({ titulo, tipo, abierto = true, extra = null }) => (
     <Accordion defaultExpanded={abierto}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography fontWeight="bold">{titulo}</Typography>
+        {extra}
       </AccordionSummary>
 
       <AccordionDetails>
@@ -435,26 +415,32 @@ export default function GraduacionRX({ examen, setExamen }) {
     </Accordion>
   ));
 
-
-  return ( // Componente principal de Graduación RX 
+  return (
     <Box>
       <Typography variant="h6" mb={2}>
         Graduación RX
       </Typography>
 
-      {/* SECCIONES */}
       <ObservacionesField
         value={examen.observacionesGenerales}
         onCommit={val => setExamen(prev => ({ ...prev, observacionesGenerales: val }))}
       />
-<SeccionRX tipo="RxBase" titulo="RX en Uso" />
-<SeccionRX tipo="RxActual" titulo="RX Base" />
-<SeccionRX tipo="RxCerca" titulo="RX Cerca" abierto={false} />
-<SeccionRX tipo="RxContacto" titulo="RX Lente de Contacto" abierto={false} />
 
-
-     
-
+      <SeccionRX
+        tipo="RxBase"
+        titulo="RX en Uso"
+        extra={
+          cargandoRxAnterior ? (
+            <Box display="flex" alignItems="center" gap={1} ml={2}>
+              <CircularProgress size={16} />
+              <Typography variant="caption">Cargando RX anterior…</Typography>
+            </Box>
+          ) : null
+        }
+      />
+      <SeccionRX tipo="RxActual" titulo="RX Base" />
+      <SeccionRX tipo="RxCerca" titulo="RX Cerca" abierto={false} />
+      <SeccionRX tipo="RxContacto" titulo="RX Lente de Contacto" abierto={false} />
     </Box>
   );
 }
