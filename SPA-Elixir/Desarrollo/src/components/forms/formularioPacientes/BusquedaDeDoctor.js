@@ -11,6 +11,18 @@ const formatDoctorOption = (doctor) => ({
   data: doctor
 });
 
+const esDoctorActivo = (doctor) => {
+  const activo = doctor?.activo ?? doctor?.Activo ?? doctor?.esActivo ?? doctor?.EsActivo ?? doctor?.estado ?? doctor?.Estado;
+
+  if (activo === 1 || activo === '1') return true;
+  if (activo === 0 || activo === '0') return false;
+  if (typeof activo === 'string') {
+    return ['true', 'si', 's', 'activo', 'active'].includes(activo.trim().toLowerCase());
+  }
+
+  return !!activo;
+};
+
 const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange }) => {
   const [doctores, setDoctores] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -23,8 +35,9 @@ const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange 
     setLoading(true);
     try {
       const lista = await BuscarDoctoresPorIdentificador(identificador);
-      setDoctores(lista || []);
-      return lista || [];
+      const doctoresActivos = (lista || []).filter(esDoctorActivo);
+      setDoctores(doctoresActivos);
+      return doctoresActivos;
     } catch (error) {
       console.error('Error cargando doctores:', error);
       return [];
@@ -49,6 +62,7 @@ const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange 
         const lista = doctores.length ? doctores : await cargarDoctores();
         const texto = String(inputValue || '').toLowerCase();
         const opciones = (lista || [])
+          .filter(esDoctorActivo)
           .filter((doctor) => {
             if (!texto) return true;
             const nombre = String(doctor.nombre || doctor.Nombre || '').toLowerCase();

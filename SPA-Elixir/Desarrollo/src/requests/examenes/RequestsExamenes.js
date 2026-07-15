@@ -97,11 +97,8 @@ const buildAgregarExamenDto = (examen = {}) => {
         }
     }
 
-    const xmlBase = convertRxToXml(examen.RxBase || { OD: {}, OI: {} }, 'Base');
-    const xmlActual = convertRxToXml(examen.RxActual || { OD: {}, OI: {} }, 'Actual');
-    const xmlCerca = convertRxToXml(examen.RxCerca || { OD: {}, OI: {} }, 'Cerca');
-    const xmlContacto = convertRxToXml(examen.RxContacto || { OD: {}, OI: {} }, 'Contacto');
-    const xmlGraduaciones = `<Graduaciones>${xmlBase}${xmlActual}${xmlCerca}${xmlContacto}</Graduaciones>`;
+    const xmlActual = convertRxToXml(examen.RxBase || { OD: {}, OI: {} }, 'Actual');
+    const xmlGraduaciones = `<Graduaciones>${xmlActual}</Graduaciones>`;
 
     let xmlDisenos = '';
     if (examen.DisenioLente && examen.DisenioLente.length > 0) {

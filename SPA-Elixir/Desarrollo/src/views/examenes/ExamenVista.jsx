@@ -31,10 +31,7 @@ const createInitialExamenState = () => ({
   NombreProfesional: "",
   CodigoProfesional: "",
   IdProfesional: null,
-  RxBase: { OD: {}, OI: {}, observaciones: "" },
-  RxActual: { OD: {}, OI: {}, observaciones: "" },
-  RxCerca: { OD: {}, OI: {}, observaciones: "" },
-  RxContacto: { OD: {}, OI: {}, observaciones: "" },
+  
   observacionesGenerales: "",
   TipoLente: "",
   TipoLenteId: null,
@@ -52,24 +49,8 @@ const createInitialExamenState = () => ({
   CostoExamen: "",
   PrecioFinal: 0,
   Imagen: null,
-  TieneDiseno: "N",
-  TieneAro: "N",
-  TipoDml: "I",
-  Diagonal: 0,
-  Vertical: 0,
-  Puente: 0,
-  Horizontal: 0,
-  Estado: "Activo",
-  TipoExamen: "Refracción",
   DpGeneral: "",
-  MedioTransp: "Claro",
-  Fo: "",
-  Pio: "",
-  UltimoExamen: null,
-  TratamientoAnterior: "",
-  ModoUso: "",
-  TipoPatologias: "",
-  XmlPatologias: "",
+
   XmlGraduaciones: "",
   XmlDisenos: "",
   CodigoExamen: "",
@@ -156,6 +137,8 @@ const ExamenVista = () => {
         // Limpiar el draft después de guardar exitosamente
         sessionStorage.removeItem(EXAMEN_STORAGE_KEY);
         setExamen(createInitialExamenState());
+        setActiveStep(0);
+        setValidationError("");
       } else {
         console.error('Error al guardar examen:', response?.mensaje);
         setValidationError(response?.mensaje || 'Error al guardar el examen');
@@ -254,19 +237,11 @@ const ExamenVista = () => {
   };
 
   const handleFinish = () => {
-    // Preparar payload para enviar al backend. Por ahora lo mostramos en consola
-    // para validar la forma y contenidos antes de implementar el POST.
+
     try {
       const payload = { ...examen };
-      // Normalizar fechas como strings ISO si vienen como Date
       if (payload.FechaExamen instanceof Date) payload.FechaExamen = payload.FechaExamen.toISOString();
       if (payload.UltimoExamen instanceof Date) payload.UltimoExamen = payload.UltimoExamen.toISOString();
-
-      console.log("Examen completado (obj):", examen);
-      console.log("Examen payload (JSON):", JSON.stringify(payload, null, 2));
-
-      // Ejemplo de envío (descomentar y ajustar URL/método cuando esté listo)
-      // await fetch('/api/examenes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
 
       setOpenSnackbar(true);
     } catch (err) {

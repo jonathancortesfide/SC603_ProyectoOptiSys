@@ -62,13 +62,27 @@ function posicionToOjo(posicion) {
   return null;
 }
 
-// Construye { OD: {...}, OI: {...} } para RxBase a partir de las filas que devuelve
-// api/ExamenCompleto/ObtenerPorNoPaciente
+// Construye { OD: {...}, OI: {...} } para el RX anterior/en uso a partir de las filas que devuelve
+// api/ExamenCompleto/ObtenerPorNoPaciente.
+// Ahora acepta los metadatos nuevos del backend (tipo_xml / tipo_graduacion) y hace fallback
+// al comportamiento anterior si esos campos no vienen presentes.
 function construirRxBaseDesdeApi(rows) {
   const resultado = { OD: {}, OI: {} };
   if (!Array.isArray(rows)) return resultado;
 
-  for (const row of rows) {
+  const filasParaMapear = rows.filter((row) => {
+    const tipoXml = String(row?.tipo_xml ?? row?.tipoXml ?? "").trim().toLowerCase();
+    const tipoGraduacion = String(row?.tipo_graduacion ?? row?.tipoGraduacion ?? "").trim().toLowerCase();
+    const esRxAnterior = tipoGraduacion.includes("rx anterior") || tipoGraduacion.includes("en uso") || tipoGraduacion.includes("anterior");
+
+    if (tipoXml === "base" || esRxAnterior) return true;
+    if (!tipoXml && !tipoGraduacion) return true; // fallback si no vienen metadatos
+    return false;
+  });
+
+  const filas = filasParaMapear.length > 0 ? filasParaMapear : rows;
+
+  for (const row of filas) {
     const ojo = posicionToOjo(row.posicion ?? row.posicion_nombre);
     if (!ojo) continue;
 
@@ -100,9 +114,7 @@ export default function GraduacionRX({ examen, setExamen }) {
     }));
   }, []);
 
-  // Carga del RX anterior del paciente (RX en Uso) desde el backend.
-  // Se dispara cuando examen.NoPaciente está disponible, y solo una vez por paciente
-  // (evita pisar lo que el usuario esté escribiendo si el componente se re-renderiza).
+  
   const [cargandoRxAnterior, setCargandoRxAnterior] = React.useState(false);
   const noPacienteCargadoRef = React.useRef(null);
 
@@ -125,10 +137,10 @@ export default function GraduacionRX({ examen, setExamen }) {
         noPacienteCargadoRef.current = noPacienteId;
         setExamen(prev => ({
           ...prev,
-          RxBase: {
-            OD: { ...(prev.RxBase?.OD ?? {}), ...rxBaseDesdeApi.OD },
-            OI: { ...(prev.RxBase?.OI ?? {}), ...rxBaseDesdeApi.OI },
-            observaciones: prev.RxBase?.observaciones ?? ""
+          RxActual: {
+            OD: { ...(prev.RxActual?.OD ?? {}), ...rxBaseDesdeApi.OD },
+            OI: { ...(prev.RxActual?.OI ?? {}), ...rxBaseDesdeApi.OI },
+            observaciones: prev.RxActual?.observaciones ?? ""
           }
         }));
       } catch (e) {

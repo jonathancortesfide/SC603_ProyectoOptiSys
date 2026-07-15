@@ -35,6 +35,18 @@ const followerCard = [
 ];
 
 
+const esPacienteActivo = (paciente) => {
+  const activo = paciente?.activo ?? paciente?.Activo ?? paciente?.esActivo ?? paciente?.EsActivo ?? paciente?.estado ?? paciente?.Estado;
+
+  if (activo === 1 || activo === '1') return true;
+  if (activo === 0 || activo === '0') return false;
+  if (typeof activo === 'string') {
+    return ['true', 'si', 's', 'activo', 'active'].includes(activo.trim().toLowerCase());
+  }
+
+  return !!activo;
+};
+
 const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente = null, onPacienteChange }) => {
   const [options, setOptions] = React.useState([]);
   const [pacientes, setPacientes] = React.useState([]);
@@ -64,13 +76,14 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
       setLoading(true);
       try {
         const response = await obtenerListaDePacientes('');
-        if (response && response.length) {
-          const formattedData = response.map(item => ({
+        const pacientesActivos = (response || []).filter(esPacienteActivo);
+        if (pacientesActivos.length) {
+          const formattedData = pacientesActivos.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
             value: item.noPaciente || item.numeroDePaciente
           }));
           setOptions(formattedData);
-          setPacientes(response);
+            setPacientes(pacientesActivos);
           return formattedData; 
         } else {
           setOptions([]);
@@ -94,13 +107,14 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
       setLoading(true);
       try {
         const response = await obtenerListaDePacientes(inputValue);
-        if (response && response.length) {
-          const formattedData = response.map(item => ({
+        const pacientesActivos = (response || []).filter(esPacienteActivo);
+        if (pacientesActivos.length) {
+          const formattedData = pacientesActivos.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
             value: item.noPaciente || item.numeroDePaciente
           }));
           setOptions(formattedData);
-          setPacientes(response);
+          setPacientes(pacientesActivos);
           return formattedData;
         } else {
           setOptions([]); // Si no hay datos, vaciar las opciones
