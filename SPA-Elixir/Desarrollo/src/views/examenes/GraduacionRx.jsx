@@ -27,8 +27,6 @@ const CAMPOS_POR_RX = {
 };
 
 // Mapa abreviatura (tal como la devuelve el backend en ObtenerPorNoPaciente) -> campo de RxBase ("RX en Uso").
-// El orden de CAMPOS_POR_RX.RxBase coincide con el orden de abreviaturas que manda el backend,
-// así que solo se emparejan 1 a 1.
 const ABREVIATURAS_RXBASE = ["ESF", "CIL", "EJE", "ADD", "DNP", "AVC", "AVL", "ALT", "BASE", "PR", "CB", "DIAM", "AVSC", "PIO", "LH"];
 const ABREV_TO_CAMPO_RXBASE = ABREVIATURAS_RXBASE.reduce((acc, abrev, i) => {
   acc[abrev] = CAMPOS_POR_RX.RxBase[i];
@@ -64,8 +62,6 @@ function posicionToOjo(posicion) {
 
 // Construye { OD: {...}, OI: {...} } para el RX anterior/en uso a partir de las filas que devuelve
 // api/ExamenCompleto/ObtenerPorNoPaciente.
-// Ahora acepta los metadatos nuevos del backend (tipo_xml / tipo_graduacion) y hace fallback
-// al comportamiento anterior si esos campos no vienen presentes.
 function construirRxBaseDesdeApi(rows) {
   const resultado = { OD: {}, OI: {} };
   if (!Array.isArray(rows)) return resultado;
@@ -97,6 +93,256 @@ function construirRxBaseDesdeApi(rows) {
   return resultado;
 }
 
+/* =========================================================================
+ * IMPORTANTE: todos los componentes de abajo viven a nivel de MÓDULO
+ * (fuera de GraduacionRX). Antes estaban declarados dentro del cuerpo del
+ * componente padre, lo que hacía que React les asignara una identidad
+ * NUEVA en cada render (cada vez que se tipeaba algo y el padre volvía a
+ * renderizar). Eso forzaba a React a desmontar y re-montar todos los
+ * <TextField> en cada cambio de estado, perdiendo el foco: es la causa
+ * de que al hacer click en otra celda/tabla "te sacara" del campo.
+ *
+ * Ahora comparten identidad estable entre renders, y las refs/callbacks
+ * de navegación (tabbing, mouse, pending commits) se pasan vía Context
+ * en lugar de por clausura.
+ * ========================================================================= */
+
+const RxNavContext = React.createContext(null);
+
+const CellInput = React.memo(function CellInput({ value, onCommit, id, externalRef }) {
+  const nav = React.useContext(RxNavContext);
+  const [local, setLocal] = React.useState(value ?? "");
+  const innerRef = React.useRef(null);
+  const inputRef = externalRef ?? innerRef;
+
+  React.useEffect(() => setLocal(value ?? ""), [value]);
+
+  const blurTimerRef = React.useRef(null);
+  const handleBlur = React.useCallback(() => {
+    if (nav.tabbingRef.current || nav.mouseNavRef.current) {
+      nav.registerPendingCommit(id, onCommit, local);
+      return;
+    }
+
+    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+    blurTimerRef.current = setTimeout(() => {
+      blurTimerRef.current = null;
+      if ((value ?? "") !== local) onCommit(local);
+    }, 0);
+  }, [local, onCommit, value, id, nav]);
+
+  React.useEffect(() => () => { if (blurTimerRef.current) clearTimeout(blurTimerRef.current); }, []);
+
+  const handleMouseDown = React.useCallback((e) => {
+    nav.mouseNavRef.current = true;
+    if (nav.mouseNavTimerRef.current) clearTimeout(nav.mouseNavTimerRef.current);
+    nav.mouseNavTimerRef.current = setTimeout(() => {
+      nav.mouseNavRef.current = false;
+      nav.mouseNavTimerRef.current = null;
+    }, 200);
+
+    e.stopPropagation();
+    if (inputRef.current && document.activeElement !== inputRef.current) {
+      e.preventDefault();
+      inputRef.current.focus();
+      requestAnimationFrame(() => { try { inputRef.current.focus(); } catch (_) {} });
+    }
+  }, [inputRef, nav]);
+
+  const handleFocus = React.useCallback((e) => {
+    try { e.target.select(); } catch (err) { /* no crítico */ }
+    requestAnimationFrame(() => {
+      nav.flushPendingCommits();
+    });
+  }, [nav]);
+
+  const handleKeyDown = React.useCallback((e) => {
+    if (e.key !== 'Tab') return;
+    e.stopPropagation();
+  }, []);
+
+  return (
+    <TextField
+      size="small"
+      inputRef={inputRef}
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={handleBlur}
+      onMouseDown={handleMouseDown}
+      onFocus={handleFocus}
+      onKeyDown={handleKeyDown}
+      inputProps={{ style: { textAlign: "center", width: 60 }, 'aria-label': id }}
+    />
+  );
+});
+
+const TablaRX = React.memo(function TablaRX({ tipo, examen, setCampo }) {
+  const nav = React.useContext(RxNavContext);
+  const campos = React.useMemo(() => CAMPOS_POR_RX[tipo] || [], [tipo]);
+  const ojos = React.useMemo(() => ["OD", "OI"], []);
+
+  const cellRefs = React.useRef({});
+
+  const handleTableKeyDownCaptureLocal = React.useCallback((e) => {
+    if (e.key !== 'Tab') return;
+    const active = document.activeElement;
+    if (!active) return;
+
+    const isFocusable = (n) => !!(n && typeof n.focus === 'function' && !n.disabled && n.tabIndex !== -1);
+    const doFocus = (n) => {
+      if (!n) return false;
+      try { n.focus(); n.select?.(); } catch (_) { /* ignore */ }
+      requestAnimationFrame(() => { try { n.focus(); } catch (_) {} });
+      return true;
+    };
+
+    const secciones = ["RxBase", "RxActual", "RxCerca", "RxContacto"];
+    const ojosOrder = ["OD", "OI"];
+    const seq = [];
+    for (const s of secciones) {
+      const camposS = CAMPOS_POR_RX[s] || [];
+      for (const o of ojosOrder) {
+        for (const c of camposS) seq.push(normalizeId(s, o, c));
+      }
+    }
+
+    const currentAria = active.getAttribute?.('aria-label') ?? '';
+    const idx = seq.indexOf(currentAria);
+    const forward = !e.shiftKey;
+
+    if (idx !== -1) {
+      const nextIdx = forward ? idx + 1 : idx - 1;
+      if (nextIdx >= 0 && nextIdx < seq.length) {
+        const nextRef = cellRefs.current[seq[nextIdx]];
+        const nextEl = nextRef?.current;
+        if (isFocusable(nextEl)) {
+          e.preventDefault();
+          e.stopPropagation();
+          nav.tabbingRef.current = true;
+          if (nav.tabbingTimerRef.current) clearTimeout(nav.tabbingTimerRef.current);
+          nav.tabbingTimerRef.current = setTimeout(() => { nav.tabbingRef.current = false; nav.tabbingTimerRef.current = null; }, 150);
+          doFocus(nextEl);
+          return;
+        }
+      }
+    }
+
+    const localOrder = [];
+    for (const s of [tipo]) {
+      for (const o of ojos) {
+        for (const c of campos) {
+          const id = normalizeId(s, o, c);
+          const r = cellRefs.current[id];
+          if (r?.current && isFocusable(r.current)) localOrder.push(r.current);
+        }
+      }
+    }
+
+    const cur = localOrder.indexOf(active);
+    const next = localOrder[forward ? cur + 1 : cur - 1];
+    if (next) {
+      e.preventDefault();
+      e.stopPropagation();
+      nav.tabbingRef.current = true;
+      if (nav.tabbingTimerRef.current) clearTimeout(nav.tabbingTimerRef.current);
+      nav.tabbingTimerRef.current = setTimeout(() => { nav.tabbingRef.current = false; nav.tabbingTimerRef.current = null; }, 150);
+      doFocus(next);
+      return;
+    }
+  }, [campos, ojos, tipo, nav]);
+
+  return (
+    <TableContainer component={Paper} variant="outlined" onKeyDownCapture={handleTableKeyDownCaptureLocal}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell />
+            {campos.map(c => (
+              <TableCell key={c} align="center" sx={{ fontWeight: "bold" }}>
+                {c}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
+          {ojos.map(ojo => (
+            <TableRow key={ojo}>
+              <TableCell sx={{ fontWeight: "bold", width: 60 }}>
+                {ojo}
+              </TableCell>
+
+              {campos.map(campo => {
+                const id = normalizeId(tipo, ojo, campo);
+                if (!cellRefs.current[id]) cellRefs.current[id] = React.createRef();
+                return (
+                  <TableCell key={campo} align="center" sx={{ p: 0.5 }}>
+                    <CellInput
+                      id={id}
+                      externalRef={cellRefs.current[id]}
+                      value={examen[tipo]?.[ojo]?.[campo] ?? ""}
+                      onCommit={val => setCampo(tipo, ojo, campo, val)}
+                    />
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+});
+
+const ObservacionesField = React.memo(function ObservacionesField({ value, onCommit }) {
+  const [local, setLocal] = React.useState(value ?? "");
+  const timerRef = React.useRef(null);
+
+  React.useEffect(() => setLocal(value ?? ""), [value]);
+
+  React.useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if ((value ?? "") !== local) onCommit(local);
+    }, 300);
+    return () => clearTimeout(timerRef.current);
+  }, [local, onCommit, value]);
+
+  const handleBlur = React.useCallback(() => {
+    if ((value ?? "") !== local) onCommit(local);
+  }, [local, onCommit, value]);
+
+  return (
+    <Box mt={2}>
+      <TextField
+        fullWidth
+        label="Observaciones del médico"
+        multiline
+        minRows={3}
+        value={local}
+        onChange={e => setLocal(e.target.value)}
+        onBlur={handleBlur}
+        inputProps={{ 'aria-label': 'observaciones-medico' }}
+      />
+    </Box>
+  );
+});
+
+const SeccionRX = React.memo(function SeccionRX({ titulo, tipo, abierto = true, extra = null, examen, setCampo }) {
+  return (
+    <Accordion defaultExpanded={abierto}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography fontWeight="bold">{titulo}</Typography>
+        {extra}
+      </AccordionSummary>
+
+      <AccordionDetails>
+        <TablaRX tipo={tipo} examen={examen} setCampo={setCampo} />
+      </AccordionDetails>
+    </Accordion>
+  );
+});
+
 // Componente principal de Graduación RX
 export default function GraduacionRX({ examen, setExamen }) {
   const inicializado = React.useRef(false);
@@ -114,7 +360,6 @@ export default function GraduacionRX({ examen, setExamen }) {
     }));
   }, []);
 
-  
   const [cargandoRxAnterior, setCargandoRxAnterior] = React.useState(false);
   const noPacienteCargadoRef = React.useRef(null);
 
@@ -155,8 +400,6 @@ export default function GraduacionRX({ examen, setExamen }) {
     return () => { cancelado = true; };
   }, [examen?.NoPaciente, setExamen]);
 
-  if (!examen) return null;
-
   const setCampo = React.useCallback((tipo, ojo, campo, valor) => {
     setExamen(prev => ({
       ...prev,
@@ -170,19 +413,19 @@ export default function GraduacionRX({ examen, setExamen }) {
     }));
   }, [setExamen]);
 
-  // Flag compartida: true mientras hacemos navegación por Tab programática (evita races onBlur->setState)
+  // Refs compartidas de navegación (foco por Tab / mouse) — estas SÍ pueden
+  // vivir en el padre porque son objetos ref estables (no cambian de
+  // identidad entre renders); se exponen a los hijos vía Context.
   const tabbingRef = React.useRef(false);
   const tabbingTimerRef = React.useRef(null);
-  // Flag compartida para navegación por mouse (mousedown -> focus into another input)
   const mouseNavRef = React.useRef(false);
   const mouseNavTimerRef = React.useRef(null);
-
-  // Pending commits: cuando la navegación por Tab/Mouse está en curso, los onBlur no harán
-  // commit inmediato — se registran aquí y se flushan cuando el siguiente input está listo.
   const pendingCommitsRef = React.useRef({});
+
   const registerPendingCommit = React.useCallback((id, commitFn, value) => {
     pendingCommitsRef.current[id] = { commitFn, value };
   }, []);
+
   const flushPendingCommits = React.useCallback(() => {
     const entries = Object.values(pendingCommitsRef.current);
     pendingCommitsRef.current = {};
@@ -191,7 +434,6 @@ export default function GraduacionRX({ examen, setExamen }) {
     }
   }, []);
 
-  // Limpiar timers al desmontar
   React.useEffect(() => {
     return () => {
       if (tabbingTimerRef.current) clearTimeout(tabbingTimerRef.current);
@@ -200,259 +442,50 @@ export default function GraduacionRX({ examen, setExamen }) {
     };
   }, []);
 
-  // Componente para renderizar la tabla RX que es la que contiene los campos editables de cada ojo
-  const CellInput = React.memo(function CellInput({ value, onCommit, id, externalRef }) {
-    const [local, setLocal] = React.useState(value ?? "");
-    const innerRef = React.useRef(null);
-    const inputRef = externalRef ?? innerRef;
+  // Valor de contexto estable: se crea una sola vez (todas las refs y
+  // callbacks que contiene ya son estables), así que no dispara
+  // re-renders extra en los consumidores.
+  const navValue = React.useRef({
+    tabbingRef,
+    tabbingTimerRef,
+    mouseNavRef,
+    mouseNavTimerRef,
+    registerPendingCommit,
+    flushPendingCommits
+  }).current;
 
-    React.useEffect(() => setLocal(value ?? ""), [value]);
-    const blurTimerRef = React.useRef(null);
-    const handleBlur = React.useCallback(() => {
-      if (tabbingRef.current || mouseNavRef.current) {
-        registerPendingCommit(id, onCommit, local);
-        return;
-      }
-
-      const delay = 0;
-      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
-      blurTimerRef.current = setTimeout(() => {
-        blurTimerRef.current = null;
-        if ((value ?? "") !== local) onCommit(local);
-      }, delay);
-    }, [local, onCommit, value, id, registerPendingCommit]);
-    React.useEffect(() => () => { if (blurTimerRef.current) clearTimeout(blurTimerRef.current); }, []);
-
-    const handleMouseDown = React.useCallback((e) => {
-      mouseNavRef.current = true;
-      if (mouseNavTimerRef.current) clearTimeout(mouseNavTimerRef.current);
-      mouseNavTimerRef.current = setTimeout(() => { mouseNavRef.current = false; mouseNavTimerRef.current = null; }, 200);
-
-      e.stopPropagation();
-      if (inputRef.current && document.activeElement !== inputRef.current) {
-        e.preventDefault();
-        inputRef.current.focus();
-        requestAnimationFrame(() => { try { inputRef.current.focus(); } catch (_) {} });
-      }
-    }, [inputRef]);
-
-    const handleFocus = React.useCallback((e) => {
-      try { e.target.select(); } catch (err) { /* no crítico */ }
-      requestAnimationFrame(() => {
-        flushPendingCommits();
-      });
-    }, [flushPendingCommits]);
-
-    const handleKeyDown = React.useCallback((e) => {
-      if (e.key !== 'Tab') return;
-      e.stopPropagation();
-    }, []);
-
-    return (
-      <TextField
-        size="small"
-        inputRef={inputRef}
-        value={local}
-        onChange={e => setLocal(e.target.value)}
-        onBlur={handleBlur}
-        onMouseDown={handleMouseDown}
-        onFocus={handleFocus}
-        onKeyDown={handleKeyDown}
-        inputProps={{ style: { textAlign: "center", width: 60 }, 'aria-label': id }}
-      />
-    );
-  });
-
-  const TablaRX = React.memo(function TablaRX({ tipo }) {
-    const campos = React.useMemo(() => CAMPOS_POR_RX[tipo] || [], [tipo]);
-    const ojos = React.useMemo(() => ["OD", "OI"], []);
-
-    const cellRefs = React.useRef({});
-
-    const handleTableKeyDownCaptureLocal = React.useCallback((e) => {
-      if (e.key !== 'Tab') return;
-      const active = document.activeElement;
-      if (!active) return;
-
-      const isFocusable = (n) => !!(n && typeof n.focus === 'function' && !n.disabled && n.tabIndex !== -1);
-      const doFocus = (n) => {
-        if (!n) return false;
-        try { n.focus(); n.select?.(); } catch (_) { /* ignore */ }
-        requestAnimationFrame(() => { try { n.focus(); } catch (_) {} });
-        return true;
-      };
-
-      const secciones = ["RxBase", "RxActual", "RxCerca", "RxContacto"];
-      const ojosOrder = ["OD", "OI"];
-      const seq = [];
-      for (const s of secciones) {
-        const camposS = CAMPOS_POR_RX[s] || [];
-        for (const o of ojosOrder) {
-          for (const c of camposS) seq.push(normalizeId(s, o, c));
-        }
-      }
-
-      const currentAria = active.getAttribute?.('aria-label') ?? '';
-      const idx = seq.indexOf(currentAria);
-      const forward = !e.shiftKey;
-
-      if (idx !== -1) {
-        const nextIdx = forward ? idx + 1 : idx - 1;
-        if (nextIdx >= 0 && nextIdx < seq.length) {
-          const nextRef = cellRefs.current[seq[nextIdx]];
-          const nextEl = nextRef?.current;
-          if (isFocusable(nextEl)) {
-            e.preventDefault();
-            e.stopPropagation();
-            tabbingRef.current = true;
-            if (tabbingTimerRef.current) clearTimeout(tabbingTimerRef.current);
-            tabbingTimerRef.current = setTimeout(() => { tabbingRef.current = false; tabbingTimerRef.current = null; }, 150);
-            doFocus(nextEl);
-            return;
-          }
-        }
-      }
-
-      const localOrder = [];
-      for (const s of [tipo]) {
-        for (const o of ojos) {
-          for (const c of campos) {
-            const id = normalizeId(s, o, c);
-            const r = cellRefs.current[id];
-            if (r?.current && isFocusable(r.current)) localOrder.push(r.current);
-          }
-        }
-      }
-
-      const cur = localOrder.indexOf(active);
-      const next = localOrder[forward ? cur + 1 : cur - 1];
-      if (next) {
-        e.preventDefault();
-        e.stopPropagation();
-        tabbingRef.current = true;
-        if (tabbingTimerRef.current) clearTimeout(tabbingTimerRef.current);
-        tabbingTimerRef.current = setTimeout(() => { tabbingRef.current = false; tabbingTimerRef.current = null; }, 150);
-        doFocus(next);
-        return;
-      }
-    }, [campos, ojos, tipo]);
-
-    return (
-      <TableContainer component={Paper} variant="outlined" onKeyDownCapture={handleTableKeyDownCaptureLocal}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell />
-              {campos.map(c => (
-                <TableCell key={c} align="center" sx={{ fontWeight: "bold" }}>
-                  {c}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {ojos.map(ojo => (
-              <TableRow key={ojo}>
-                <TableCell sx={{ fontWeight: "bold", width: 60 }}>
-                  {ojo}
-                </TableCell>
-
-                {campos.map(campo => {
-                  const id = normalizeId(tipo, ojo, campo);
-                  if (!cellRefs.current[id]) cellRefs.current[id] = React.createRef();
-                  return (
-                    <TableCell key={campo} align="center" sx={{ p: 0.5 }}>
-                      <CellInput
-                        id={id}
-                        externalRef={cellRefs.current[id]}
-                        value={examen[tipo]?.[ojo]?.[campo] ?? ""}
-                        onCommit={val => setCampo(tipo, ojo, campo, val)}
-                      />
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-  });
-
-  const ObservacionesField = React.memo(function ObservacionesField({ value, onCommit }) {
-    const [local, setLocal] = React.useState(value ?? "");
-    const timerRef = React.useRef(null);
-
-    React.useEffect(() => setLocal(value ?? ""), [value]);
-
-    React.useEffect(() => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        if ((value ?? "") !== local) onCommit(local);
-      }, 300);
-      return () => clearTimeout(timerRef.current);
-    }, [local, onCommit, value]);
-
-    const handleBlur = React.useCallback(() => {
-      if ((value ?? "") !== local) onCommit(local);
-    }, [local, onCommit, value]);
-
-    return (
-      <Box mt={2}>
-        <TextField
-          fullWidth
-          label="Observaciones del médico"
-          multiline
-          minRows={3}
-          value={local}
-          onChange={e => setLocal(e.target.value)}
-          onBlur={handleBlur}
-          inputProps={{ 'aria-label': 'observaciones-medico' }}
-        />
-      </Box>
-    );
-  });
-
-  const SeccionRX = React.memo(({ titulo, tipo, abierto = true, extra = null }) => (
-    <Accordion defaultExpanded={abierto}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography fontWeight="bold">{titulo}</Typography>
-        {extra}
-      </AccordionSummary>
-
-      <AccordionDetails>
-        <TablaRX tipo={tipo} />
-      </AccordionDetails>
-    </Accordion>
-  ));
+  if (!examen) return null;
 
   return (
-    <Box>
-      <Typography variant="h6" mb={2}>
-        Graduación RX
-      </Typography>
+    <RxNavContext.Provider value={navValue}>
+      <Box>
+        <Typography variant="h6" mb={2}>
+          Graduación RX
+        </Typography>
 
-      <ObservacionesField
-        value={examen.observacionesGenerales}
-        onCommit={val => setExamen(prev => ({ ...prev, observacionesGenerales: val }))}
-      />
+        <ObservacionesField
+          value={examen.observacionesGenerales}
+          onCommit={val => setExamen(prev => ({ ...prev, observacionesGenerales: val }))}
+        />
 
-      <SeccionRX
-        tipo="RxBase"
-        titulo="RX en Uso"
-        extra={
-          cargandoRxAnterior ? (
-            <Box display="flex" alignItems="center" gap={1} ml={2}>
-              <CircularProgress size={16} />
-              <Typography variant="caption">Cargando RX anterior…</Typography>
-            </Box>
-          ) : null
-        }
-      />
-      <SeccionRX tipo="RxActual" titulo="RX Base" />
-      <SeccionRX tipo="RxCerca" titulo="RX Cerca" abierto={false} />
-      <SeccionRX tipo="RxContacto" titulo="RX Lente de Contacto" abierto={false} />
-    </Box>
+        <SeccionRX
+          tipo="RxBase"
+          titulo="RX en Uso"
+          examen={examen}
+          setCampo={setCampo}
+          extra={
+            cargandoRxAnterior ? (
+              <Box display="flex" alignItems="center" gap={1} ml={2}>
+                <CircularProgress size={16} />
+                <Typography variant="caption">Cargando RX anterior…</Typography>
+              </Box>
+            ) : null
+          }
+        />
+        <SeccionRX tipo="RxActual" titulo="RX Base" examen={examen} setCampo={setCampo} />
+        <SeccionRX tipo="RxCerca" titulo="RX Cerca" abierto={false} examen={examen} setCampo={setCampo} />
+        <SeccionRX tipo="RxContacto" titulo="RX Lente de Contacto" abierto={false} examen={examen} setCampo={setCampo} />
+      </Box>
+    </RxNavContext.Provider>
   );
 }

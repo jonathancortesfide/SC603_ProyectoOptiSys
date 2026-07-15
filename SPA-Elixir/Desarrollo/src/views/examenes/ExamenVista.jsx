@@ -51,8 +51,7 @@ const createInitialExamenState = () => ({
   Imagen: null,
   DpGeneral: "",
 
-  XmlGraduaciones: "",
-  XmlDisenos: "",
+
   CodigoExamen: "",
   Identificador: null,
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import AsyncSelect from 'react-select/async';
 import { Grid, Box } from '@mui/material';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
@@ -23,13 +23,28 @@ const esDoctorActivo = (doctor) => {
   return !!activo;
 };
 
+// Objeto estático: se crea UNA sola vez, no en cada render.
+// Esto evita romper la memoización interna de react-select.
+const selectStyles = {
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
+  }),
+};
+
 const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange }) => {
   const [doctores, setDoctores] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [loading, setLoading] = useState(false);
   const debounceTimerRef = useRef(null);
 
-  const identificador = initialIdentificador ?? getSucursalIdentificador();
+  // Memoizado: solo se recalcula si initialIdentificador cambia,
+  // en vez de ejecutarse en cada render (incluyendo los que dispara
+  // escribir en otros campos del formulario padre).
+  const identificador = useMemo(
+    () => initialIdentificador ?? getSucursalIdentificador(),
+    [initialIdentificador]
+  );
 
   const cargarDoctores = async () => {
     setLoading(true);
@@ -112,12 +127,7 @@ const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange 
             placeholder="Ingrese nombre o código del profesional"
             noOptionsMessage={() => loading ? 'Cargando doctores...' : 'No se encontraron doctores'}
             menuPortalTarget={document.body}
-            styles={{
-              menuPortal: (base) => ({
-                ...base,
-                zIndex: 9999,
-              }),
-            }}
+            styles={selectStyles}
           />
         </Grid>
       </Grid>
@@ -125,4 +135,7 @@ const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange 
   );
 };
 
-export default BusquedaDeDoctor;
+// React.memo: evita re-renderizar este componente si sus props
+// (identificador, onDoctorChange) no cambiaron entre renders del padre.
+// Depende de que onDoctorChange venga envuelto en useCallback en el padre.
+export default React.memo(BusquedaDeDoctor);

@@ -47,6 +47,15 @@ const esPacienteActivo = (paciente) => {
   return !!activo;
 };
 
+// Objeto estático: se crea UNA sola vez, no en cada render.
+// Esto evita romper la memoización interna de react-select.
+const selectStyles = {
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
+  }),
+};
+
 const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente = null, onPacienteChange }) => {
   const [options, setOptions] = React.useState([]);
   const [pacientes, setPacientes] = React.useState([]);
@@ -142,8 +151,6 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
         onPacienteChange(paciente || { noPaciente: numeroDePaciente.value });
       }
       setIsVisible(true);
-      console.log("Paciente seleccionado:", paciente);
-      console.log("noPaciente guardado:", numeroDePaciente.value);
     } else {
       setIsVisible(false);
       setSelectedPaciente(null);
@@ -177,12 +184,7 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
           noOptionsMessage={() => "No se encontraron resultados"} // Mensaje cuando no hay resultados
           menuPortalTarget={document.body} // Esto mueve el dropdown fuera del contenedor
           onChange={seleccionarPaciente} // Función que se ejecuta cuando se selecciona un valor
-          styles={{
-            menuPortal: base => ({
-              ...base,
-              zIndex: 9999,  // Aseguramos que el menú tiene un z-index muy alto
-            }),
-          }}
+          styles={selectStyles}
       />
         </Grid>
         <br></br>
@@ -227,4 +229,8 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
   );
 };
 
-export default BusquedaDePaciente;
+// React.memo: evita re-renderizar este componente si sus props
+// (noPaciente, initialPaciente, onPacienteChange) no cambiaron entre
+// renders del padre. Depende de que onPacienteChange venga envuelto
+// en useCallback en el padre.
+export default React.memo(BusquedaDePaciente);
