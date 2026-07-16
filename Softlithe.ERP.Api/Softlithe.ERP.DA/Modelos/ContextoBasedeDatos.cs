@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Softlithe.ERP.Abstracciones.Contenedores.Graduaciones;
+using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
 
 namespace Softlithe.ERP.DA.Modelos;
 
@@ -14,6 +15,9 @@ public partial class ContextoBasedeDatos : DbContext
         : base(options)
     {
     }
+    public DbSet<ObtenerGraduacionPorSucursalSPDto> ObtenerGraduacionPorSucursalSPDto { get; set; }
+    public virtual DbSet<GraduacionAD> GraduacionContexto { get; set; }
+    public virtual DbSet<TipoGraduacionAD> TipoGraduacionContexto { get; set; }
     public virtual DbSet<SeguridadAccion> SeguridadAccions { get; set; }
     public virtual DbSet<TipoLenteAD> TipoLente { get; set; }
 
@@ -134,6 +138,9 @@ public partial class ContextoBasedeDatos : DbContext
                 .HasForeignKey(e => e.NoSucursal)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<ObtenerGraduacionPorSucursalSPDto>()
+           .HasNoKey();
 
         OnModelCreatingPartial(modelBuilder);
     }

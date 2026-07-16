@@ -89,7 +89,6 @@ const ConsultaExamenVista = () => {
       no_paciente: parseInt(item.resultado_valor) || 0,
       fecha_examen: item.posicion || '',
       motivo: item.posicion_nombre || '',
-      // PascalCase versions for component compatibility
       NoExamen: parseInt(item.abreviatura) || 0,
       NoPaciente: parseInt(item.resultado_valor) || 0,
       FechaExamen: item.posicion || '',

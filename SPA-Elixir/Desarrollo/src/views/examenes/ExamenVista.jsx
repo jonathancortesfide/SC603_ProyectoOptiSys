@@ -48,12 +48,7 @@ const createInitialExamenState = () => ({
   CostoMaterial: "",
   CostoExamen: "",
   PrecioFinal: 0,
-  Imagen: null,
-  DpGeneral: "",
 
-
-  CodigoExamen: "",
-  Identificador: null,
 });
 
 const initialExamenState = createInitialExamenState();

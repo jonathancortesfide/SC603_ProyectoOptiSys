@@ -10,6 +10,7 @@ namespace Softlithe.ERP.Api
 			InyeccionDeDependenciasGenerales.InyectarDependencias(services);
 			InyeccionDeDependenciasPacientes.InyectarDependencias(services);
 			InyeccionDeDependenciasExamenes.InyectarDependencias(services);
+			InyeccionDeDependenciasGraduaciones.InyectarDependencias(services);
 			InyeccionDependenciasMonedas.InyectarDependencias(services);
 			InyeccionDependenciasGrupos.InyectarDependencias(services);
 			InyeccionDeDependenciasTipoLente.InyectarDependencias(services);

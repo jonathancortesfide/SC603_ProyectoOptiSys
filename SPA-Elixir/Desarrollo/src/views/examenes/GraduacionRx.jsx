@@ -20,7 +20,7 @@ import { obtenerExamenCompletoPorNoPaciente } from "../../requests/examenes/Requ
 
 // Constantes de campos RX a manejar en la tabla
 const CAMPOS_POR_RX = {
-  RxBase: ["Esfera", "Cilindro", "Eje", "Adicción", "DNP", "AVC", "AVL", "Altura", "Base", "Prisma", "CB", "Diam", "AVSC", "PIO", "LH"],
+  RxBase: ["Esfera", "Cilindro", "Eje", "Adicion", "DNP", "AVC", "AVL", "Altura", "Base", "Prisma", "CB", "Diam", "AVSC", "PIO", "LH"],
   RxActual: ["Esfera", "Cilindro", "Eje", "Adicción", "DNP", "AVC", "AVL", "Altura", "Base", "Prisma", "CB", "Diam", "AVSC", "PIO", "LH"],
   RxCerca: ["Esfera", "Cilindro", "Eje", "DNP", "AVC"],
   RxContacto: ["Esfera", "Cilindro", "Eje", "Adicción"]

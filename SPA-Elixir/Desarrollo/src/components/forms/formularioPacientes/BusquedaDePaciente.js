@@ -1,38 +1,9 @@
 import React, { useEffect } from 'react';
-import { CardContent, Typography, Grid, Button, Box, AvatarGroup, Avatar, Stack } from '@mui/material';
+import { CardContent, Typography, Grid, Stack } from '@mui/material';
 import BlankCard from '../../shared/BlankCard';
 import AsyncSelect from 'react-select/async';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
 import { obtenerListaDePacientes } from '../../../requests/pacientes/RequestsPacientes';
-
-import img1 from 'src/assets/images/profile/user-1.jpg';
-import img2 from 'src/assets/images/profile/user-2.jpg';
-import img3 from 'src/assets/images/profile/user-3.jpg';
-import img4 from 'src/assets/images/profile/user-4.jpg';
-
-
-const followerCard = [
-  {
-    title: 'Andrew Grant',
-    location: 'El Salvador',
-    avatar: img1,
-  },
-  {
-    title: 'Leo Pratt',
-    location: 'Bulgaria',
-    avatar: img2,
-  },
-  {
-    title: 'Charles Nunez',
-    location: 'Nepal',
-    avatar: img3,
-  },
-  {
-    title: 'Lora Powers',
-    location: 'Nepal',
-    avatar: img4,
-  },
-];
 
 
 const esPacienteActivo = (paciente) => {
@@ -194,31 +165,19 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
     <BlankCard>
     {isVisible && (
       <CardContent>
-      <Stack direction="row" spacing={2} mt={3}>
-        <Box>
-        <Stack direction="row" spacing={2} alignItems="center">
-        <Avatar src={img1} sx={{ height: 80, width: 80 }}></Avatar>
-          <Typography variant="h6" mb={1}>
+        <Stack spacing={2} mt={3}>
+          <Typography variant="h6">
             Nombre: {selectedPaciente?.nombre}
           </Typography>
-          </Stack>
-          <Stack direction="row" spacing={2} alignItems="center" marginTop={2}>
-            <Typography variant="subtitle2" color="textSecondary">
-              Identificación: {selectedPaciente?.cedula}
-            </Typography>
-            <Typography variant="subtitle2" color="textSecondary">
-              Correo: {selectedPaciente?.email}
-            </Typography>
-          </Stack>
-        </Box>
-      </Stack>
-      <Stack spacing={2} mt={3} direction="row" justifyContent="center" alignItems="center">
-        <Button size="large" variant="text" color="primary">
-          Editar paciente
-        </Button>
-      </Stack>
-    </CardContent>
-      )}
+          <Typography variant="subtitle2" color="textSecondary">
+            Identificación: {selectedPaciente?.cedula}
+          </Typography>
+          <Typography variant="subtitle2" color="textSecondary">
+            Correo: {selectedPaciente?.email}
+          </Typography>
+        </Stack>
+      </CardContent>
+    )}
 
     </BlankCard>
   </Grid>
