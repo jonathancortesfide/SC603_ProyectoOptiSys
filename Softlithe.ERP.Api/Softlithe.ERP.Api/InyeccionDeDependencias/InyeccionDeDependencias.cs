@@ -27,8 +27,9 @@ namespace Softlithe.ERP.Api
             InyeccionDeDependenciaVendedores.InyectarDependencias(services);
             InyeccionDeDependenciaCajas.InyectarDependencias(services);
 			InyeccionDeDependenciaUsuarios.InyectarDependencias(services);
-				InyeccionDeDependenciasSeguridad.InyectarDependencias(services);
-				InyeccionDeDependenciasAutenticacion.InyectarDependencias(services);
+			InyeccionDeDependenciasSeguridad.InyectarDependencias(services);
+			InyeccionDeDependenciasAutenticacion.InyectarDependencias(services);
+
 
 				return services;
 		}

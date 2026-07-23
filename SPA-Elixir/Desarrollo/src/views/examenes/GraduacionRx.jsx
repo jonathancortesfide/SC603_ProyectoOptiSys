@@ -1,121 +1,300 @@
-import React from "react";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
-  Box,
-  Typography,
   Accordion,
-  AccordionSummary,
   AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  CircularProgress,
+  Paper,
   Table,
+  TableBody,
+  TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  TableCell,
-  TableBody,
-  TableContainer,
-  Paper,
   TextField,
-  CircularProgress
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { obtenerExamenCompletoPorNoPaciente } from "../../requests/examenes/RequestsExamenes";
+  Typography,
+} from '@mui/material';
+import React from 'react';
+import { obtenerExamenCompletoPorNoPaciente } from '../../requests/examenes/RequestsExamenes';
+import { obtenerGraduacionesPorIdentificador } from '../../requests/examenes/RequestsGraduacion';
 
-// Constantes de campos RX a manejar en la tabla
-const CAMPOS_POR_RX = {
-  RxBase: ["Esfera", "Cilindro", "Eje", "Adicion", "DNP", "AVC", "AVL", "Altura", "Base", "Prisma", "CB", "Diam", "AVSC", "PIO", "LH"],
-  RxActual: ["Esfera", "Cilindro", "Eje", "Adicción", "DNP", "AVC", "AVL", "Altura", "Base", "Prisma", "CB", "Diam", "AVSC", "PIO", "LH"],
-  RxCerca: ["Esfera", "Cilindro", "Eje", "DNP", "AVC"],
-  RxContacto: ["Esfera", "Cilindro", "Eje", "Adicción"]
+/* =========================================================================
+ * MAPEO LEGACY
+ * -------------------------------------------------------------------------
+ * El backend de guardado del examen espera exactamente estas keys
+ * (RxBase.OD.Esfera, RxActual.OD.DNP, etc). La API de graduaciones nos da
+ * el ORDEN, el TÍTULO y qué columnas están ACTIVAS por identificador de
+ * sucursal, pero la traducción abreviatura -> campo legacy se mantiene
+ * fija acá para no romper lo que ya está guardado en producción.
+ *
+ * Si el backend agrega una graduación nueva que no está en este mapa,
+ * esa columna simplemente se ignora (no se rompe nada, pero tampoco
+ * aparece hasta que alguien la agregue acá a propósito).
+ * ========================================================================= */
+
+const TIPO_LEGACY = {
+  1: 'RxBase', // "RX anterior (en uso)" -> se llena con el RX previo del paciente
+  2: 'RxActual', // "RX actual (nueva)"
+  3: 'RxCerca',
+  4: 'RxContacto',
 };
 
-// Mapa abreviatura (tal como la devuelve el backend en ObtenerPorNoPaciente) -> campo de RxBase ("RX en Uso").
-const ABREVIATURAS_RXBASE = ["ESF", "CIL", "EJE", "ADD", "DNP", "AVC", "AVL", "ALT", "BASE", "PR", "CB", "DIAM", "AVSC", "PIO", "LH"];
-const ABREV_TO_CAMPO_RXBASE = ABREVIATURAS_RXBASE.reduce((acc, abrev, i) => {
-  acc[abrev] = CAMPOS_POR_RX.RxBase[i];
-  return acc;
-}, {});
+const TITULO_LEGACY = {
+  RxBase: 'RX en Uso',
+  RxActual: 'RX Base',
+  RxCerca: 'RX Cerca',
+  RxContacto: 'RX Lente de Contacto',
+};
 
-// Función para inicializar una estructura RX vacía
-const initRX = () => ({
-  OD: {},
-  OI: {},
-  observaciones: ""
-});
+const ORDEN_FIJO_SECCIONES = ['RxBase', 'RxActual', 'RxCerca', 'RxContacto'];
 
-// Helper: normaliza un id seguro (quita diacríticos, espacios y caracteres raros)
+// OJO: se respeta el typo/inconsistencia histórica de "Adicion" vs "Adicción"
+// tal como estaba en el componente hardcodeado original.
+const CAMPO_LEGACY_POR_TIPO = {
+  RxBase: {
+    ESF: 'Esfera',
+    CIL: 'Cilindro',
+    EJE: 'Eje',
+    ADD: 'Adicion',
+    DNP: 'DNP',
+    AVC: 'AVC',
+    AVL: 'AVL',
+    ALT: 'Altura',
+    BASE: 'Base',
+    PR: 'Prisma',
+    CB: 'CB',
+    DIAM: 'Diam',
+    AVSC: 'AVSC',
+    PIO: 'PIO',
+    LH: 'LH',
+  },
+  RxActual: {
+    ESF: 'Esfera',
+    CIL: 'Cilindro',
+    EJE: 'Eje',
+    ADD: 'Adicción',
+    DNP: 'DNP',
+    AVC: 'AVC',
+    AVL: 'AVL',
+    ALT: 'Altura',
+    BASE: 'Base',
+    PR: 'Prisma',
+    CB: 'CB',
+    DIAM: 'Diam',
+    AVSC: 'AVSC',
+    PIO: 'PIO',
+    LH: 'LH',
+  },
+  RxCerca: {
+    ESF: 'Esfera',
+    CIL: 'Cilindro',
+    EJE: 'Eje',
+    DNP: 'DNP',
+    AVC: 'AVC',
+  },
+  RxContacto: {
+    ESF: 'Esfera',
+    CIL: 'Cilindro',
+    EJE: 'Eje',
+    ADD: 'Adicción',
+  },
+};
+
+const ID_TIPO_RX_ANTERIOR = 1;
+
+// TODO: reemplazar el fallback "1" por el helper real de sucursal cuando
+// exista en este proyecto (equivalente a getSucursalIdentificador()).
+function resolveIdentificadorExamen(examen) {
+  const raw =
+    examen?.identificadorGraduaciones ??
+    examen?.IdentificadorGraduaciones ??
+    examen?.identificador ??
+    examen?.Identificador;
+  if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
+    const n = Number.parseInt(String(raw), 10);
+    if (Number.isFinite(n)) return n;
+  }
+  return 1;
+}
+
+const initRX = () => ({ OD: {}, OI: {}, observaciones: '' });
+
 function normalizeId(tipo, ojo, campo) {
   const safeCampo = String(campo)
-    .normalize?.("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .replace(/^_|_$/g, "")
+    .normalize?.('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
     .toLowerCase();
   return `${String(tipo).toLowerCase()}_${String(ojo).toLowerCase()}_${safeCampo}`;
 }
 
-// Helper: "D "/"Derecho" -> "OD", "I "/"Izquierdo" -> "OI"
 function posicionToOjo(posicion) {
   if (!posicion) return null;
   const valor = String(posicion).trim().toUpperCase();
-  if (valor.startsWith("D") || valor.includes("DER")) return "OD";
-  if (valor.startsWith("I") || valor.includes("IZQ")) return "OI";
+  if (valor.startsWith('D') || valor.includes('DER')) return 'OD';
+  if (valor.startsWith('I') || valor.includes('IZQ')) return 'OI';
   return null;
 }
 
-// Construye { OD: {...}, OI: {...} } para el RX anterior/en uso a partir de las filas que devuelve
-// api/ExamenCompleto/ObtenerPorNoPaciente.
-function construirRxBaseDesdeApi(rows) {
-  const resultado = { OD: {}, OI: {} };
-  if (!Array.isArray(rows)) return resultado;
+function tiposDesdeRespuestaApi(data) {
+  if (!data) return [];
+  return data.tiposGraduacion ?? data.TiposGraduacion ?? [];
+}
 
-  const filasParaMapear = rows.filter((row) => {
-    const tipoXml = String(row?.tipo_xml ?? row?.tipoXml ?? "").trim().toLowerCase();
-    const tipoGraduacion = String(row?.tipo_graduacion ?? row?.tipoGraduacion ?? "").trim().toLowerCase();
-    const esRxAnterior = tipoGraduacion.includes("rx anterior") || tipoGraduacion.includes("en uso") || tipoGraduacion.includes("anterior");
+function normalizarFilaApi(row) {
+  return {
+    idGraduacion: row.idGraduacion ?? row.IdGraduacion,
+    nombre: row.nombre ?? row.Nombre ?? '',
+    abreviatura: row.abreviatura ?? row.Abreviatura ?? '',
+    orden: Number(row.orden ?? row.Orden ?? 0),
+    activo: row.activo ?? row.Activo ?? true,
+    idTipoGraduacion: Number(row.idTipoGraduacion ?? row.IdTipoGraduacion ?? 0),
+  };
+}
 
-    if (tipoXml === "base" || esRxAnterior) return true;
-    if (!tipoXml && !tipoGraduacion) return true; // fallback si no vienen metadatos
-    return false;
-  });
+// Construye las secciones (RxBase/RxActual/RxCerca/RxContacto) a partir de
+// la respuesta de /api/Graduacion/Obtener, traduciendo cada abreviatura a
+// su key legacy correspondiente.
+function construirSeccionesLegacy(tiposApi) {
+  const secciones = [];
 
-  const filas = filasParaMapear.length > 0 ? filasParaMapear : rows;
+  for (const tipo of tiposApi) {
+    const idTipo = Number(tipo.idTipoGraduacion ?? tipo.IdTipoGraduacion ?? 0);
+    const tipoKey = TIPO_LEGACY[idTipo];
+    if (!tipoKey) continue; // tipo que el guardado legacy todavía no soporta
 
-  for (const row of filas) {
+    const gradsRaw = tipo.graduaciones ?? tipo.Graduaciones ?? [];
+    const filas = gradsRaw.map(normalizarFilaApi).filter((g) => g.activo !== false);
+    const ordenadas = [...filas].sort((a, b) => a.orden - b.orden);
+
+    const mapaLegacy = CAMPO_LEGACY_POR_TIPO[tipoKey] || {};
+    const columnas = [];
+    for (const g of ordenadas) {
+      const abrev = String(g.abreviatura ?? '')
+        .trim()
+        .toUpperCase();
+      const campoLegacy = mapaLegacy[abrev];
+      if (!campoLegacy) continue; // columna nueva sin mapeo legacy -> se ignora
+      columnas.push({
+        key: campoLegacy,
+        label: g.abreviatura || g.nombre || campoLegacy,
+        idGraduacion: g.idGraduacion,
+      });
+    }
+    if (!columnas.length) continue;
+
+    secciones.push({
+      idTipo,
+      tipo: tipoKey,
+      titulo: TITULO_LEGACY[tipoKey] || tipo.nombreTipoGraduacion || tipoKey,
+      abierto: tipoKey === 'RxBase' || tipoKey === 'RxActual',
+      columnas,
+    });
+  }
+
+  secciones.sort(
+    (a, b) => ORDEN_FIJO_SECCIONES.indexOf(a.tipo) - ORDEN_FIJO_SECCIONES.indexOf(b.tipo),
+  );
+
+  return secciones;
+}
+
+// Agrega/limpia secciones en el objeto `examen` según lo que vino de la API,
+// sin tocar valores ya cargados.
+function mergeExamenRx(prev, secciones) {
+  const next = { ...prev };
+  const seccionesActivas = new Set(secciones.map((s) => s.tipo));
+
+  for (const sec of secciones) {
+    const prevRx = prev[sec.tipo] ?? initRX();
+    next[sec.tipo] = {
+      OD: { ...(prevRx.OD ?? {}) },
+      OI: { ...(prevRx.OI ?? {}) },
+      observaciones: prevRx.observaciones ?? '',
+    };
+  }
+
+  for (const key of Object.keys(prev)) {
+    if (key === 'observacionesGenerales' || seccionesActivas.has(key)) continue;
+    const valor = prev[key];
+    if (
+      valor &&
+      typeof valor === 'object' &&
+      !Array.isArray(valor) &&
+      (Object.prototype.hasOwnProperty.call(valor, 'OD') ||
+        Object.prototype.hasOwnProperty.call(valor, 'OI'))
+    ) {
+      delete next[key];
+    }
+  }
+
+  next.observacionesGenerales = prev.observacionesGenerales ?? '';
+  return next;
+}
+
+function construirSecuenciaTab(secciones) {
+  const seq = [];
+  for (const s of secciones) {
+    for (const o of ['OD', 'OI']) {
+      for (const col of s.columnas) seq.push(normalizeId(s.tipo, o, col.key));
+    }
+  }
+  return seq;
+}
+
+// Traduce las filas del RX anterior del paciente (ObtenerPorNoPaciente) a
+// la sección legacy correspondiente (idTipoGraduacion === 1 -> "RxBase").
+function construirRxAnteriorDesdeApi(rows, secciones) {
+  const resultado = {};
+  for (const sec of secciones) resultado[sec.tipo] = { OD: {}, OI: {} };
+
+  const seccionDestino =
+    secciones.find((s) => s.tipo === 'RxActual') ??
+    secciones.find((s) => s.idTipo === ID_TIPO_RX_ANTERIOR);
+  if (!seccionDestino || !Array.isArray(rows)) return resultado;
+
+  const porId = new Map();
+  for (const col of seccionDestino.columnas) {
+    if (col.idGraduacion != null) porId.set(Number(col.idGraduacion), col.key);
+  }
+  const mapaAbrev = CAMPO_LEGACY_POR_TIPO[seccionDestino.tipo] || {};
+
+  for (const row of rows) {
     const ojo = posicionToOjo(row.posicion ?? row.posicion_nombre);
     if (!ojo) continue;
 
-    const abrev = String(row.abreviatura ?? "").trim().toUpperCase();
-    const campo = ABREV_TO_CAMPO_RXBASE[abrev];
-    if (!campo) continue; // abreviatura desconocida, se ignora
+    const idGrad = Number(row.id_graduacion ?? row.idGraduacion ?? row.IdGraduacion ?? 0);
+    const abrev = String(row.abreviatura ?? '')
+      .trim()
+      .toUpperCase();
+    const campoKey = (idGrad && porId.get(idGrad)) ?? mapaAbrev[abrev];
+    if (!campoKey) continue;
 
-    const valor = row.resultado_valor ?? row.resultadoValor ?? row.resultado ?? "";
-    resultado[ojo][campo] = valor;
+    const valor = row.resultado_valor ?? row.resultadoValor ?? row.resultado ?? '';
+    resultado.RxActual = resultado.RxActual ?? { OD: {}, OI: {} };
+    resultado.RxActual[ojo][campoKey] = valor;
   }
 
   return resultado;
 }
 
 /* =========================================================================
- * IMPORTANTE: todos los componentes de abajo viven a nivel de MÓDULO
- * (fuera de GraduacionRX). Antes estaban declarados dentro del cuerpo del
- * componente padre, lo que hacía que React les asignara una identidad
- * NUEVA en cada render (cada vez que se tipeaba algo y el padre volvía a
- * renderizar). Eso forzaba a React a desmontar y re-montar todos los
- * <TextField> en cada cambio de estado, perdiendo el foco: es la causa
- * de que al hacer click en otra celda/tabla "te sacara" del campo.
- *
- * Ahora comparten identidad estable entre renders, y las refs/callbacks
- * de navegación (tabbing, mouse, pending commits) se pasan vía Context
- * en lugar de por clausura.
+ * Componentes de UI (nivel de módulo, identidad estable entre renders —
+ * ver comentario original sobre por qué NO deben vivir dentro del padre).
  * ========================================================================= */
 
 const RxNavContext = React.createContext(null);
 
 const CellInput = React.memo(function CellInput({ value, onCommit, id, externalRef }) {
   const nav = React.useContext(RxNavContext);
-  const [local, setLocal] = React.useState(value ?? "");
+  const [local, setLocal] = React.useState(value ?? '');
   const innerRef = React.useRef(null);
   const inputRef = externalRef ?? innerRef;
 
-  React.useEffect(() => setLocal(value ?? ""), [value]);
+  React.useEffect(() => setLocal(value ?? ''), [value]);
 
   const blurTimerRef = React.useRef(null);
   const handleBlur = React.useCallback(() => {
@@ -123,38 +302,56 @@ const CellInput = React.memo(function CellInput({ value, onCommit, id, externalR
       nav.registerPendingCommit(id, onCommit, local);
       return;
     }
-
     if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
     blurTimerRef.current = setTimeout(() => {
       blurTimerRef.current = null;
-      if ((value ?? "") !== local) onCommit(local);
+      if ((value ?? '') !== local) onCommit(local);
     }, 0);
   }, [local, onCommit, value, id, nav]);
 
-  React.useEffect(() => () => { if (blurTimerRef.current) clearTimeout(blurTimerRef.current); }, []);
+  React.useEffect(
+    () => () => {
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+    },
+    [],
+  );
 
-  const handleMouseDown = React.useCallback((e) => {
-    nav.mouseNavRef.current = true;
-    if (nav.mouseNavTimerRef.current) clearTimeout(nav.mouseNavTimerRef.current);
-    nav.mouseNavTimerRef.current = setTimeout(() => {
-      nav.mouseNavRef.current = false;
-      nav.mouseNavTimerRef.current = null;
-    }, 200);
+  const handleMouseDown = React.useCallback(
+    (e) => {
+      nav.mouseNavRef.current = true;
+      if (nav.mouseNavTimerRef.current) clearTimeout(nav.mouseNavTimerRef.current);
+      nav.mouseNavTimerRef.current = setTimeout(() => {
+        nav.mouseNavRef.current = false;
+        nav.mouseNavTimerRef.current = null;
+      }, 200);
 
-    e.stopPropagation();
-    if (inputRef.current && document.activeElement !== inputRef.current) {
-      e.preventDefault();
-      inputRef.current.focus();
-      requestAnimationFrame(() => { try { inputRef.current.focus(); } catch (_) {} });
-    }
-  }, [inputRef, nav]);
+      e.stopPropagation();
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        e.preventDefault();
+        inputRef.current.focus();
+        requestAnimationFrame(() => {
+          try {
+            inputRef.current.focus();
+          } catch (_) {}
+        });
+      }
+    },
+    [inputRef, nav],
+  );
 
-  const handleFocus = React.useCallback((e) => {
-    try { e.target.select(); } catch (err) { /* no crítico */ }
-    requestAnimationFrame(() => {
-      nav.flushPendingCommits();
-    });
-  }, [nav]);
+  const handleFocus = React.useCallback(
+    (e) => {
+      try {
+        e.target.select();
+      } catch (err) {
+        /* no crítico */
+      }
+      requestAnimationFrame(() => {
+        nav.flushPendingCommits();
+      });
+    },
+    [nav],
+  );
 
   const handleKeyDown = React.useCallback((e) => {
     if (e.key !== 'Tab') return;
@@ -166,122 +363,128 @@ const CellInput = React.memo(function CellInput({ value, onCommit, id, externalR
       size="small"
       inputRef={inputRef}
       value={local}
-      onChange={e => setLocal(e.target.value)}
+      onChange={(e) => setLocal(e.target.value)}
       onBlur={handleBlur}
       onMouseDown={handleMouseDown}
       onFocus={handleFocus}
       onKeyDown={handleKeyDown}
-      inputProps={{ style: { textAlign: "center", width: 60 }, 'aria-label': id }}
+      inputProps={{ style: { textAlign: 'center', width: 60 }, 'aria-label': id }}
     />
   );
 });
 
-const TablaRX = React.memo(function TablaRX({ tipo, examen, setCampo }) {
+const TablaRX = React.memo(function TablaRX({ tipo, columnas, rx, setCampo }) {
   const nav = React.useContext(RxNavContext);
-  const campos = React.useMemo(() => CAMPOS_POR_RX[tipo] || [], [tipo]);
-  const ojos = React.useMemo(() => ["OD", "OI"], []);
-
   const cellRefs = React.useRef({});
 
-  const handleTableKeyDownCaptureLocal = React.useCallback((e) => {
-    if (e.key !== 'Tab') return;
-    const active = document.activeElement;
-    if (!active) return;
+  const handleTableKeyDownCaptureLocal = React.useCallback(
+    (e) => {
+      if (e.key !== 'Tab') return;
+      const active = document.activeElement;
+      if (!active) return;
 
-    const isFocusable = (n) => !!(n && typeof n.focus === 'function' && !n.disabled && n.tabIndex !== -1);
-    const doFocus = (n) => {
-      if (!n) return false;
-      try { n.focus(); n.select?.(); } catch (_) { /* ignore */ }
-      requestAnimationFrame(() => { try { n.focus(); } catch (_) {} });
-      return true;
-    };
+      const isFocusable = (n) =>
+        !!(n && typeof n.focus === 'function' && !n.disabled && n.tabIndex !== -1);
+      const doFocus = (n) => {
+        if (!n) return false;
+        try {
+          n.focus();
+          n.select?.();
+        } catch (_) {
+          /* ignore */
+        }
+        requestAnimationFrame(() => {
+          try {
+            n.focus();
+          } catch (_) {}
+        });
+        return true;
+      };
 
-    const secciones = ["RxBase", "RxActual", "RxCerca", "RxContacto"];
-    const ojosOrder = ["OD", "OI"];
-    const seq = [];
-    for (const s of secciones) {
-      const camposS = CAMPOS_POR_RX[s] || [];
-      for (const o of ojosOrder) {
-        for (const c of camposS) seq.push(normalizeId(s, o, c));
-      }
-    }
+      const seq = nav.tabSequence;
+      const currentAria = active.getAttribute?.('aria-label') ?? '';
+      const idx = seq.indexOf(currentAria);
+      const forward = !e.shiftKey;
 
-    const currentAria = active.getAttribute?.('aria-label') ?? '';
-    const idx = seq.indexOf(currentAria);
-    const forward = !e.shiftKey;
-
-    if (idx !== -1) {
-      const nextIdx = forward ? idx + 1 : idx - 1;
-      if (nextIdx >= 0 && nextIdx < seq.length) {
-        const nextRef = cellRefs.current[seq[nextIdx]];
-        const nextEl = nextRef?.current;
-        if (isFocusable(nextEl)) {
-          e.preventDefault();
-          e.stopPropagation();
-          nav.tabbingRef.current = true;
-          if (nav.tabbingTimerRef.current) clearTimeout(nav.tabbingTimerRef.current);
-          nav.tabbingTimerRef.current = setTimeout(() => { nav.tabbingRef.current = false; nav.tabbingTimerRef.current = null; }, 150);
-          doFocus(nextEl);
-          return;
+      if (idx !== -1) {
+        const nextIdx = forward ? idx + 1 : idx - 1;
+        if (nextIdx >= 0 && nextIdx < seq.length) {
+          const nextEl = nav.cellRefsGlobal.current[seq[nextIdx]]?.current;
+          if (isFocusable(nextEl)) {
+            e.preventDefault();
+            e.stopPropagation();
+            nav.tabbingRef.current = true;
+            if (nav.tabbingTimerRef.current) clearTimeout(nav.tabbingTimerRef.current);
+            nav.tabbingTimerRef.current = setTimeout(() => {
+              nav.tabbingRef.current = false;
+              nav.tabbingTimerRef.current = null;
+            }, 150);
+            doFocus(nextEl);
+            return;
+          }
         }
       }
-    }
 
-    const localOrder = [];
-    for (const s of [tipo]) {
-      for (const o of ojos) {
-        for (const c of campos) {
-          const id = normalizeId(s, o, c);
+      const localOrder = [];
+      for (const o of ['OD', 'OI']) {
+        for (const col of columnas) {
+          const id = normalizeId(tipo, o, col.key);
           const r = cellRefs.current[id];
           if (r?.current && isFocusable(r.current)) localOrder.push(r.current);
         }
       }
-    }
-
-    const cur = localOrder.indexOf(active);
-    const next = localOrder[forward ? cur + 1 : cur - 1];
-    if (next) {
-      e.preventDefault();
-      e.stopPropagation();
-      nav.tabbingRef.current = true;
-      if (nav.tabbingTimerRef.current) clearTimeout(nav.tabbingTimerRef.current);
-      nav.tabbingTimerRef.current = setTimeout(() => { nav.tabbingRef.current = false; nav.tabbingTimerRef.current = null; }, 150);
-      doFocus(next);
-      return;
-    }
-  }, [campos, ojos, tipo, nav]);
+      const cur = localOrder.indexOf(active);
+      const next = localOrder[forward ? cur + 1 : cur - 1];
+      if (next) {
+        e.preventDefault();
+        e.stopPropagation();
+        nav.tabbingRef.current = true;
+        if (nav.tabbingTimerRef.current) clearTimeout(nav.tabbingTimerRef.current);
+        nav.tabbingTimerRef.current = setTimeout(() => {
+          nav.tabbingRef.current = false;
+          nav.tabbingTimerRef.current = null;
+        }, 150);
+        doFocus(next);
+      }
+    },
+    [columnas, tipo, nav],
+  );
 
   return (
-    <TableContainer component={Paper} variant="outlined" onKeyDownCapture={handleTableKeyDownCaptureLocal}>
+    <TableContainer
+      component={Paper}
+      variant="outlined"
+      onKeyDownCapture={handleTableKeyDownCaptureLocal}
+    >
       <Table size="small">
         <TableHead>
           <TableRow>
             <TableCell />
-            {campos.map(c => (
-              <TableCell key={c} align="center" sx={{ fontWeight: "bold" }}>
-                {c}
+            {columnas.map((col) => (
+              <TableCell key={col.key} align="center" sx={{ fontWeight: 'bold' }}>
+                {col.label}
               </TableCell>
             ))}
           </TableRow>
         </TableHead>
 
         <TableBody>
-          {ojos.map(ojo => (
+          {['OD', 'OI'].map((ojo) => (
             <TableRow key={ojo}>
-              <TableCell sx={{ fontWeight: "bold", width: 60 }}>
-                {ojo}
-              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold', width: 60 }}>{ojo}</TableCell>
 
-              {campos.map(campo => {
-                const id = normalizeId(tipo, ojo, campo);
+              {columnas.map((col) => {
+                const id = normalizeId(tipo, ojo, col.key);
                 if (!cellRefs.current[id]) cellRefs.current[id] = React.createRef();
+                // Registrar también en el mapa global para el tab-order cross-sección
+                nav.cellRefsGlobal.current[id] = cellRefs.current[id];
                 return (
-                  <TableCell key={campo} align="center" sx={{ p: 0.5 }}>
+                  <TableCell key={col.key} align="center" sx={{ p: 0.5 }}>
                     <CellInput
                       id={id}
                       externalRef={cellRefs.current[id]}
-                      value={examen[tipo]?.[ojo]?.[campo] ?? ""}
-                      onCommit={val => setCampo(tipo, ojo, campo, val)}
+                      value={rx?.[ojo]?.[col.key] ?? ''}
+                      onCommit={(val) => setCampo(tipo, ojo, col.key, val)}
                     />
                   </TableCell>
                 );
@@ -295,21 +498,21 @@ const TablaRX = React.memo(function TablaRX({ tipo, examen, setCampo }) {
 });
 
 const ObservacionesField = React.memo(function ObservacionesField({ value, onCommit }) {
-  const [local, setLocal] = React.useState(value ?? "");
+  const [local, setLocal] = React.useState(value ?? '');
   const timerRef = React.useRef(null);
 
-  React.useEffect(() => setLocal(value ?? ""), [value]);
+  React.useEffect(() => setLocal(value ?? ''), [value]);
 
   React.useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      if ((value ?? "") !== local) onCommit(local);
+      if ((value ?? '') !== local) onCommit(local);
     }, 300);
     return () => clearTimeout(timerRef.current);
   }, [local, onCommit, value]);
 
   const handleBlur = React.useCallback(() => {
-    if ((value ?? "") !== local) onCommit(local);
+    if ((value ?? '') !== local) onCommit(local);
   }, [local, onCommit, value]);
 
   return (
@@ -320,7 +523,7 @@ const ObservacionesField = React.memo(function ObservacionesField({ value, onCom
         multiline
         minRows={3}
         value={local}
-        onChange={e => setLocal(e.target.value)}
+        onChange={(e) => setLocal(e.target.value)}
         onBlur={handleBlur}
         inputProps={{ 'aria-label': 'observaciones-medico' }}
       />
@@ -328,7 +531,15 @@ const ObservacionesField = React.memo(function ObservacionesField({ value, onCom
   );
 });
 
-const SeccionRX = React.memo(function SeccionRX({ titulo, tipo, abierto = true, extra = null, examen, setCampo }) {
+const SeccionRX = React.memo(function SeccionRX({
+  titulo,
+  tipo,
+  columnas,
+  abierto,
+  extra,
+  rx,
+  setCampo,
+}) {
   return (
     <Accordion defaultExpanded={abierto}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -337,36 +548,80 @@ const SeccionRX = React.memo(function SeccionRX({ titulo, tipo, abierto = true, 
       </AccordionSummary>
 
       <AccordionDetails>
-        <TablaRX tipo={tipo} examen={examen} setCampo={setCampo} />
+        <TablaRX tipo={tipo} columnas={columnas} rx={rx} setCampo={setCampo} />
       </AccordionDetails>
     </Accordion>
   );
 });
 
-// Componente principal de Graduación RX
+/* =========================================================================
+ * Componente principal
+ * ========================================================================= */
+
 export default function GraduacionRX({ examen, setExamen }) {
-  const inicializado = React.useRef(false);
-  React.useEffect(() => {
-    if (!examen || inicializado.current) return;
-    inicializado.current = true;
-
-    setExamen(prev => ({
-      ...prev,
-      RxBase: prev.RxBase ?? initRX(),
-      RxActual: prev.RxActual ?? initRX(),
-      RxCerca: prev.RxCerca ?? initRX(),
-      RxContacto: prev.RxContacto ?? initRX(),
-      observacionesGenerales: prev.observacionesGenerales ?? ""
-    }));
-  }, []);
-
+  const [secciones, setSecciones] = React.useState([]);
+  const [cargandoConfig, setCargandoConfig] = React.useState(true);
+  const [errorConfig, setErrorConfig] = React.useState(null);
   const [cargandoRxAnterior, setCargandoRxAnterior] = React.useState(false);
-  const noPacienteCargadoRef = React.useRef(null);
 
+  const lastLoadedRef = React.useRef({ noPaciente: null, seccionesKey: null });
+
+  const identificadorGraduaciones = React.useMemo(
+    () => (examen ? resolveIdentificadorExamen(examen) : 1),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      examen?.identificador,
+      examen?.Identificador,
+      examen?.identificadorGraduaciones,
+      examen?.IdentificadorGraduaciones,
+    ],
+  );
+
+  // Efecto 1: cargar estructura de graduaciones (secciones/columnas) desde el backend.
+  React.useEffect(() => {
+    if (!examen) return;
+    let cancelado = false;
+    setCargandoConfig(true);
+    setErrorConfig(null);
+
+    const cargar = async () => {
+      try {
+        const data = await obtenerGraduacionesPorIdentificador(identificadorGraduaciones);
+        if (cancelado) return;
+        if (data?.esCorrecto === false || data?.EsCorrecto === false) {
+          throw new Error(
+            data?.mensaje ?? data?.Mensaje ?? 'No se pudieron obtener las graduaciones.',
+          );
+        }
+        const tipos = tiposDesdeRespuestaApi(data);
+        const built = construirSeccionesLegacy(tipos);
+        setSecciones(built);
+        setExamen((prev) => mergeExamenRx(prev ?? {}, built));
+      } catch (e) {
+        if (cancelado) return;
+        setSecciones([]);
+        setErrorConfig(
+          e?.response?.data?.mensaje ?? e?.message ?? 'No se pudieron cargar las graduaciones.',
+        );
+      } finally {
+        if (!cancelado) setCargandoConfig(false);
+      }
+    };
+
+    cargar();
+    return () => {
+      cancelado = true;
+    };
+  }, [identificadorGraduaciones, setExamen]);
+
+  // Efecto 2: cargar RX anterior del paciente (igual que antes, ahora resuelto contra secciones dinámicas).
   React.useEffect(() => {
     const noPacienteId = examen?.NoPaciente;
-    if (!noPacienteId) return;
-    if (noPacienteCargadoRef.current === noPacienteId) return;
+    if (!noPacienteId || cargandoConfig || !secciones.length) return;
+
+    const seccionesKey = secciones.map((s) => s.tipo).join('|');
+    const lastLoaded = lastLoadedRef.current;
+    if (lastLoaded.noPaciente === noPacienteId && lastLoaded.seccionesKey === seccionesKey) return;
 
     let cancelado = false;
     setCargandoRxAnterior(true);
@@ -377,50 +632,68 @@ export default function GraduacionRX({ examen, setExamen }) {
         if (cancelado) return;
 
         const rows = Array.isArray(data) ? data : Array.isArray(data?.datos) ? data.datos : [];
-        const rxBaseDesdeApi = construirRxBaseDesdeApi(rows);
+        const rxAnterior = construirRxAnteriorDesdeApi(rows, secciones);
 
-        noPacienteCargadoRef.current = noPacienteId;
-        setExamen(prev => ({
-          ...prev,
-          RxActual: {
-            OD: { ...(prev.RxActual?.OD ?? {}), ...rxBaseDesdeApi.OD },
-            OI: { ...(prev.RxActual?.OI ?? {}), ...rxBaseDesdeApi.OI },
-            observaciones: prev.RxActual?.observaciones ?? ""
+        lastLoadedRef.current = { noPaciente: noPacienteId, seccionesKey };
+        setExamen((prev) => {
+          const next = { ...prev };
+          const prevActual = prev.RxActual ?? initRX();
+          const rxActual = rxAnterior.RxActual ?? { OD: {}, OI: {} };
+
+          next.RxActual = {
+            OD: { ...prevActual.OD, ...(rxActual.OD ?? {}) },
+            OI: { ...prevActual.OI, ...(rxActual.OI ?? {}) },
+            observaciones: prevActual.observaciones ?? '',
+          };
+
+          for (const sec of secciones.filter((s) => s.tipo !== 'RxActual')) {
+            const prevRx = prev[sec.tipo] ?? initRX();
+            next[sec.tipo] = {
+              OD: { ...prevRx.OD },
+              OI: { ...prevRx.OI },
+              observaciones: prevRx.observaciones ?? '',
+            };
           }
-        }));
+
+          return next;
+        });
       } catch (e) {
         if (cancelado) return;
-        console.error("Error al cargar RX en Uso por NoPaciente:", e);
+        console.error('Error al cargar RX anterior por NoPaciente:', e);
       } finally {
         if (!cancelado) setCargandoRxAnterior(false);
       }
     };
 
     cargar();
-    return () => { cancelado = true; };
-  }, [examen?.NoPaciente, setExamen]);
+    return () => {
+      cancelado = true;
+    };
+  }, [examen?.NoPaciente, secciones, cargandoConfig, setExamen]);
 
-  const setCampo = React.useCallback((tipo, ojo, campo, valor) => {
-    setExamen(prev => ({
-      ...prev,
-      [tipo]: {
-        ...(prev[tipo] ?? initRX()),
-        [ojo]: {
-          ...(prev[tipo]?.[ojo] ?? {}),
-          [campo]: valor
-        }
-      }
-    }));
-  }, [setExamen]);
+  const setCampo = React.useCallback(
+    (tipo, ojo, campo, valor) => {
+      setExamen((prev) => ({
+        ...prev,
+        [tipo]: {
+          ...(prev[tipo] ?? initRX()),
+          [ojo]: {
+            ...(prev[tipo]?.[ojo] ?? {}),
+            [campo]: valor,
+          },
+        },
+      }));
+    },
+    [setExamen],
+  );
 
-  // Refs compartidas de navegación (foco por Tab / mouse) — estas SÍ pueden
-  // vivir en el padre porque son objetos ref estables (no cambian de
-  // identidad entre renders); se exponen a los hijos vía Context.
+  // Refs de navegación compartidas (estables entre renders).
   const tabbingRef = React.useRef(false);
   const tabbingTimerRef = React.useRef(null);
   const mouseNavRef = React.useRef(false);
   const mouseNavTimerRef = React.useRef(null);
   const pendingCommitsRef = React.useRef({});
+  const cellRefsGlobal = React.useRef({}); // id -> ref, para el tab-order cross-sección
 
   const registerPendingCommit = React.useCallback((id, commitFn, value) => {
     pendingCommitsRef.current[id] = { commitFn, value };
@@ -430,7 +703,11 @@ export default function GraduacionRX({ examen, setExamen }) {
     const entries = Object.values(pendingCommitsRef.current);
     pendingCommitsRef.current = {};
     for (const e of entries) {
-      try { e.commitFn(e.value); } catch (_) { /* swallow */ }
+      try {
+        e.commitFn(e.value);
+      } catch (_) {
+        /* swallow */
+      }
     }
   }, []);
 
@@ -442,17 +719,21 @@ export default function GraduacionRX({ examen, setExamen }) {
     };
   }, []);
 
-  // Valor de contexto estable: se crea una sola vez (todas las refs y
-  // callbacks que contiene ya son estables), así que no dispara
-  // re-renders extra en los consumidores.
   const navValue = React.useRef({
     tabbingRef,
     tabbingTimerRef,
     mouseNavRef,
     mouseNavTimerRef,
     registerPendingCommit,
-    flushPendingCommits
+    flushPendingCommits,
+    cellRefsGlobal,
+    tabSequence: [],
   }).current;
+
+  // El tabSequence se recalcula cuando cambian las secciones; se muta el
+  // objeto de contexto directamente (se lee en el handler de evento, no en
+  // render, así que no hace falta disparar un re-render extra).
+  navValue.tabSequence = React.useMemo(() => construirSecuenciaTab(secciones), [secciones]);
 
   if (!examen) return null;
 
@@ -463,28 +744,51 @@ export default function GraduacionRX({ examen, setExamen }) {
           Graduación RX
         </Typography>
 
+        {cargandoConfig && (
+          <Box display="flex" alignItems="center" gap={1} mb={2}>
+            <CircularProgress size={22} />
+            <Typography variant="body2">Cargando graduaciones…</Typography>
+          </Box>
+        )}
+
+        {errorConfig && !cargandoConfig && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {errorConfig}
+          </Alert>
+        )}
+
+        {!cargandoConfig && !errorConfig && secciones.length === 0 && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No hay graduaciones activas configuradas para este identificador.
+          </Alert>
+        )}
+
         <ObservacionesField
           value={examen.observacionesGenerales}
-          onCommit={val => setExamen(prev => ({ ...prev, observacionesGenerales: val }))}
+          onCommit={(val) => setExamen((prev) => ({ ...prev, observacionesGenerales: val }))}
         />
 
-        <SeccionRX
-          tipo="RxBase"
-          titulo="RX en Uso"
-          examen={examen}
-          setCampo={setCampo}
-          extra={
-            cargandoRxAnterior ? (
-              <Box display="flex" alignItems="center" gap={1} ml={2}>
-                <CircularProgress size={16} />
-                <Typography variant="caption">Cargando RX anterior…</Typography>
-              </Box>
-            ) : null
-          }
-        />
-        <SeccionRX tipo="RxActual" titulo="RX Base" examen={examen} setCampo={setCampo} />
-        <SeccionRX tipo="RxCerca" titulo="RX Cerca" abierto={false} examen={examen} setCampo={setCampo} />
-        <SeccionRX tipo="RxContacto" titulo="RX Lente de Contacto" abierto={false} examen={examen} setCampo={setCampo} />
+        {!cargandoConfig &&
+          !errorConfig &&
+          secciones.map((sec) => (
+            <SeccionRX
+              key={sec.tipo}
+              tipo={sec.tipo}
+              titulo={sec.titulo}
+              columnas={sec.columnas}
+              abierto={sec.abierto}
+              rx={examen[sec.tipo]}
+              setCampo={setCampo}
+              extra={
+                sec.tipo === 'RxBase' && cargandoRxAnterior ? (
+                  <Box display="flex" alignItems="center" gap={1} ml={2}>
+                    <CircularProgress size={16} />
+                    <Typography variant="caption">Cargando RX anterior…</Typography>
+                  </Box>
+                ) : null
+              }
+            />
+          ))}
       </Box>
     </RxNavContext.Provider>
   );

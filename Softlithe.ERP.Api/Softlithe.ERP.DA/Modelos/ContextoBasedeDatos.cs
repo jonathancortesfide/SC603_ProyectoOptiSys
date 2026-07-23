@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Softlithe.ERP.Abstracciones.Contenedores.Graduaciones;
+using Softlithe.ERP.DA.Examenes.ExamenSnapshot;
 using System;
 using System.Collections.Generic;
 
@@ -20,7 +21,7 @@ public partial class ContextoBasedeDatos : DbContext
     public virtual DbSet<TipoGraduacionAD> TipoGraduacionContexto { get; set; }
     public virtual DbSet<SeguridadAccion> SeguridadAccions { get; set; }
     public virtual DbSet<TipoLenteAD> TipoLente { get; set; }
-
+    public virtual DbSet<ExamenSnapshotAD> ExamenSnapshots { get; set; }
     public virtual DbSet<SeguridadOpcione> SeguridadOpciones { get; set; }
     public virtual DbSet<SeguridadRolAccione> SeguridadRolAcciones { get; set; }
     public virtual DbSet<SeguridadRolesUsuario> SeguridadRolesUsuarios { get; set; }
@@ -83,6 +84,7 @@ public partial class ContextoBasedeDatos : DbContext
             entity.Property(e => e.Descripcion).IsFixedLength();
         });
 
+
         modelBuilder.Entity<SeguridadOpcione>(entity =>
         {
             entity.Property(e => e.Descripcion).IsFixedLength();
@@ -138,7 +140,8 @@ public partial class ContextoBasedeDatos : DbContext
                 .HasForeignKey(e => e.NoSucursal)
                 .OnDelete(DeleteBehavior.Restrict);
         });
-
+        modelBuilder.Entity<ExamenSnapshotAD>()
+    .HasNoKey();
         modelBuilder.Entity<ObtenerGraduacionPorSucursalSPDto>()
            .HasNoKey();
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { apiAgregarExamenes, apiObtenerExamenCompleto } from './DireccionesRequest';
+import { apiAgregarExamenes, apiObtenerExamenCompleto, apiExamenSnapshot } from './DireccionesRequest';
 import { getSucursalIdentificador } from '../../utils/sucursal';
 
 axios.interceptors.request.use(async (config) => {
@@ -160,6 +160,42 @@ const buildAgregarExamenDto = (examen = {}) => {
     });
 
     return dto;
+};
+
+const buildExamenSnapshotDto = (examen = {}, dto = {}) => {
+    const fechaExamen = dto.FechaExamen || new Date().toISOString();
+    const xmlGraduaciones = dto.XmlGraduaciones || dto.xml_graduaciones || '';
+
+    return {
+        id_examen: sanitizeValue(examen.IdExamen) ?? 0,
+        no_examen: sanitizeValue(examen.NoExamen) ?? dto.NoExamen ?? 0,
+        no_paciente: sanitizeValue(examen.NoPaciente) ?? dto.NoPaciente ?? 0,
+        fecha_examen: fechaExamen,
+        nombre_paciente: sanitizeValue(examen.NombrePaciente) ?? '',
+        id_profesional: sanitizeValue(examen.IdProfesional) ?? 0,
+        nombre_profesional: sanitizeValue(examen.NombreProfesional) ?? '',
+        codigo_profesional: sanitizeValue(examen.CodigoProfesional) ?? '',
+        motivo_consulta: sanitizeValue(examen.Motivo) ?? '',
+        observaciones_generales: sanitizeValue(examen.observacionesGenerales) ?? '',
+        tipo_lente_id: sanitizeValue(examen.TipoLenteId) ?? 0,
+        tipo_lente: sanitizeValue(examen.TipoLente) ?? '',
+        material_id: sanitizeValue(examen.MaterialId) ?? 0,
+        material: sanitizeValue(examen.Material) ?? '',
+        codigo_aro: sanitizeValue(examen.CodigoAro) ?? 0,
+        aro: sanitizeValue(examen.Aro) ?? '',
+        laboratorio: sanitizeValue(examen.Laboratorio) ?? '',
+        numero_orden_laboratorio: sanitizeValue(examen.NumeroOrdenLaboratorio) ?? '',
+        disposicion: sanitizeValue(examen.Disposicion) ?? '',
+        tratamiento: sanitizeValue(examen.Tratamiento) ?? '',
+        costo_examen: sanitizeValue(examen.CostoExamen) ?? 0,
+        costo_material: sanitizeValue(examen.CostoMaterial) ?? 0,
+        costo_lente: sanitizeValue(examen.CostoLente) ?? 0,
+        costo_aro: sanitizeValue(examen.CostoAro) ?? 0,
+        precio_final: sanitizeValue(examen.PrecioFinal) ?? 0,
+        estado: sanitizeValue(examen.Estado) ?? 'Activo',
+        xml_graduaciones: xmlGraduaciones,
+        fecha_creacion: new Date().toISOString(),
+    };
 };
 
 const AgregarExamen = async (examen) => {
