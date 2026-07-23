@@ -262,6 +262,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
                 setExamen((prev) => ({
                   ...prev,
                   Material: newValue?.descripcion || "",
+                  MaterialId: newValue?.idProducto ?? null,
                   CostoMaterial: precio !== null ? precio : "",
                 }));
               }}

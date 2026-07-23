@@ -198,6 +198,35 @@ const buildExamenSnapshotDto = (examen = {}, dto = {}) => {
     };
 };
 
+const guardarExamenSnapshot = async (examen, dto) => {
+    const snapshotDto = buildExamenSnapshotDto(examen, dto);
+    console.log('Snapshot enviado a ExamenSnapshot:', snapshotDto);
+
+    try {
+        const respuesta = await axios.post(apiExamenSnapshot, snapshotDto);
+        if (respuesta.status === 200) {
+            return respuesta.data;
+        }
+        return {
+            Mensaje: "Hubo un problema al guardar el snapshot del examen",
+            EsCorrecto: false
+        };
+    } catch (e) {
+        console.log("Error en guardarExamenSnapshot:", e);
+        if (e.response && e.response.data) {
+            console.log("Detalle del error snapshot:", e.response.data);
+            return {
+                Mensaje: e.response.data.mensaje || JSON.stringify(e.response.data),
+                EsCorrecto: false
+            };
+        }
+        return {
+            Mensaje: e.message || "Hubo un problema al guardar el snapshot del examen",
+            EsCorrecto: false
+        };
+    }
+};
+
 const AgregarExamen = async (examen) => {
     const urlApi = `${apiAgregarExamenes}`;
     let dataRespuesta = {
@@ -208,22 +237,39 @@ const AgregarExamen = async (examen) => {
         const dto = buildAgregarExamenDto(examen);
         console.log('DTO enviado al backend para el', dto);
 
-        return axios.post(urlApi, dto)
-            .then(respuesta => {
-                if (respuesta.status === 200) {
-                    dataRespuesta = respuesta.data;
-                    return dataRespuesta;
-                }
-                return dataRespuesta;
-            })
-            .catch(e => {
-                console.log("Error en AgregarExamen:", e);
-                if (e.response && e.response.data) {
-                    console.log("Detalle del error:", e.response.data);
-                    dataRespuesta.Mensaje = e.response.data.mensaje || JSON.stringify(e.response.data);
-                }
-                return dataRespuesta;
-            });
+        try {
+            const respuesta = await axios.post(urlApi, dto);
+            if (respuesta.status === 200) {
+                dataRespuesta = respuesta.data;
+            }
+        } catch (e) {
+            console.log("Error en AgregarExamen:", e);
+            if (e.response && e.response.data) {
+                console.log("Detalle del error:", e.response.data);
+                dataRespuesta.Mensaje = e.response.data.mensaje || JSON.stringify(e.response.data);
+            }
+            return dataRespuesta;
+        }
+
+        const esCorrecto =
+            dataRespuesta?.esCorrecto === true ||
+            dataRespuesta?.EsCorrecto === true;
+
+        if (esCorrecto) {
+            const snapshotRespuesta = await guardarExamenSnapshot(examen, dto);
+            const snapshotOk =
+                snapshotRespuesta?.esCorrecto === true ||
+                snapshotRespuesta?.EsCorrecto === true;
+
+            if (!snapshotOk) {
+                console.warn(
+                    "Examen guardado, pero falló el snapshot:",
+                    snapshotRespuesta?.mensaje || snapshotRespuesta?.Mensaje
+                );
+            }
+        }
+
+        return dataRespuesta;
     } catch (error) {
         console.log("Error en buildAgregarExamenDto:", error);
         dataRespuesta.Mensaje = error.message;

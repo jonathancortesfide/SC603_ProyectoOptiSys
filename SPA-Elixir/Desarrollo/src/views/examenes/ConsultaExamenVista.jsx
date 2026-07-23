@@ -1,7 +1,21 @@
 // ConsultaExamenVista.jsx
 import React, { useState } from "react";
 import {
-  Box, Grid, TextField, Button, List, ListItem, ListItemText, Divider, CircularProgress, Alert
+  Box,
+  Grid,
+  TextField,
+  Button,
+  CircularProgress,
+  Alert,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Divider,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
@@ -9,115 +23,273 @@ import PageContainer from "../../components/container/PageContainer";
 import ParentCard from "../../components/shared/ParentCard";
 import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
 import axiosServices from "../../utils/axios";
+
 const apiBase = import.meta.env.VITE_ApiBase;
 
-import DatosGenerales from "./DatosGenerales";
-import GraduacionRx from "./GraduacionRx";
-import DisenoDeLente from "./DisenoDeLente";
-import DetalleDeCosto from "./DetalleDeCosto";
+// -----------------------------------------------------------------------
+// Configuración dinámica: cada campo del "datos" que viene del backend
+// se agrupa aquí. Si el backend agrega/quita un campo, solo tocas este
+// arreglo, no el JSX. "key" debe coincidir con la propiedad del objeto.
+// -----------------------------------------------------------------------
+const SECCIONES_EXAMEN = [
+  {
+    titulo: "Datos generales",
+    campos: [
+      { key: "no_examen", label: "Número de examen" },
+      { key: "fecha_examen", label: "Fecha del examen", tipo: "fecha" },
+      { key: "estado", label: "Estado" },
+      { key: "fecha_creacion", label: "Fecha de creación", tipo: "fecha" },
+    ],
+  },
+  {
+    titulo: "Paciente",
+    campos: [
+      { key: "no_paciente", label: "Número de paciente" },
+      { key: "nombre_paciente", label: "Nombre del paciente" },
+    ],
+  },
+  {
+    titulo: "Profesional",
+    campos: [
+      { key: "nombre_profesional", label: "Profesional" },
+      { key: "codigo_profesional", label: "Código profesional" },
+    ],
+  },
+  {
+    titulo: "Consulta",
+    campos: [
+      { key: "motivo_consulta", label: "Motivo de consulta", multiline: true },
+      {
+        key: "observaciones_generales",
+        label: "Observaciones generales",
+        multiline: true,
+      },
+    ],
+  },
+  {
+    titulo: "Lente y material",
+    campos: [
+      { key: "tipo_lente", label: "Tipo de lente" },
+      { key: "material", label: "Material" },
+      { key: "aro", label: "Aro" },
+      { key: "codigo_aro", label: "Código de aro" },
+    ],
+  },
+  {
+    titulo: "Laboratorio",
+    campos: [
+      { key: "laboratorio", label: "Laboratorio" },
+      { key: "numero_orden_laboratorio", label: "Número de orden" },
+    ],
+  },
+  {
+    titulo: "Notas adicionales",
+    campos: [
+      { key: "disposicion", label: "Disposición", multiline: true },
+      { key: "tratamiento", label: "Tratamiento", multiline: true },
+    ],
+  },
+  {
+    titulo: "Costos",
+    campos: [
+      { key: "costo_examen", label: "Costo del examen", tipo: "moneda" },
+      { key: "costo_material", label: "Costo del material", tipo: "moneda" },
+      { key: "costo_lente", label: "Costo del lente", tipo: "moneda" },
+      { key: "costo_aro", label: "Costo del aro", tipo: "moneda" },
+      { key: "precio_final", label: "Precio final", tipo: "moneda" },
+    ],
+  },
+];
+
+// Campos que ya se muestran arriba explícitamente o que son internos
+// (ids, xml crudo, etc.) y no queremos repetir en la sección "Otros datos".
+const CAMPOS_CONOCIDOS = new Set([
+  "id_examen",
+  "id_profesional",
+  "tipo_lente_id",
+  "material_id",
+  "xml_graduaciones",
+  ...SECCIONES_EXAMEN.flatMap((s) => s.campos.map((c) => c.key)),
+]);
+
+const formatearValor = (valor, tipo) => {
+  if (valor === null || valor === undefined || valor === "") return "—";
+
+  if (tipo === "moneda") {
+    const numero = Number(valor);
+    if (Number.isNaN(numero)) return valor;
+    return numero.toLocaleString("es-CR", {
+      style: "currency",
+      currency: "CRC",
+      maximumFractionDigits: 0,
+    });
+  }
+
+  if (tipo === "fecha") {
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return valor;
+    return fecha.toLocaleString("es-CR");
+  }
+
+  return String(valor);
+};
+
+// -----------------------------------------------------------------------
+// Parseo del XML de graduaciones a un objeto plano:
+// { Actual: { OD: {Esfera, Cilindro, ...}, OI: {...} }, Anterior: {...} }
+// Es genérico: recorre cualquier estructura <Bloque><OD>...</OD></Bloque>
+// sin necesidad de conocer de antemano los nombres de las etiquetas.
+// -----------------------------------------------------------------------
+const parsearGraduaciones = (xmlString) => {
+  if (!xmlString) return null;
+
+  try {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+    const parseError = xmlDoc.querySelector("parsererror");
+    if (parseError) return null;
+
+    const raiz = xmlDoc.documentElement; // <Graduaciones>
+    const resultado = {};
+
+    Array.from(raiz.children).forEach((bloque) => {
+      // bloque = <Actual>, <Anterior>, etc.
+      const ojos = {};
+      Array.from(bloque.children).forEach((ojoNodo) => {
+        // ojoNodo = <OD>, <OI>
+        const valores = {};
+        Array.from(ojoNodo.children).forEach((campoNodo) => {
+          valores[campoNodo.tagName] = campoNodo.textContent;
+        });
+        ojos[ojoNodo.tagName] = valores;
+      });
+      resultado[bloque.tagName] = ojos;
+    });
+
+    return resultado;
+  } catch (e) {
+    console.error("Error parseando xml_graduaciones:", e);
+    return null;
+  }
+};
+
+const TablaGraduaciones = ({ graduaciones }) => {
+  if (!graduaciones) return null;
+
+  return Object.entries(graduaciones).map(([nombreBloque, ojos]) => {
+    const nombresOjos = Object.keys(ojos); // p.ej ["OD", "OI"]
+    // Unimos todas las llaves posibles de todos los ojos para las filas
+    const todasLasLlaves = Array.from(
+      new Set(nombresOjos.flatMap((ojo) => Object.keys(ojos[ojo])))
+    );
+
+    if (todasLasLlaves.length === 0) return null;
+
+    return (
+      <Box key={nombreBloque} mt={2}>
+        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+          {nombreBloque}
+        </Typography>
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Parámetro</TableCell>
+                {nombresOjos.map((ojo) => (
+                  <TableCell key={ojo} align="center">
+                    {ojo}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {todasLasLlaves.map((llave) => (
+                <TableRow key={llave}>
+                  <TableCell>{llave}</TableCell>
+                  {nombresOjos.map((ojo) => (
+                    <TableCell key={ojo} align="center">
+                      {ojos[ojo][llave] ?? "—"}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+    );
+  });
+};
 
 const ConsultaExamenVista = () => {
   const [filtroExamen, setFiltroExamen] = useState("");
-  const [filtroPaciente, setFiltroPaciente] = useState("");
-  const [resultados, setResultados] = useState([]);
   const [examen, setExamen] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const buscar = async () => {
-    if (!filtroExamen && !filtroPaciente) {
-      setError("Ingrese un número de examen o de paciente para buscar");
+    if (!filtroExamen) {
+      setError("Ingrese un número de examen.");
       return;
     }
 
     setLoading(true);
     setError("");
+    setExamen(null);
+
     try {
-      let data = [];
-      let endpoint = "";
-      let params = {};
+      const noExamen = parseInt(filtroExamen);
 
-      // Determine which endpoint to use
-      if (filtroExamen && filtroPaciente) {
-        // Both provided - use combined search
-        endpoint = `${apiBase}/ExamenCompleto/ObtenerPorCriterios`;
-        params = {
-          noExamen: parseInt(filtroExamen),
-          noPaciente: parseInt(filtroPaciente)
-        };
-      } else if (filtroExamen) {
-        // Only exam number provided
-        endpoint = `${apiBase}/ExamenCompleto/ObtenerPorNumeroExamen`;
-        params = {
-          noExamen: parseInt(filtroExamen)
-        };
+      const response = await axiosServices.get(
+        `${apiBase}/ExamenSnapshot/${noExamen}`
+      );
+
+      if (response.data.esCorrecto) {
+        setExamen(response.data.datos);
       } else {
-        // Only patient number provided
-        endpoint = `${apiBase}/ExamenCompleto/ObtenerPorNoPaciente`;
-        params = {
-          noPaciente: parseInt(filtroPaciente)
-        };
+        setError(response.data.mensaje);
       }
-
-      // Build query string
-      const queryString = new URLSearchParams(params).toString();
-      const response = await axiosServices.post(`${endpoint}?${queryString}`);
-      
-      if (response.data && response.data.esCorrecto) {
-        data = response.data.datos || [];
-      } else {
-        setError(response.data?.mensaje || "No se encontraron exámenes");
-      }
-
-      setResultados(data);
     } catch (err) {
-      console.error("Error al buscar exámenes:", err);
-      setError("Error al conectar con el servidor");
-      setResultados([]);
+      console.error("Error:", err);
+
+      if (err.response) {
+        console.log(err.response.data);
+      }
+
+      setError("Error al conectar con el servidor.");
     } finally {
       setLoading(false);
     }
   };
 
-  const cargarExamen = (item) => {
-    console.log("Item received from API:", item);
-    // API returns: id_graduacion, abreviatura (no_examen), resultado_valor (no_paciente), posicion (date), posicion_nombre (motivo)
-    const examenMapeado = {
-      id_examen: item.id_graduacion,
-      no_examen: parseInt(item.abreviatura) || 0,
-      no_paciente: parseInt(item.resultado_valor) || 0,
-      fecha_examen: item.posicion || '',
-      motivo: item.posicion_nombre || '',
-      NoExamen: parseInt(item.abreviatura) || 0,
-      NoPaciente: parseInt(item.resultado_valor) || 0,
-      FechaExamen: item.posicion || '',
-      Motivo: item.posicion_nombre || ''
-    };
-    console.log("Mapped exam object:", examenMapeado);
-    setExamen(examenMapeado);
-  };
+  const graduaciones = examen
+    ? parsearGraduaciones(examen.xml_graduaciones)
+    : null;
+
+  // Campos que llegan del backend pero no están mapeados en SECCIONES_EXAMEN,
+  // para no perder información nueva que se agregue del lado del backend.
+  const otrosDatos = examen
+    ? Object.entries(examen).filter(([key]) => !CAMPOS_CONOCIDOS.has(key))
+    : [];
+
   return (
     <PageContainer>
-      <Breadcrumb title="Consulta de Exámenes" description="Buscar exámenes anteriores" />
+      <Breadcrumb
+        title="Consulta de Exámenes"
+        description="Buscar examen por número"
+      />
 
       <ParentCard title="Búsqueda">
         <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={8}>
             <TextField
-              label="Número de Examen"
               fullWidth
+              label="Número de Examen"
               value={filtroExamen}
               onChange={(e) => setFiltroExamen(e.target.value)}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <TextField
-              label="Número de Paciente"
-              fullWidth
-              value={filtroPaciente}
-              onChange={(e) => setFiltroPaciente(e.target.value)}
             />
           </Grid>
 
@@ -132,8 +304,8 @@ const ConsultaExamenVista = () => {
               {loading ? <CircularProgress size={24} /> : "Buscar"}
             </Button>
           </Grid>
-          
         </Grid>
+
         {error && (
           <Box mt={2}>
             <Alert severity="error">{error}</Alert>
@@ -141,42 +313,80 @@ const ConsultaExamenVista = () => {
         )}
       </ParentCard>
 
-      {resultados && resultados.length > 0 && (
-        <ParentCard title={`Resultados (${resultados.length} exámenes encontrados)`}>
-          <List>
-            {resultados.map((r, i) => (
-              <React.Fragment key={i}>
-                <ListItem button onClick={() => cargarExamen(r)}>
-                  <ListItemText
-                    primary={`Examen #${r.abreviatura || 'N/A'}`}
-                    secondary={`Paciente: ${r.nombrePaciente || 'N/A'} | Fecha: ${r.posicion || 'N/A'} | ${r.posicion_nombre || ''}`}
-                  />
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-          </List>
-        </ParentCard>
-      )}
-
       {examen && (
-        <ParentCard title={`Examen #${examen.NoExamen}`}>
-          <DatosGenerales examen={examen} setExamen={setExamen} />
-          <GraduacionRx examen={examen} setExamen={setExamen} />
-          <DisenoDeLente examen={examen} setExamen={setExamen} />
-          <DetalleDeCosto examen={examen} setExamen={setExamen} />
+        <ParentCard title={`Examen #${examen.no_examen}`}>
+          {SECCIONES_EXAMEN.map((seccion) => (
+            <Box key={seccion.titulo} mb={3}>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                {seccion.titulo}
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Grid container spacing={2}>
+                {seccion.campos.map((campo) => (
+                  <Grid
+                    item
+                    xs={12}
+                    md={campo.multiline ? 12 : 6}
+                    key={campo.key}
+                  >
+                    <TextField
+                      fullWidth
+                      label={campo.label}
+                      value={formatearValor(examen[campo.key], campo.tipo)}
+                      InputProps={{ readOnly: true }}
+                      multiline={campo.multiline}
+                      minRows={campo.multiline ? 2 : undefined}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          ))}
+
+          {graduaciones && (
+            <Box mb={3}>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Graduaciones
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <TablaGraduaciones graduaciones={graduaciones} />
+            </Box>
+          )}
+
+          {otrosDatos.length > 0 && (
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Otros datos
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Grid container spacing={2}>
+                {otrosDatos.map(([key, valor]) => (
+                  <Grid item xs={12} md={6} key={key}>
+                    <TextField
+                      fullWidth
+                      label={key}
+                      value={
+                        valor === null || valor === undefined ? "—" : String(valor)
+                      }
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
         </ParentCard>
       )}
 
       <ParentCard title="Acciones">
         <Grid container spacing={2}>
-          <Grid item xs={12} md={12}>
+          <Grid item xs={12}>
             <Button
-                fullWidth
-                variant="contained"
-                onClick={() => navigate("/crearexamen")}
+              fullWidth
+              variant="contained"
+              onClick={() => navigate("/crearexamen")}
             >
-                Crear nuevo examen
+              Crear nuevo examen
             </Button>
           </Grid>
         </Grid>
