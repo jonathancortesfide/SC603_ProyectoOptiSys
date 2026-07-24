@@ -38,6 +38,7 @@ namespace Softlithe.ERP.DA.TipoLente.ModificarTipoLente
                 // Actualizar las propiedades del tipo de lente existente con los valores del DTO
                 TipoLenteExistente.Descripcion = elTipoLente.descripcion;
                 TipoLenteExistente.Activo = elTipoLente.Activo;
+                TipoLenteExistente.Price = elTipoLente.Price;
                 
                 _contextoBasedeDatos.TipoLente.Update(TipoLenteExistente);
                 int resultadoRegistro = await _contextoBasedeDatos.SaveChangesAsync();

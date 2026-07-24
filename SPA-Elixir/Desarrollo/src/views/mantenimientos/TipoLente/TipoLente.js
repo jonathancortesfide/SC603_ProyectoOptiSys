@@ -225,6 +225,7 @@ const handleBuscar = async () => {
                 <TableHead>
                   <TableRow>
                     <TableCell><strong>Descripción</strong></TableCell>
+                    <TableCell align="right"><strong>Precio</strong></TableCell>
                     <TableCell align="center"><strong>Estado</strong></TableCell>
                     <TableCell align="center"><strong>Acciones</strong></TableCell>
                   </TableRow>
@@ -233,6 +234,9 @@ const handleBuscar = async () => {
                   {tiposFiltrados.map((tipo) => (
                     <TableRow key={tipo.no_tipo} hover>
                       <TableCell>{tipo.descripcion}</TableCell>
+                      <TableCell align="right">
+                        {tipo.price != null ? `₡${Number(tipo.price).toFixed(2)}` : '—'}
+                      </TableCell>
                       <TableCell align="center">
                         <Chip
                           label={tipo.activo ? 'Activo' : 'Inactivo'}
