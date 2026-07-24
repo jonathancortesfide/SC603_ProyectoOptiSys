@@ -1,39 +1,31 @@
 import React, { useEffect } from 'react';
-import { CardContent, Typography, Grid, Button, Box, AvatarGroup, Avatar, Stack } from '@mui/material';
+import { CardContent, Typography, Grid, Stack } from '@mui/material';
 import BlankCard from '../../shared/BlankCard';
 import AsyncSelect from 'react-select/async';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
 import { obtenerListaDePacientes } from '../../../requests/pacientes/RequestsPacientes';
 
-import img1 from 'src/assets/images/profile/user-1.jpg';
-import img2 from 'src/assets/images/profile/user-2.jpg';
-import img3 from 'src/assets/images/profile/user-3.jpg';
-import img4 from 'src/assets/images/profile/user-4.jpg';
 
+const esPacienteActivo = (paciente) => {
+  const activo = paciente?.activo ?? paciente?.Activo ?? paciente?.esActivo ?? paciente?.EsActivo ?? paciente?.estado ?? paciente?.Estado;
 
-const followerCard = [
-  {
-    title: 'Andrew Grant',
-    location: 'El Salvador',
-    avatar: img1,
-  },
-  {
-    title: 'Leo Pratt',
-    location: 'Bulgaria',
-    avatar: img2,
-  },
-  {
-    title: 'Charles Nunez',
-    location: 'Nepal',
-    avatar: img3,
-  },
-  {
-    title: 'Lora Powers',
-    location: 'Nepal',
-    avatar: img4,
-  },
-];
+  if (activo === 1 || activo === '1') return true;
+  if (activo === 0 || activo === '0') return false;
+  if (typeof activo === 'string') {
+    return ['true', 'si', 's', 'activo', 'active'].includes(activo.trim().toLowerCase());
+  }
 
+  return !!activo;
+};
+
+// Objeto estático: se crea UNA sola vez, no en cada render.
+// Esto evita romper la memoización interna de react-select.
+const selectStyles = {
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
+  }),
+};
 
 const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente = null, onPacienteChange }) => {
   const [options, setOptions] = React.useState([]);
@@ -64,13 +56,14 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
       setLoading(true);
       try {
         const response = await obtenerListaDePacientes('');
-        if (response && response.length) {
-          const formattedData = response.map(item => ({
+        const pacientesActivos = (response || []).filter(esPacienteActivo);
+        if (pacientesActivos.length) {
+          const formattedData = pacientesActivos.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
             value: item.noPaciente || item.numeroDePaciente
           }));
           setOptions(formattedData);
-          setPacientes(response);
+            setPacientes(pacientesActivos);
           return formattedData; 
         } else {
           setOptions([]);
@@ -94,13 +87,14 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
       setLoading(true);
       try {
         const response = await obtenerListaDePacientes(inputValue);
-        if (response && response.length) {
-          const formattedData = response.map(item => ({
+        const pacientesActivos = (response || []).filter(esPacienteActivo);
+        if (pacientesActivos.length) {
+          const formattedData = pacientesActivos.map(item => ({
             label: `${item.cedula}-${item.nombre}`,
             value: item.noPaciente || item.numeroDePaciente
           }));
           setOptions(formattedData);
-          setPacientes(response);
+          setPacientes(pacientesActivos);
           return formattedData;
         } else {
           setOptions([]); // Si no hay datos, vaciar las opciones
@@ -128,8 +122,6 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
         onPacienteChange(paciente || { noPaciente: numeroDePaciente.value });
       }
       setIsVisible(true);
-      console.log("Paciente seleccionado:", paciente);
-      console.log("noPaciente guardado:", numeroDePaciente.value);
     } else {
       setIsVisible(false);
       setSelectedPaciente(null);
@@ -163,12 +155,7 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
           noOptionsMessage={() => "No se encontraron resultados"} // Mensaje cuando no hay resultados
           menuPortalTarget={document.body} // Esto mueve el dropdown fuera del contenedor
           onChange={seleccionarPaciente} // Función que se ejecuta cuando se selecciona un valor
-          styles={{
-            menuPortal: base => ({
-              ...base,
-              zIndex: 9999,  // Aseguramos que el menú tiene un z-index muy alto
-            }),
-          }}
+          styles={selectStyles}
       />
         </Grid>
         <br></br>
@@ -178,31 +165,19 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
     <BlankCard>
     {isVisible && (
       <CardContent>
-      <Stack direction="row" spacing={2} mt={3}>
-        <Box>
-        <Stack direction="row" spacing={2} alignItems="center">
-        <Avatar src={img1} sx={{ height: 80, width: 80 }}></Avatar>
-          <Typography variant="h6" mb={1}>
+        <Stack spacing={2} mt={3}>
+          <Typography variant="h6">
             Nombre: {selectedPaciente?.nombre}
           </Typography>
-          </Stack>
-          <Stack direction="row" spacing={2} alignItems="center" marginTop={2}>
-            <Typography variant="subtitle2" color="textSecondary">
-              Identificación: {selectedPaciente?.cedula}
-            </Typography>
-            <Typography variant="subtitle2" color="textSecondary">
-              Correo: {selectedPaciente?.email}
-            </Typography>
-          </Stack>
-        </Box>
-      </Stack>
-      <Stack spacing={2} mt={3} direction="row" justifyContent="center" alignItems="center">
-        <Button size="large" variant="text" color="primary">
-          Editar paciente
-        </Button>
-      </Stack>
-    </CardContent>
-      )}
+          <Typography variant="subtitle2" color="textSecondary">
+            Identificación: {selectedPaciente?.cedula}
+          </Typography>
+          <Typography variant="subtitle2" color="textSecondary">
+            Correo: {selectedPaciente?.email}
+          </Typography>
+        </Stack>
+      </CardContent>
+    )}
 
     </BlankCard>
   </Grid>
@@ -213,4 +188,8 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
   );
 };
 
-export default BusquedaDePaciente;
+// React.memo: evita re-renderizar este componente si sus props
+// (noPaciente, initialPaciente, onPacienteChange) no cambiaron entre
+// renders del padre. Depende de que onPacienteChange venga envuelto
+// en useCallback en el padre.
+export default React.memo(BusquedaDePaciente);

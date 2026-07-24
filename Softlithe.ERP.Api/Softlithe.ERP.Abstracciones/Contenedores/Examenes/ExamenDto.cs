@@ -14,5 +14,7 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Examenes
         public DateTime fecha_examen { get; set; }
         public string? motivo { get; set; }
         public string? observacion { get; set; }
+        // Nuevo campo devuelto por el primer resultset del SP
+        public string? identificador { get; set; }
     }
 }

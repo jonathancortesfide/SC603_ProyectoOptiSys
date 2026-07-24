@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import AsyncSelect from 'react-select/async';
 import { Grid, Box } from '@mui/material';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
@@ -11,20 +11,48 @@ const formatDoctorOption = (doctor) => ({
   data: doctor
 });
 
+const esDoctorActivo = (doctor) => {
+  const activo = doctor?.activo ?? doctor?.Activo ?? doctor?.esActivo ?? doctor?.EsActivo ?? doctor?.estado ?? doctor?.Estado;
+
+  if (activo === 1 || activo === '1') return true;
+  if (activo === 0 || activo === '0') return false;
+  if (typeof activo === 'string') {
+    return ['true', 'si', 's', 'activo', 'active'].includes(activo.trim().toLowerCase());
+  }
+
+  return !!activo;
+};
+
+// Objeto estático: se crea UNA sola vez, no en cada render.
+// Esto evita romper la memoización interna de react-select.
+const selectStyles = {
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
+  }),
+};
+
 const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange }) => {
   const [doctores, setDoctores] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [loading, setLoading] = useState(false);
   const debounceTimerRef = useRef(null);
 
-  const identificador = initialIdentificador ?? getSucursalIdentificador();
+  // Memoizado: solo se recalcula si initialIdentificador cambia,
+  // en vez de ejecutarse en cada render (incluyendo los que dispara
+  // escribir en otros campos del formulario padre).
+  const identificador = useMemo(
+    () => initialIdentificador ?? getSucursalIdentificador(),
+    [initialIdentificador]
+  );
 
   const cargarDoctores = async () => {
     setLoading(true);
     try {
       const lista = await BuscarDoctoresPorIdentificador(identificador);
-      setDoctores(lista || []);
-      return lista || [];
+      const doctoresActivos = (lista || []).filter(esDoctorActivo);
+      setDoctores(doctoresActivos);
+      return doctoresActivos;
     } catch (error) {
       console.error('Error cargando doctores:', error);
       return [];
@@ -49,6 +77,7 @@ const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange 
         const lista = doctores.length ? doctores : await cargarDoctores();
         const texto = String(inputValue || '').toLowerCase();
         const opciones = (lista || [])
+          .filter(esDoctorActivo)
           .filter((doctor) => {
             if (!texto) return true;
             const nombre = String(doctor.nombre || doctor.Nombre || '').toLowerCase();
@@ -98,12 +127,7 @@ const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange 
             placeholder="Ingrese nombre o código del profesional"
             noOptionsMessage={() => loading ? 'Cargando doctores...' : 'No se encontraron doctores'}
             menuPortalTarget={document.body}
-            styles={{
-              menuPortal: (base) => ({
-                ...base,
-                zIndex: 9999,
-              }),
-            }}
+            styles={selectStyles}
           />
         </Grid>
       </Grid>
@@ -111,4 +135,7 @@ const BusquedaDeDoctor = ({ identificador: initialIdentificador, onDoctorChange 
   );
 };
 
-export default BusquedaDeDoctor;
+// React.memo: evita re-renderizar este componente si sus props
+// (identificador, onDoctorChange) no cambiaron entre renders del padre.
+// Depende de que onDoctorChange venga envuelto en useCallback en el padre.
+export default React.memo(BusquedaDeDoctor);

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { apiAgregarExamenes, apiObtenerExamenCompleto } from './DireccionesRequest';
+import { apiAgregarExamenes, apiObtenerExamenCompleto, apiExamenSnapshot } from './DireccionesRequest';
 import { getSucursalIdentificador } from '../../utils/sucursal';
 
 axios.interceptors.request.use(async (config) => {
@@ -97,11 +97,8 @@ const buildAgregarExamenDto = (examen = {}) => {
         }
     }
 
-    const xmlBase = convertRxToXml(examen.RxBase || { OD: {}, OI: {} }, 'Base');
-    const xmlActual = convertRxToXml(examen.RxActual || { OD: {}, OI: {} }, 'Actual');
-    const xmlCerca = convertRxToXml(examen.RxCerca || { OD: {}, OI: {} }, 'Cerca');
-    const xmlContacto = convertRxToXml(examen.RxContacto || { OD: {}, OI: {} }, 'Contacto');
-    const xmlGraduaciones = `<Graduaciones>${xmlBase}${xmlActual}${xmlCerca}${xmlContacto}</Graduaciones>`;
+    const xmlActual = convertRxToXml(examen.RxBase || { OD: {}, OI: {} }, 'Actual');
+    const xmlGraduaciones = `<Graduaciones>${xmlActual}</Graduaciones>`;
 
     let xmlDisenos = '';
     if (examen.DisenioLente && examen.DisenioLente.length > 0) {
@@ -165,6 +162,71 @@ const buildAgregarExamenDto = (examen = {}) => {
     return dto;
 };
 
+const buildExamenSnapshotDto = (examen = {}, dto = {}) => {
+    const fechaExamen = dto.FechaExamen || new Date().toISOString();
+    const xmlGraduaciones = dto.XmlGraduaciones || dto.xml_graduaciones || '';
+
+    return {
+        id_examen: sanitizeValue(examen.IdExamen) ?? 0,
+        no_examen: sanitizeValue(examen.NoExamen) ?? dto.NoExamen ?? 0,
+        no_paciente: sanitizeValue(examen.NoPaciente) ?? dto.NoPaciente ?? 0,
+        fecha_examen: fechaExamen,
+        nombre_paciente: sanitizeValue(examen.NombrePaciente) ?? '',
+        id_profesional: sanitizeValue(examen.IdProfesional) ?? 0,
+        nombre_profesional: sanitizeValue(examen.NombreProfesional) ?? '',
+        codigo_profesional: sanitizeValue(examen.CodigoProfesional) ?? '',
+        motivo_consulta: sanitizeValue(examen.Motivo) ?? '',
+        observaciones_generales: sanitizeValue(examen.observacionesGenerales) ?? '',
+        tipo_lente_id: sanitizeValue(examen.TipoLenteId) ?? 0,
+        tipo_lente: sanitizeValue(examen.TipoLente) ?? '',
+        material_id: sanitizeValue(examen.MaterialId) ?? 0,
+        material: sanitizeValue(examen.Material) ?? '',
+        codigo_aro: sanitizeValue(examen.CodigoAro) ?? 0,
+        aro: sanitizeValue(examen.Aro) ?? '',
+        laboratorio: sanitizeValue(examen.Laboratorio) ?? '',
+        numero_orden_laboratorio: sanitizeValue(examen.NumeroOrdenLaboratorio) ?? '',
+        disposicion: sanitizeValue(examen.Disposicion) ?? '',
+        tratamiento: sanitizeValue(examen.Tratamiento) ?? '',
+        costo_examen: sanitizeValue(examen.CostoExamen) ?? 0,
+        costo_material: sanitizeValue(examen.CostoMaterial) ?? 0,
+        costo_lente: sanitizeValue(examen.CostoLente) ?? 0,
+        costo_aro: sanitizeValue(examen.CostoAro) ?? 0,
+        precio_final: sanitizeValue(examen.PrecioFinal) ?? 0,
+        estado: sanitizeValue(examen.Estado) ?? 'Activo',
+        xml_graduaciones: xmlGraduaciones,
+        fecha_creacion: new Date().toISOString(),
+    };
+};
+
+const guardarExamenSnapshot = async (examen, dto) => {
+    const snapshotDto = buildExamenSnapshotDto(examen, dto);
+    console.log('Snapshot enviado a ExamenSnapshot:', snapshotDto);
+
+    try {
+        const respuesta = await axios.post(apiExamenSnapshot, snapshotDto);
+        if (respuesta.status === 200) {
+            return respuesta.data;
+        }
+        return {
+            Mensaje: "Hubo un problema al guardar el snapshot del examen",
+            EsCorrecto: false
+        };
+    } catch (e) {
+        console.log("Error en guardarExamenSnapshot:", e);
+        if (e.response && e.response.data) {
+            console.log("Detalle del error snapshot:", e.response.data);
+            return {
+                Mensaje: e.response.data.mensaje || JSON.stringify(e.response.data),
+                EsCorrecto: false
+            };
+        }
+        return {
+            Mensaje: e.message || "Hubo un problema al guardar el snapshot del examen",
+            EsCorrecto: false
+        };
+    }
+};
+
 const AgregarExamen = async (examen) => {
     const urlApi = `${apiAgregarExamenes}`;
     let dataRespuesta = {
@@ -175,22 +237,39 @@ const AgregarExamen = async (examen) => {
         const dto = buildAgregarExamenDto(examen);
         console.log('DTO enviado al backend para el', dto);
 
-        return axios.post(urlApi, dto)
-            .then(respuesta => {
-                if (respuesta.status === 200) {
-                    dataRespuesta = respuesta.data;
-                    return dataRespuesta;
-                }
-                return dataRespuesta;
-            })
-            .catch(e => {
-                console.log("Error en AgregarExamen:", e);
-                if (e.response && e.response.data) {
-                    console.log("Detalle del error:", e.response.data);
-                    dataRespuesta.Mensaje = e.response.data.mensaje || JSON.stringify(e.response.data);
-                }
-                return dataRespuesta;
-            });
+        try {
+            const respuesta = await axios.post(urlApi, dto);
+            if (respuesta.status === 200) {
+                dataRespuesta = respuesta.data;
+            }
+        } catch (e) {
+            console.log("Error en AgregarExamen:", e);
+            if (e.response && e.response.data) {
+                console.log("Detalle del error:", e.response.data);
+                dataRespuesta.Mensaje = e.response.data.mensaje || JSON.stringify(e.response.data);
+            }
+            return dataRespuesta;
+        }
+
+        const esCorrecto =
+            dataRespuesta?.esCorrecto === true ||
+            dataRespuesta?.EsCorrecto === true;
+
+        if (esCorrecto) {
+            const snapshotRespuesta = await guardarExamenSnapshot(examen, dto);
+            const snapshotOk =
+                snapshotRespuesta?.esCorrecto === true ||
+                snapshotRespuesta?.EsCorrecto === true;
+
+            if (!snapshotOk) {
+                console.warn(
+                    "Examen guardado, pero falló el snapshot:",
+                    snapshotRespuesta?.mensaje || snapshotRespuesta?.Mensaje
+                );
+            }
+        }
+
+        return dataRespuesta;
     } catch (error) {
         console.log("Error en buildAgregarExamenDto:", error);
         dataRespuesta.Mensaje = error.message;

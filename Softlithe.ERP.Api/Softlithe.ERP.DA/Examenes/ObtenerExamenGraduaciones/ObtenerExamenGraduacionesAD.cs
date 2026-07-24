@@ -48,12 +48,15 @@ namespace Softlithe.ERP.DA.Examenes.ObtenerExamenGraduaciones
                     commandType: CommandType.StoredProcedure);
 
                 // Leer primer resultset (info examen)
-                var examen = await multi.ReadFirstOrDefaultAsync();
+                // Mapear al DTO ExamenDto para mantener compatibilidad con la estructura de la respuesta
+                var examen = await multi.ReadFirstOrDefaultAsync<Softlithe.ERP.Abstracciones.Contenedores.Examenes.ExamenDto>();
 
                 // Leer segundo resultset (graduaciones)
-                var graduaciones = (await multi.ReadAsync<ExamenGraduacionDto>())
+                // Dapper mapeará automáticamente las columnas a las propiedades del DTO actualizado
+                var graduaciones = (await multi.ReadAsync<Softlithe.ERP.Abstracciones.Contenedores.Examenes.ExamenGraduacionDto>())
                     .AsList();
 
+                // Si es necesario, establecer valores derivados o normalizados aquí (no cambiar lógica de negocio)
                 return graduaciones;
             }
             catch (Exception ex)

@@ -6,6 +6,7 @@ using Softlithe.ERP.Abstracciones.DA.Pacientes;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Softlithe.ERP.BW.Examenes.ObtenerExamenCompleto
 {
@@ -34,9 +35,17 @@ namespace Softlithe.ERP.BW.Examenes.ObtenerExamenCompleto
             {
                 var graduaciones = await _obtenerExamenGraduacionesAD.Obtener(noPaciente);
 
+                // Agrupar y ordenar las graduaciones utilizando id_tipo_graduacion y tipo_xml
+                // para evitar depender del texto de tipo_graduacion. Mantener estructura de respuesta.
+                var graduacionesOrdenadas = graduaciones
+                    .OrderBy(g => g.id_tipo_graduacion)
+                    .ThenBy(g => g.tipo_xml)
+                    .ThenBy(g => g.orden)
+                    .ToList();
+
                 respuesta.EsCorrecto = true;
                 respuesta.Mensaje = "OK";
-                respuesta.Datos = graduaciones;
+                respuesta.Datos = graduacionesOrdenadas;
                 return respuesta;
             }
             catch (System.Exception ex)

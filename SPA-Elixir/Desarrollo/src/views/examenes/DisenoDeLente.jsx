@@ -64,6 +64,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
   const [laboratorio, setLaboratorio] = useState("");
   const [numOrden, setNumOrden] = useState("");
   const [numLaboratorio, setNumLaboratorio] = useState("");
+  const [noProveedorLaboratorio, setNoProveedorLaboratorio] = useState("");
 
   const [disposicion, setDisposicion] = useState("");
   const [tratamiento, setTratamiento] = useState("");
@@ -261,6 +262,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
                 setExamen((prev) => ({
                   ...prev,
                   Material: newValue?.descripcion || "",
+                  MaterialId: newValue?.idProducto ?? null,
                   CostoMaterial: precio !== null ? precio : "",
                 }));
               }}
@@ -445,9 +447,15 @@ export default function DisenoDeLente({ examen, setExamen }) {
               value={labSelected}
               loading={labSearchLoading}
               onChange={(_, newValue) => {
+                const noProveedor = newValue?.no_proveedor ?? "";
                 setLabSelected(newValue);
                 setLaboratorio(newValue?.nombre || "");
-                setExamen((prev) => ({ ...prev, Laboratorio: newValue?.nombre || "" }));
+                setNoProveedorLaboratorio(noProveedor);
+                setExamen((prev) => ({
+                  ...prev,
+                  Laboratorio: newValue?.nombre || "",
+                  NoProveedor: noProveedor,
+                }));
               }}
               renderInput={(params) => (
                 <TextField
@@ -474,21 +482,26 @@ export default function DisenoDeLente({ examen, setExamen }) {
             />
           </Grid>
 
+          
+
           <Grid item xs={12} sm={4}>
             <TextField
               label="N° de laboratorio"
-              value={numLaboratorio}
+              value={noProveedorLaboratorio}
               onChange={(e) => {
                 setNumLaboratorio(e.target.value);
                 setExamen((prev) => ({ ...prev, NumeroPedidoLaboratorio: e.target.value }));
               }}
-              placeholder="LAB-000"
+              placeholder="Sin selección"
               fullWidth
               size="small"
+              InputProps={{ readOnly: true }}
             />
           </Grid>
         </Grid>
       </SectionCard>
+
+    
 
       {/* SECCIÓN 4: Notas adicionales */}
       <SectionCard title="Notas adicionales">

@@ -10,6 +10,7 @@ namespace Softlithe.ERP.Api
 			InyeccionDeDependenciasGenerales.InyectarDependencias(services);
 			InyeccionDeDependenciasPacientes.InyectarDependencias(services);
 			InyeccionDeDependenciasExamenes.InyectarDependencias(services);
+			InyeccionDeDependenciasGraduaciones.InyectarDependencias(services);
 			InyeccionDependenciasMonedas.InyectarDependencias(services);
 			InyeccionDependenciasGrupos.InyectarDependencias(services);
 			InyeccionDeDependenciasTipoLente.InyectarDependencias(services);
@@ -26,8 +27,9 @@ namespace Softlithe.ERP.Api
             InyeccionDeDependenciaVendedores.InyectarDependencias(services);
             InyeccionDeDependenciaCajas.InyectarDependencias(services);
 			InyeccionDeDependenciaUsuarios.InyectarDependencias(services);
-				InyeccionDeDependenciasSeguridad.InyectarDependencias(services);
-				InyeccionDeDependenciasAutenticacion.InyectarDependencias(services);
+			InyeccionDeDependenciasSeguridad.InyectarDependencias(services);
+			InyeccionDeDependenciasAutenticacion.InyectarDependencias(services);
+
 
 				return services;
 		}
