@@ -2,10 +2,14 @@ import { createContext, useCallback, useEffect, useReducer } from 'react';
 
 // utils
 import axios from 'src/utils/axios';
+import axiosBase from 'axios';
 import { clearNoEmpresaSeleccionada } from 'src/utils/empresa';
 import { clearIdentificadorSucursalSeleccionado } from 'src/utils/sucursal';
 import { isValidToken, setSession } from './Jwt';
 import {apiLogin, apiRegistroUsuario, apiObtenerTokenOauth} from '../../components/apiConstantes';
+
+// Clean axios instance for the OAuth token endpoint — not affected by shared interceptors
+const authAxios = axiosBase.create();
 
 // ----------------------------------------------------------------------
 
@@ -129,13 +133,14 @@ function  AuthProvider({ children }) {
 
   const signin = async (email, password, rememberMe) => {
     const params = new URLSearchParams();
-  params.append('client_id', 'js');
-  params.append('grant_type', 'password');
-  params.append('scope', 'openid profile scope2');
-  params.append('username', email);
-  params.append('password', password);
-    const response = await axios.post(apiObtenerTokenOauth, params);
-    const { accessTokens } = response.data.access_token;
+    params.append('client_id', 'js');
+    params.append('grant_type', 'password');
+    params.append('scope', 'openid profile scope2');
+    params.append('username', email);
+    params.append('password', password);
+    const response = await authAxios.post(apiObtenerTokenOauth, params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
     const user = '';
     const accessToken = response.data.access_token;
     setSession(accessToken);

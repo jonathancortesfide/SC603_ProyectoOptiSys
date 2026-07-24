@@ -6,11 +6,8 @@ import { toggleSidebar, toggleMobileSidebar } from 'src/store/customizer/Customi
 import { IconMenu2 } from '@tabler/icons';
 
 // components
-import Notifications from './Notifications';
 import Profile from './Profile';
-
 import Search from './Search';
-import Language from './Language';
 import SesionEmpresaSucursalBarra from 'src/layouts/full/shared/sesionEmpresaSucursalBarra/SesionEmpresaSucursalBarra';
 import MobileRightSidebar from './MobileRightSidebar';
 
@@ -63,15 +60,6 @@ const Header = () => {
 
         <Box flexGrow={1} />
         <Stack spacing={1} direction="row" alignItems="center">
-          <Language />
-
-          {/* ------------------------------------------- */}
-          {/* End Ecommerce Dropdown */}
-          {/* ------------------------------------------- */}
-          <Notifications />
-          {/* ------------------------------------------- */}
-          {/* Toggle Right Sidebar for mobile */}
-          {/* ------------------------------------------- */}
           {lgDown ? <MobileRightSidebar /> : null}
           <Profile />
         </Stack>
