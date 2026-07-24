@@ -32,8 +32,7 @@ public class UsuarioDto
 
 public class AgregarUsuarioDto
 {
-    [Required]
-    public string IdIdentityServer { get; set; } = string.Empty;
+    public string? IdIdentityServer { get; set; }
 
     [Required(ErrorMessage = MensajesGeneralesDelSistemaDto.CodigoIdentificadorRequerido)]
     public int Identificador { get; set; }

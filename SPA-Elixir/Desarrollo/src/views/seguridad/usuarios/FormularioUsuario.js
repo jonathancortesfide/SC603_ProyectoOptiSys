@@ -66,10 +66,6 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
             setError('El nombre es requerido');
             return false;
         }
-        if (!formData.idIdentityServer) {
-            setError('El ID del proveedor de identidad es requerido');
-            return false;
-        }
         if (formData.esDoctor && !formData.codigoProfesional) {
             setError('El código profesional es requerido para doctores');
             return false;
@@ -115,7 +111,7 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
 
                 <Stack spacing={2}>
                     <Box>
-                        <CustomFormLabel htmlFor="idIdentityServer">ID Proveedor de Identidad *</CustomFormLabel>
+                        <CustomFormLabel htmlFor="idIdentityServer">ID Proveedor de Identidad</CustomFormLabel>
                         <CustomTextField
                             id="idIdentityServer"
                             name="idIdentityServer"
