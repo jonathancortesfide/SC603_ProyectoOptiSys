@@ -32,6 +32,7 @@ namespace Softlithe.ERP.DA.TipoLente.ObtenerTipoLentePorId
                                 no_tipo = tipoLentes.NoTipo,
                                 Activo = tipoLentes.Activo,
                                 no_empresa = tipoLentes.NoEmpresa,
+                                Price = tipoLentes.Price,
                             };
 
                 return await query.ToListAsync();

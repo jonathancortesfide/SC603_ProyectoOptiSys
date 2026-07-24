@@ -42,7 +42,8 @@ namespace Softlithe.ERP.DA.TipoLente.AgregarTipoLente
                 NoTipo = elNuevoTipoLente.no_tipo,
                 Descripcion = elNuevoTipoLente.descripcion,
                 NoEmpresa = elNuevoTipoLente.no_empresa,
-                Activo = elNuevoTipoLente.Activo
+                Activo = elNuevoTipoLente.Activo,
+                Price = elNuevoTipoLente.Price
 
             };
 

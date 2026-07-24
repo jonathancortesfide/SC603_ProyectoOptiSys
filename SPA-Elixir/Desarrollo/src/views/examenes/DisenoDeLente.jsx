@@ -86,6 +86,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
       const lista = data.map((item) => ({
         no_tipo: item.no_tipo,
         descripcion: item.descripcion,
+        price: item.price ?? item.Price ?? null,
       }));
 
       setTiposLente(lista);
@@ -232,6 +233,7 @@ export default function DisenoDeLente({ examen, setExamen }) {
                   ...prev,
                   TipoLente: seleccionado?.descripcion || "",
                   TipoLenteId: seleccionado?.no_tipo ?? null,
+                  CostoLente: seleccionado?.price != null ? seleccionado.price : prev.CostoLente,
                 }));
               }}
               fullWidth
