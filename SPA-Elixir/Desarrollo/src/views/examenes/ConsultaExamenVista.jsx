@@ -16,8 +16,16 @@ import {
   TableRow,
   Paper,
   Divider,
+  Chip,
+  InputAdornment,
+  Stack,
 } from "@mui/material";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
+import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import { useNavigate } from "react-router-dom";
+import { alpha, useTheme } from "@mui/material/styles";
 
 import PageContainer from "../../components/container/PageContainer";
 import ParentCard from "../../components/shared/ParentCard";
@@ -96,13 +104,11 @@ const SECCIONES_EXAMEN = [
       { key: "costo_material", label: "Costo del material", tipo: "moneda" },
       { key: "costo_lente", label: "Costo del lente", tipo: "moneda" },
       { key: "costo_aro", label: "Costo del aro", tipo: "moneda" },
-      { key: "precio_final", label: "Precio final", tipo: "moneda" },
+      { key: "precio_final", label: "Precio final", tipo: "moneda", destacado: true },
     ],
   },
 ];
 
-// Campos que ya se muestran arriba explícitamente o que son internos
-// (ids, xml crudo, etc.) y no queremos repetir en la sección "Otros datos".
 const CAMPOS_CONOCIDOS = new Set([
   "id_examen",
   "id_profesional",
@@ -134,12 +140,6 @@ const formatearValor = (valor, tipo) => {
   return String(valor);
 };
 
-// -----------------------------------------------------------------------
-// Parseo del XML de graduaciones a un objeto plano:
-// { Actual: { OD: {Esfera, Cilindro, ...}, OI: {...} }, Anterior: {...} }
-// Es genérico: recorre cualquier estructura <Bloque><OD>...</OD></Bloque>
-// sin necesidad de conocer de antemano los nombres de las etiquetas.
-// -----------------------------------------------------------------------
 const parsearGraduaciones = (xmlString) => {
   if (!xmlString) return null;
 
@@ -150,14 +150,12 @@ const parsearGraduaciones = (xmlString) => {
     const parseError = xmlDoc.querySelector("parsererror");
     if (parseError) return null;
 
-    const raiz = xmlDoc.documentElement; // <Graduaciones>
+    const raiz = xmlDoc.documentElement;
     const resultado = {};
 
     Array.from(raiz.children).forEach((bloque) => {
-      // bloque = <Actual>, <Anterior>, etc.
       const ojos = {};
       Array.from(bloque.children).forEach((ojoNodo) => {
-        // ojoNodo = <OD>, <OI>
         const valores = {};
         Array.from(ojoNodo.children).forEach((campoNodo) => {
           valores[campoNodo.tagName] = campoNodo.textContent;
@@ -174,12 +172,81 @@ const parsearGraduaciones = (xmlString) => {
   }
 };
 
+const SectionCard = ({ title, children, action }) => (
+  <Paper
+    variant="outlined"
+    sx={{
+      p: { xs: 2, md: 2.5 },
+      borderRadius: 2,
+      borderColor: "divider",
+      mb: 2.5,
+      bgcolor: "background.paper",
+    }}
+  >
+    <Box
+      display="flex"
+      alignItems="center"
+      justifyContent="space-between"
+      gap={1}
+      mb={1.5}
+    >
+      <Typography
+        variant="overline"
+        sx={{
+          fontSize: "0.7rem",
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          color: "text.secondary",
+        }}
+      >
+        {title}
+      </Typography>
+      {action}
+    </Box>
+    <Divider sx={{ mb: 2 }} />
+    {children}
+  </Paper>
+);
+
+const CampoSoloLectura = ({ label, value, multiline, destacado }) => {
+  const theme = useTheme();
+
+  return (
+    <TextField
+      fullWidth
+      label={label}
+      value={value}
+      InputProps={{ readOnly: true }}
+      multiline={multiline}
+      minRows={multiline ? 2 : undefined}
+      size="small"
+      sx={{
+        "& .MuiInputBase-root": {
+          bgcolor: destacado
+            ? alpha(theme.palette.primary.main, 0.06)
+            : alpha(theme.palette.grey[500], 0.04),
+        },
+        "& .MuiInputBase-input": {
+          fontWeight: destacado ? 700 : 400,
+          color: destacado ? "primary.main" : "text.primary",
+        },
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderColor: destacado
+            ? alpha(theme.palette.primary.main, 0.35)
+            : "divider",
+        },
+      }}
+    />
+  );
+};
+
 const TablaGraduaciones = ({ graduaciones }) => {
+  const theme = useTheme();
+
   if (!graduaciones) return null;
 
   return Object.entries(graduaciones).map(([nombreBloque, ojos]) => {
-    const nombresOjos = Object.keys(ojos); // p.ej ["OD", "OI"]
-    // Unimos todas las llaves posibles de todos los ojos para las filas
+    const nombresOjos = Object.keys(ojos);
     const todasLasLlaves = Array.from(
       new Set(nombresOjos.flatMap((ojo) => Object.keys(ojos[ojo])))
     );
@@ -187,28 +254,48 @@ const TablaGraduaciones = ({ graduaciones }) => {
     if (todasLasLlaves.length === 0) return null;
 
     return (
-      <Box key={nombreBloque} mt={2}>
-        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+      <Box key={nombreBloque} mb={2.5}>
+        <Typography
+          variant="subtitle2"
+          fontWeight={600}
+          sx={{ mb: 1, color: "text.secondary" }}
+        >
           {nombreBloque}
         </Typography>
-        <TableContainer component={Paper} variant="outlined">
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+          sx={{ borderRadius: 2, overflow: "hidden" }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow>
-                <TableCell>Parámetro</TableCell>
+              <TableRow
+                sx={{
+                  bgcolor: alpha(theme.palette.primary.main, 0.06),
+                }}
+              >
+                <TableCell sx={{ fontWeight: 700 }}>Parámetro</TableCell>
                 {nombresOjos.map((ojo) => (
-                  <TableCell key={ojo} align="center">
+                  <TableCell key={ojo} align="center" sx={{ fontWeight: 700 }}>
                     {ojo}
                   </TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {todasLasLlaves.map((llave) => (
-                <TableRow key={llave}>
-                  <TableCell>{llave}</TableCell>
+              {todasLasLlaves.map((llave, idx) => (
+                <TableRow
+                  key={llave}
+                  sx={{
+                    bgcolor:
+                      idx % 2 === 0
+                        ? "transparent"
+                        : alpha(theme.palette.grey[500], 0.03),
+                  }}
+                >
+                  <TableCell sx={{ color: "text.secondary" }}>{llave}</TableCell>
                   {nombresOjos.map((ojo) => (
-                    <TableCell key={ojo} align="center">
+                    <TableCell key={ojo} align="center" sx={{ fontWeight: 500 }}>
                       {ojos[ojo][llave] ?? "—"}
                     </TableCell>
                   ))}
@@ -222,13 +309,131 @@ const TablaGraduaciones = ({ graduaciones }) => {
   });
 };
 
+const EstadoVacio = () => (
+  <Box
+    sx={{
+      py: { xs: 5, md: 7 },
+      px: 2,
+      textAlign: "center",
+      borderRadius: 2,
+      border: "1px dashed",
+      borderColor: "divider",
+      bgcolor: (theme) => alpha(theme.palette.grey[500], 0.03),
+    }}
+  >
+    <Box
+      sx={{
+        width: 64,
+        height: 64,
+        borderRadius: "50%",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        mb: 2,
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+        color: "primary.main",
+      }}
+    >
+      <AssignmentOutlinedIcon sx={{ fontSize: 30 }} />
+    </Box>
+    <Typography variant="h6" fontWeight={600} gutterBottom>
+      Consulta de examen
+    </Typography>
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      sx={{ maxWidth: 420, mx: "auto" }}
+    >
+      Ingresá el número de examen y buscá para ver el snapshot guardado:
+      paciente, graduaciones, lente y costos.
+    </Typography>
+  </Box>
+);
+
+const ResumenExamen = ({ examen }) => {
+  const theme = useTheme();
+  const estado = examen.estado || "—";
+  const activo = String(estado).toLowerCase() === "activo";
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        p: { xs: 2, md: 2.5 },
+        mb: 2.5,
+        borderRadius: 2,
+        borderColor: alpha(theme.palette.primary.main, 0.2),
+        background: `linear-gradient(135deg, ${alpha(
+          theme.palette.primary.main,
+          0.06
+        )} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+      >
+        <Box>
+          <Stack direction="row" spacing={1} alignItems="center" mb={0.75}>
+            <Typography variant="h5" fontWeight={700}>
+              Examen #{examen.no_examen}
+            </Typography>
+            <Chip
+              size="small"
+              label={estado}
+              color={activo ? "success" : "default"}
+              variant={activo ? "filled" : "outlined"}
+            />
+          </Stack>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 0.5, sm: 2 }}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+          >
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <PersonOutlineOutlinedIcon
+                sx={{ fontSize: 18, color: "text.secondary" }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {examen.nombre_paciente || "Paciente sin nombre"}
+                {examen.no_paciente ? ` · #${examen.no_paciente}` : ""}
+              </Typography>
+            </Stack>
+            <Typography variant="body2" color="text.secondary">
+              {formatearValor(examen.fecha_examen, "fecha")}
+            </Typography>
+          </Stack>
+        </Box>
+
+        <Box textAlign={{ xs: "left", sm: "right" }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ letterSpacing: "0.06em", textTransform: "uppercase" }}
+          >
+            Precio final
+          </Typography>
+          <Typography variant="h5" fontWeight={700} color="primary.main">
+            {formatearValor(examen.precio_final, "moneda")}
+          </Typography>
+        </Box>
+      </Stack>
+    </Paper>
+  );
+};
+
 const ConsultaExamenVista = () => {
   const [filtroExamen, setFiltroExamen] = useState("");
   const [examen, setExamen] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [buscado, setBuscado] = useState(false);
 
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const buscar = async () => {
     if (!filtroExamen) {
@@ -239,6 +444,7 @@ const ConsultaExamenVista = () => {
     setLoading(true);
     setError("");
     setExamen(null);
+    setBuscado(true);
 
     try {
       const noExamen = parseInt(filtroExamen);
@@ -265,12 +471,17 @@ const ConsultaExamenVista = () => {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      buscar();
+    }
+  };
+
   const graduaciones = examen
     ? parsearGraduaciones(examen.xml_graduaciones)
     : null;
 
-  // Campos que llegan del backend pero no están mapeados en SECCIONES_EXAMEN,
-  // para no perder información nueva que se agregue del lado del backend.
   const otrosDatos = examen
     ? Object.entries(examen).filter(([key]) => !CAMPOS_CONOCIDOS.has(key))
     : [];
@@ -283,114 +494,177 @@ const ConsultaExamenVista = () => {
       />
 
       <ParentCard title="Búsqueda">
-        <Grid container spacing={2}>
+        <Grid container spacing={2} alignItems="stretch">
           <Grid item xs={12} md={8}>
             <TextField
               fullWidth
-              label="Número de Examen"
+              label="Número de examen"
+              placeholder="Ej. 1024"
               value={filtroExamen}
               onChange={(e) => setFiltroExamen(e.target.value)}
+              onKeyDown={handleKeyDown}
+              size="medium"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchOutlinedIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
+              helperText="Presioná Enter o usá el botón Buscar"
             />
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={buscar}
-              disabled={loading}
+            <Stack
+              direction={{ xs: "column", sm: "row", md: "column" }}
+              spacing={1}
               sx={{ height: "100%" }}
             >
-              {loading ? <CircularProgress size={24} /> : "Buscar"}
-            </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={buscar}
+                disabled={loading}
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    <SearchOutlinedIcon />
+                  )
+                }
+                sx={{
+                  minHeight: 56,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderRadius: 1.5,
+                }}
+              >
+                {loading ? "Buscando..." : "Buscar examen"}
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<AddOutlinedIcon />}
+                onClick={() => navigate("/crearexamen")}
+                sx={{
+                  minHeight: 44,
+                  textTransform: "none",
+                  borderRadius: 1.5,
+                }}
+              >
+                Crear nuevo
+              </Button>
+            </Stack>
           </Grid>
         </Grid>
 
         {error && (
           <Box mt={2}>
-            <Alert severity="error">{error}</Alert>
+            <Alert severity="error" onClose={() => setError("")}>
+              {error}
+            </Alert>
           </Box>
         )}
       </ParentCard>
 
+      {!examen && !loading && !error && (
+        <ParentCard title="Resultado">
+          {buscado ? (
+            <Alert severity="info">
+              No se encontró un snapshot para el examen indicado.
+            </Alert>
+          ) : (
+            <EstadoVacio />
+          )}
+        </ParentCard>
+      )}
+
       {examen && (
-        <ParentCard title={`Examen #${examen.no_examen}`}>
+        <ParentCard title="Detalle del snapshot">
+          <ResumenExamen examen={examen} />
+
           {SECCIONES_EXAMEN.map((seccion) => (
-            <Box key={seccion.titulo} mb={3}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                {seccion.titulo}
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+            <SectionCard key={seccion.titulo} title={seccion.titulo}>
               <Grid container spacing={2}>
                 {seccion.campos.map((campo) => (
                   <Grid
                     item
                     xs={12}
-                    md={campo.multiline ? 12 : 6}
+                    md={campo.multiline || campo.destacado ? 12 : 6}
                     key={campo.key}
                   >
-                    <TextField
-                      fullWidth
+                    <CampoSoloLectura
                       label={campo.label}
                       value={formatearValor(examen[campo.key], campo.tipo)}
-                      InputProps={{ readOnly: true }}
                       multiline={campo.multiline}
-                      minRows={campo.multiline ? 2 : undefined}
+                      destacado={campo.destacado}
                     />
                   </Grid>
                 ))}
               </Grid>
-            </Box>
+            </SectionCard>
           ))}
 
           {graduaciones && (
-            <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Graduaciones
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+            <SectionCard title="Graduaciones">
               <TablaGraduaciones graduaciones={graduaciones} />
-            </Box>
+            </SectionCard>
           )}
 
           {otrosDatos.length > 0 && (
-            <Box>
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Otros datos
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+            <SectionCard title="Otros datos">
               <Grid container spacing={2}>
                 {otrosDatos.map(([key, valor]) => (
                   <Grid item xs={12} md={6} key={key}>
-                    <TextField
-                      fullWidth
+                    <CampoSoloLectura
                       label={key}
                       value={
-                        valor === null || valor === undefined ? "—" : String(valor)
+                        valor === null || valor === undefined
+                          ? "—"
+                          : String(valor)
                       }
-                      InputProps={{ readOnly: true }}
                     />
                   </Grid>
                 ))}
               </Grid>
-            </Box>
+            </SectionCard>
           )}
+
+          <Box
+            mt={1}
+            p={2}
+            borderRadius={2}
+            sx={{
+              bgcolor: alpha(theme.palette.grey[500], 0.04),
+              border: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Vista de solo lectura del snapshot almacenado. Para registrar un
+              examen nuevo usá{" "}
+              <Box
+                component="button"
+                onClick={() => navigate("/crearexamen")}
+                sx={{
+                  border: 0,
+                  background: "none",
+                  p: 0,
+                  m: 0,
+                  color: "primary.main",
+                  font: "inherit",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                Crear nuevo examen
+              </Box>
+              .
+            </Typography>
+          </Box>
         </ParentCard>
       )}
-
-      <ParentCard title="Acciones">
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={() => navigate("/crearexamen")}
-            >
-              Crear nuevo examen
-            </Button>
-          </Grid>
-        </Grid>
-      </ParentCard>
     </PageContainer>
   );
 };
