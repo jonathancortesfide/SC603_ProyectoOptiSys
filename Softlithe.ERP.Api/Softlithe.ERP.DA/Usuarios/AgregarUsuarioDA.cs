@@ -28,7 +28,7 @@ public class AgregarUsuarioDA : IAgregarUsuarioDA
         {
             var entidad = new Usuario
             {
-                IdIdentityServer = dto.IdIdentityServer,
+                IdIdentityServer = dto.IdIdentityServer ?? string.Empty,
                 Identificador = dto.Identificador,
                 Nombre = dto.Nombre,
                 EsDoctor = dto.EsDoctor,

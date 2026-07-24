@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Grid, Box, Stack, Typography } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
-import img1 from 'src/assets/images/backgrounds/login-bg.svg';
 import Logo from 'src/layouts/full/shared/logo/Logo';
 import AuthLogin from '../authForms/AuthLogin';
 
@@ -45,11 +44,14 @@ const Login = () => (
             }}
           >
             <img
-              src={img1}
-              alt="bg"
+              src="/familia-optica.png"
+              alt="Óptica familiar"
               style={{
                 width: '100%',
-                maxWidth: '500px',
+                maxWidth: '600px',
+                maxHeight: 'calc(100vh - 75px)',
+                objectFit: 'cover',
+                borderRadius: '16px',
               }}
             />
           </Box>

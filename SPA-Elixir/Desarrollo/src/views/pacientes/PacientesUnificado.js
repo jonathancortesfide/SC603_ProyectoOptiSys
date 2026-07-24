@@ -124,22 +124,6 @@ const PacientesUnificado = () => {
     navigate('/crearexamen', { state: { paciente: pacienteSeleccionado } });
   };
 
-  const handleAgregarFactura = () => {
-    if (!pacienteSeleccionado) {
-      alert('Seleccione un paciente primero');
-      return;
-    }
-    alert(`Agregar factura para ${pacienteSeleccionado.nombre}`);
-  };
-
-  const handleAgregarReciboNota = () => {
-    if (!pacienteSeleccionado) {
-      alert('Seleccione un paciente primero');
-      return;
-    }
-    alert(`Agregar recibo o nota para ${pacienteSeleccionado.nombre}`);
-  };
-
   const handleAbrirExamen = () => {
     if (!pacienteSeleccionado) {
       alert('Seleccione un paciente primero');
@@ -189,12 +173,6 @@ const PacientesUnificado = () => {
     switch (action) {
       case 'agregar_examen':
         handleAgregarExamen();
-        break;
-      case 'agregar_factura':
-        handleAgregarFactura();
-        break;
-      case 'agregar_recibo_nota':
-        handleAgregarReciboNota();
         break;
       case 'abrir_examen':
         handleAbrirExamen();
@@ -437,8 +415,6 @@ const PacientesUnificado = () => {
                     transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                   >
                     <MenuItem onClick={() => handleAccion('agregar_examen')}>Agregar Examen</MenuItem>
-                    <MenuItem onClick={() => handleAccion('agregar_factura')}>Agregar Factura</MenuItem>
-                    <MenuItem onClick={() => handleAccion('agregar_recibo_nota')}>Agregar Recibo o Nota</MenuItem>
                     <MenuItem onClick={() => handleAccion('abrir_examen')}>Abrir Examen</MenuItem>
                     <Divider />
                     <MenuItem onClick={() => handleAccion('eliminar_paciente')} sx={{ color: 'error.main' }}>
