@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Softlithe.ERP.Abstracciones.BW.EmpresaSucursal;
 using Softlithe.ERP.Abstracciones.Contenedores.EmpresaSucursal;
 
 namespace Softlithe.ERP.Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class EmpresaSucursalController : ControllerBase

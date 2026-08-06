@@ -6,4 +6,5 @@ public interface IAutenticacionDA
 {
     Task<UsuarioParaLoginDto?> ObtenerUsuarioParaLoginAsync(string Email);
     Task<UsuarioParaLoginDto?> RegistrarUsuarioAsync(RegistrarUsuarioInternoDto Request);
+    Task<bool> ActivarUsuarioAsync(string Email, string PasswordHash);
 }
