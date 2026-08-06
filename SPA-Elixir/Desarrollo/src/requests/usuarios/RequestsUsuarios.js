@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../../utils/axios';
 import {
     apiObtenerUsuarios,
     apiObtenerUsuarioPorId,
@@ -6,6 +6,9 @@ import {
     apiAgregarUsuario,
     apiModificarUsuario,
     apiModificarEstadoUsuario,
+    apiBuscarUsuariosParaAsignar,
+    apiAsignarSucursalUsuario,
+    apiActivarCuenta,
 } from './DireccionesRequest';
 import { getSucursalIdentificador } from '../../utils/sucursal';
 import { getCurrentUsername } from '../../utils/session';
@@ -118,7 +121,7 @@ const crearUsuario = async (usuario) => {
             telefono: usuario.telefono || null,
             direccion: usuario.direccion || null,
             fechaNacimiento: usuario.fechaNacimiento || null,
-            esActivo: usuario.esActivo !== undefined ? usuario.esActivo : true,
+            esActivo: usuario.esActivo !== undefined ? usuario.esActivo : false,
             usuario: getRequestUser(),
         });
 
@@ -188,6 +191,53 @@ const modificarEstadoUsuario = async (idUsuario, esActivo) => {
     }
 };
 
+/**
+ * POST /api/Usuario/BuscarParaAsignar
+ * Returns users with no sucursal assigned. Optionally filters by name/email.
+ */
+const buscarUsuariosParaAsignar = async (busqueda) => {
+    try {
+        const respuesta = await axios.post(apiBuscarUsuariosParaAsignar, { busqueda: busqueda || null });
+        const data = respuesta.data;
+        return {
+            lista: data?.datos ?? data?.Datos ?? [],
+            esCorrecto: data?.esCorrecto ?? data?.EsCorrecto ?? false,
+            mensaje: data?.mensaje ?? data?.Mensaje ?? '',
+        };
+    } catch (error) {
+        console.log('Error en buscarUsuariosParaAsignar:', error);
+        return { lista: [], esCorrecto: false, mensaje: 'Error al buscar usuarios' };
+    }
+};
+
+/**
+ * POST /api/Usuario/AsignarSucursal
+ * Links an existing user to the given empresa-sucursal identificador.
+ */
+const asignarSucursalAUsuario = async (idUsuario, identificador) => {
+    try {
+        const respuesta = await axios.post(apiAsignarSucursalUsuario, { idUsuario, identificador });
+        return getValidationResponse(respuesta.data, 'Sucursal asignada correctamente');
+    } catch (error) {
+        console.log('Error en asignarSucursalAUsuario:', error);
+        return getValidationResponse({ esCorrecto: false, mensaje: 'No se pudo asignar la sucursal' });
+    }
+};
+
+/**
+ * POST /api/Seguridad/ActivarUsuario
+ * El usuario define su propia contraseña y la cuenta queda activa.
+ */
+const activarCuenta = async (email, password) => {
+    try {
+        const respuesta = await axios.post(apiActivarCuenta, { email, password });
+        return getValidationResponse(respuesta.data, 'Cuenta activada correctamente');
+    } catch (error) {
+        console.log('Error en activarCuenta:', error);
+        return getValidationResponse({ esCorrecto: false, mensaje: 'No se pudo activar la cuenta' });
+    }
+};
+
 export {
     obtenerListaDeUsuarios,
     obtenerUsuarioPorId,
@@ -195,4 +245,8 @@ export {
     crearUsuario,
     actualizarUsuario,
     modificarEstadoUsuario,
+    buscarUsuariosParaAsignar,
+    asignarSucursalAUsuario,
+    activarCuenta,
 };
+

@@ -25,7 +25,7 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
         telefono: '',
         direccion: '',
         fechaNacimiento: '',
-        esActivo: true,
+        esActivo: false,
     });
 
     const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
                 fechaNacimiento: usuario.fechaNacimiento
                     ? usuario.fechaNacimiento.substring(0, 10)
                     : '',
-                esActivo: usuario.esActivo !== undefined ? usuario.esActivo : true,
+                esActivo: usuario.esActivo !== undefined ? usuario.esActivo : false,
             });
         }
     }, [usuario, modoEdicion]);
@@ -111,19 +111,6 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
 
                 <Stack spacing={2}>
                     <Box>
-                        <CustomFormLabel htmlFor="idIdentityServer">ID Proveedor de Identidad</CustomFormLabel>
-                        <CustomTextField
-                            id="idIdentityServer"
-                            name="idIdentityServer"
-                            value={formData.idIdentityServer}
-                            onChange={handleChange}
-                            placeholder="sub / ID del proveedor OIDC"
-                            fullWidth
-                            disabled={modoEdicion}
-                        />
-                    </Box>
-
-                    <Box>
                         <CustomFormLabel htmlFor="email">Email *</CustomFormLabel>
                         <CustomTextField
                             id="email"
@@ -147,6 +134,14 @@ const FormularioUsuario = ({ usuario, modoEdicion, onGuardar, onCancel }) => {
                             fullWidth
                         />
                     </Box>
+
+                    {!modoEdicion && (
+                        <Box>
+                            <Alert severity="info" sx={{ mb: 1 }}>
+                                La contraseña se definirá después cuando el usuario active su cuenta.
+                            </Alert>
+                        </Box>
+                    )}
 
                     <Box>
                         <FormControlLabel

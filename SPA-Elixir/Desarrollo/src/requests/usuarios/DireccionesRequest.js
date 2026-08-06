@@ -6,6 +6,9 @@ const apiObtenerUsuarioPorCorreo = `${apiBase}/Usuario/ObtenerUsuarioPorCorreo`;
 const apiAgregarUsuario = `${apiBase}/Usuario/AgregarUsuario`;
 const apiModificarUsuario = `${apiBase}/Usuario/ModificarUsuario`;
 const apiModificarEstadoUsuario = `${apiBase}/Usuario/ModificarEstadoUsuario`;
+const apiBuscarUsuariosParaAsignar = `${apiBase}/Usuario/BuscarParaAsignar`;
+const apiAsignarSucursalUsuario = `${apiBase}/Usuario/AsignarSucursal`;
+const apiActivarCuenta = `${apiBase}/Seguridad/ActivarUsuario`;
 
 export {
     apiObtenerUsuarios,
@@ -14,4 +17,7 @@ export {
     apiAgregarUsuario,
     apiModificarUsuario,
     apiModificarEstadoUsuario,
+    apiBuscarUsuariosParaAsignar,
+    apiAsignarSucursalUsuario,
+    apiActivarCuenta,
 };

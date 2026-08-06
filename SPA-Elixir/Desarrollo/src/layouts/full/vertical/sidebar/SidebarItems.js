@@ -1,5 +1,5 @@
 import React from 'react';
-import Menuitems from './MenuItems';
+import getMenuItems from './MenuItems';
 import { useLocation } from 'react-router';
 import { Box, List, useMediaQuery } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
@@ -7,20 +7,23 @@ import { toggleMobileSidebar } from 'src/store/customizer/CustomizerSlice';
 import NavItem from './NavItem';
 import NavCollapse from './NavCollapse';
 import NavGroup from './NavGroup/NavGroup';
+import usePermissions from 'src/guards/permissions/usePermissions';
 
 const SidebarItems = () => {
   const { pathname } = useLocation();
   const pathDirect = pathname;
   const pathWithoutLastPart = pathname.slice(0, pathname.lastIndexOf('/'));
   const customizer = useSelector((state) => state.customizer);
+  const { hasPermission } = usePermissions();
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
   const dispatch = useDispatch();
+  const menuItems = React.useMemo(() => getMenuItems(hasPermission), [hasPermission]);
 
   return (
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav">
-        {Menuitems.map((item) => {
+        {menuItems.map((item) => {
           // {/********SubHeader**********/}
           if (item.subheader) {
             return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;

@@ -86,8 +86,7 @@ const SeleccionSucursal = () => {
       }
       setSucursales(lista);
       if (!lista.length) {
-        setError(MENSAJE_SIN_SUCURSALES_ASIGNADAS);
-        setAlertaBloqueanteSinOpciones(true);
+        navigate('/sin-sucursal', { replace: true });
       }
     } catch (e) {
       setError(

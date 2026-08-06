@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useReducer } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // utils
 import axios from 'src/utils/axios';
@@ -88,6 +89,7 @@ const AuthContext = createContext({
 
 function  AuthProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const initialize = async () => {
@@ -159,15 +161,15 @@ function  AuthProvider({ children }) {
       firstName,
       lastName,
     });
-    const { accessToken, user } = response.data;
+    const accessToken = response.data.accessToken ?? response.data.access_token;
+    const user = response.data.user ?? '';
 
-    window.localStorage.setItem('accessToken', accessToken);
+    setSession(accessToken);
     dispatch({
       type: 'REGISTER',
-      payload: {
-        user,
-      },
+      payload: { user },
     });
+    navigate('/resolver-contexto', { replace: true });
   };
 
   const logout = useCallback(async () => {
