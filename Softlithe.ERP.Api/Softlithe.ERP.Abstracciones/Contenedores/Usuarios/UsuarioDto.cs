@@ -47,6 +47,9 @@ public class AgregarUsuarioDto
     [Required]
     public string Email { get; set; } = string.Empty;
 
+    /// <summary>Contraseña en texto plano. Si no se envía, la cuenta queda pendiente de activación.</summary>
+    public string? Password { get; set; }
+
     public string? Telefono { get; set; }
 
     public string? Direccion { get; set; }
@@ -120,4 +123,21 @@ public class RespuestaCambiarEstadoUsuarioDA
 public class UsuarioConModeloDeValidacion : ModeloValidacion
 {
     public List<UsuarioDto> ListaUsuarios { get; set; } = new();
+}
+
+/// <summary>Búsqueda de usuarios sin sucursal asignada.</summary>
+public class BuscarUsuarioSinSucursalDto
+{
+    /// <summary>Texto libre que filtra por nombre o email. Null devuelve todos.</summary>
+    public string? Busqueda { get; set; }
+}
+
+/// <summary>Vincula un usuario existente a una empresa-sucursal.</summary>
+public class AsignarSucursalUsuarioDto
+{
+    [Required]
+    public int IdUsuario { get; set; }
+
+    [Required(ErrorMessage = MensajesGeneralesDelSistemaDto.CodigoIdentificadorRequerido)]
+    public int Identificador { get; set; }
 }

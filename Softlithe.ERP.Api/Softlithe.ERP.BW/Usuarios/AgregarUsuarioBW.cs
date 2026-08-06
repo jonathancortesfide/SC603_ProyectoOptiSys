@@ -1,3 +1,4 @@
+using Softlithe.ERP.Abstracciones.BW.Autenticacion;
 using Softlithe.ERP.Abstracciones.BW.Generales.GestionDeBitacora.AgregarEventoBitacora;
 using Softlithe.ERP.Abstracciones.BW.Generales.ManejoDeErrores;
 using Softlithe.ERP.Abstracciones.BW.Usuarios;
@@ -13,15 +14,18 @@ public class AgregarUsuarioBW : IAgregarUsuarioBW
 {
     private readonly IAgregarUsuarioDA _agregarUsuarioDA;
     private readonly IAgregarEventoBitacoraBW _agregarEventoBitacoraBW;
+    private readonly IPasswordService _passwordService;
     private readonly IErrorLogger _logger;
 
     public AgregarUsuarioBW(
         IAgregarUsuarioDA agregarUsuarioDA,
         IAgregarEventoBitacoraBW agregarEventoBitacoraBW,
+        IPasswordService passwordService,
         IErrorLogger errorLogger)
     {
         _agregarUsuarioDA = agregarUsuarioDA;
         _agregarEventoBitacoraBW = agregarEventoBitacoraBW;
+        _passwordService = passwordService;
         _logger = errorLogger;
     }
 
@@ -29,6 +33,16 @@ public class AgregarUsuarioBW : IAgregarUsuarioBW
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(dto.Password))
+            {
+                dto.Password = string.Empty;
+                dto.EsActivo = false;
+            }
+            else
+            {
+                dto.Password = _passwordService.HashPassword(dto.Password);
+            }
+
             int resultado = await _agregarUsuarioDA.AgregarUsuario(dto);
             int respuestaBitacora = await AgregarEventoBitacoraCorrecto(dto, resultado);
             return ConstruirRespuestaExitosa(resultado, respuestaBitacora);

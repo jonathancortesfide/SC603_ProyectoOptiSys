@@ -1,5 +1,6 @@
 using Softlithe.ERP.Abstracciones.BW.Autenticacion;
 using Softlithe.ERP.Abstracciones.DA.Autenticacion;
+using Softlithe.ERP.Abstracciones.Servicios;
 using Softlithe.ERP.Api.Servicios;
 using Softlithe.ERP.BW.Autenticacion;
 using Softlithe.ERP.DA.Autenticacion;
@@ -14,6 +15,7 @@ internal static class InyeccionDeDependenciasAutenticacion
         Services.AddScoped<IAutenticacionBW, AutenticacionBW>();
         Services.AddScoped<IPasswordService, PasswordService>();
         Services.AddScoped<IJwtTokenService, JwtTokenService>();
+        Services.AddScoped<IEmailService, EmailService>();
 
         return Services;
     }

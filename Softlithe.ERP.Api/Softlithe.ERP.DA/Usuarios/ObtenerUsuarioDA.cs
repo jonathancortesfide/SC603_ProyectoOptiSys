@@ -146,4 +146,45 @@ public class ObtenerUsuarioDA : IObtenerUsuarioDA
                 ". Mensaje Inner Exception: " + ex.InnerException?.Message);
         }
     }
+
+    public async Task<List<UsuarioDto>> BuscarSinSucursal(string? busqueda)
+    {
+        try
+        {
+            IQueryable<Usuario> consulta = _contexto.Usuarios.AsNoTracking()
+                .Where(u => !_contexto.UsuarioEmpresaSucursales.Any(ues => ues.IdUsuario == u.IdUsuario));
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                string termino = busqueda.Trim();
+                consulta = consulta.Where(u =>
+                    EF.Functions.Like(u.Nombre ?? string.Empty, "%" + termino + "%") ||
+                    EF.Functions.Like(u.Email ?? string.Empty, "%" + termino + "%"));
+            }
+
+            return await consulta
+                .OrderBy(u => u.Nombre)
+                .Select(u => new UsuarioDto
+                {
+                    IdUsuario = u.IdUsuario,
+                    IdIdentityServer = u.IdIdentityServer,
+                    Identificador = u.Identificador,
+                    Nombre = u.Nombre ?? string.Empty,
+                    EsDoctor = u.EsDoctor,
+                    CodigoProfesional = u.CodigoProfesional,
+                    Email = u.Email ?? string.Empty,
+                    Telefono = u.Telefono,
+                    Direccion = u.Direccion,
+                    FechaNacimiento = u.FechaNacimiento,
+                    EsActivo = u.Activo,
+                })
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(
+                "Ocurrió un error al buscar usuarios sin sucursal: " + ex.Message + ". StackTrace: " + ex.StackTrace +
+                ". Mensaje Inner Exception: " + ex.InnerException?.Message);
+        }
+    }
 }

@@ -174,4 +174,28 @@ public class ObtenerUsuarioBW : IObtenerUsuarioBW
             };
         }
     }
+
+    public async Task<ModeloValidacionConDatos<List<UsuarioDto>>> BuscarSinSucursal(BuscarUsuarioSinSucursalDto parametro)
+    {
+        try
+        {
+            var lista = await _obtenerUsuarioDA.BuscarSinSucursal(parametro.Busqueda);
+            return new ModeloValidacionConDatos<List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.DatosObtenidosDeManeraCorrecta,
+                EsCorrecto = true,
+                Datos = lista
+            };
+        }
+        catch (Exception ex)
+        {
+            await _logger.RegistrarEventoError(ex);
+            return new ModeloValidacionConDatos<List<UsuarioDto>>
+            {
+                Mensaje = MensajesGeneralesDelSistemaDto.OcurrioUnErrorEnElSistema,
+                EsCorrecto = false,
+                Datos = new List<UsuarioDto>()
+            };
+        }
+    }
 }

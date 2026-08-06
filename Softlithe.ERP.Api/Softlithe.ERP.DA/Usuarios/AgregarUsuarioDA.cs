@@ -34,6 +34,7 @@ public class AgregarUsuarioDA : IAgregarUsuarioDA
                 EsDoctor = dto.EsDoctor,
                 CodigoProfesional = dto.CodigoProfesional,
                 Email = dto.Email,
+                PasswordHash = string.IsNullOrWhiteSpace(dto.Password) ? null : dto.Password,
                 Telefono = dto.Telefono,
                 Direccion = dto.Direccion,
                 FechaNacimiento = dto.FechaNacimiento,
@@ -41,6 +42,14 @@ public class AgregarUsuarioDA : IAgregarUsuarioDA
             };
 
             await _contexto.Usuarios.AddAsync(entidad);
+            await _contexto.SaveChangesAsync();
+
+            var vinculo = new UsuarioEmpresaSucursal
+            {
+                IdUsuario = entidad.IdUsuario,
+                Identificador = dto.Identificador,
+            };
+            await _contexto.UsuarioEmpresaSucursales.AddAsync(vinculo);
             int resultadoRegistro = await _contexto.SaveChangesAsync();
             await transaction.CommitAsync();
 
