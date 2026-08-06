@@ -11,4 +11,7 @@ public interface IObtenerUsuarioDA
     Task<UsuarioDto?> ObtenerUsuarioPorCorreo(string email);
 
     Task<List<UsuarioDto>> ObtenerDoctores(int identificador);
+
+    /// <summary>Usuarios que no tienen ningún registro en Usuario_Empresa_Sucursal.</summary>
+    Task<List<UsuarioDto>> BuscarSinSucursal(string? busqueda);
 }

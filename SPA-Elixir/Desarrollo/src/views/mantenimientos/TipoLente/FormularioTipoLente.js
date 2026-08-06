@@ -21,6 +21,7 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
   const [formData, setFormData] = useState({
     no_tipo: '',
     descripcion: '',
+    price: '',
     no_empresa: getNoEmpresa(),
     activo: true,
     identificador: getNoEmpresa(),
@@ -39,6 +40,7 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
               setFormData({
                 no_tipo: data.no_tipo || tipo.no_tipo || '',
                 descripcion: data.descripcion || '',
+                price: data.price ?? data.Price ?? '',
                 no_empresa: data.no_empresa || '',
                 activo: data.activo !== undefined ? data.activo : true,
                 identificador: data.identificador || '',
@@ -52,6 +54,7 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
           setFormData({
             no_tipo: tipo.no_tipo || '',
             descripcion: tipo.descripcion || '',
+            price: tipo.price ?? tipo.Price ?? '',
             no_empresa: tipo.no_empresa || '',
             activo: tipo.activo !== undefined ? tipo.activo : true,
             identificador: tipo.identificador || '',
@@ -62,6 +65,7 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
         setFormData({
           no_tipo: '',
           descripcion: '',
+          price: '',
           no_empresa: getNoEmpresa(),
           activo: true,
           identificador: getNoEmpresa(),
@@ -82,6 +86,7 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
     // Limpiar espacios en blanco de los campos
     let datosLimpios = {
       descripcion: String(formData.descripcion).trim(),
+      price: formData.price !== '' && formData.price !== null && formData.price !== undefined ? parseFloat(formData.price) : null,
       no_empresa: formData.no_empresa || getNoEmpresa(),
       activo: formData.activo,
       identificador: formData.identificador || getNoEmpresa(),
@@ -150,6 +155,16 @@ const FormularioTipoLente = ({ tipo, modoEdicion, onGuardar, onCancel }) => {
               onChange={handleChange}
               fullWidth
               required
+              disabled={loading}
+            />
+            <TextField
+              name="price"
+              label="Precio"
+              type="number"
+              inputProps={{ min: 0, step: '0.01' }}
+              value={formData.price}
+              onChange={handleChange}
+              fullWidth
               disabled={loading}
             />
           </Stack>

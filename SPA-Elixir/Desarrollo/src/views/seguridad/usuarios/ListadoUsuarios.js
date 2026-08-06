@@ -21,7 +21,7 @@ import {
     CircularProgress,
     Alert,
 } from '@mui/material';
-import { IconEdit, IconTrash, IconPlus } from '@tabler/icons';
+import { IconEdit, IconTrash, IconPlus, IconLink } from '@tabler/icons';
 import ParentCard from '../../../components/shared/ParentCard';
 import FormularioUsuario from './FormularioUsuario';
 import { obtenerListaDeUsuarios, modificarEstadoUsuario } from '../../../requests/usuarios/RequestsUsuarios';
@@ -97,6 +97,14 @@ const ListadoUsuarios = () => {
                 setError(resultado.mensaje || `Error al ${accion} el usuario`);
             }
         }
+    };
+
+    const handleCopiarEnlace = (email) => {
+        const base = window.location.origin;
+        const url = `${base}/activar-cuenta?email=${encodeURIComponent(email)}`;
+        navigator.clipboard.writeText(url)
+            .then(() => alert(`Enlace copiado. Compártelo con ${email} para que active su cuenta.`))
+            .catch(() => prompt('Copiá este enlace manualmente:', url));
     };
 
     const usuariosFiltrados = useMemo(() => {
@@ -206,6 +214,16 @@ const ListadoUsuarios = () => {
                                             >
                                                 <IconEdit size={18} />
                                             </IconButton>
+                                            {!usuario.esActivo && (
+                                                <IconButton
+                                                    size="small"
+                                                    color="info"
+                                                    onClick={() => handleCopiarEnlace(usuario.email)}
+                                                    title="Copiar enlace de activación"
+                                                >
+                                                    <IconLink size={18} />
+                                                </IconButton>
+                                            )}
                                             <IconButton
                                                 size="small"
                                                 color={usuario.esActivo ? 'error' : 'success'}

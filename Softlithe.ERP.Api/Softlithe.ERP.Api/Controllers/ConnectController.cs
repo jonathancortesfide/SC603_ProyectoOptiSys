@@ -45,7 +45,7 @@ public class ConnectController : ControllerBase
         if (usuario is null)
             return Unauthorized(new { error = "invalid_credentials" });
 
-        var accessToken = _jwtTokenService.GenerarToken(usuario);
+        var accessToken = await _jwtTokenService.GenerarTokenAsync(usuario);
 
         return Ok(new TokenResponseDto { AccessToken = accessToken });
     }

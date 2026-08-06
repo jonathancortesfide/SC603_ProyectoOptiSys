@@ -22,5 +22,8 @@ namespace Softlithe.ERP.DA.Modelos
 
         [Column("activo")]
         public bool? Activo { get; set; }
+
+        [Column("Price")]
+        public decimal? Price { get; set; }
     }
 }

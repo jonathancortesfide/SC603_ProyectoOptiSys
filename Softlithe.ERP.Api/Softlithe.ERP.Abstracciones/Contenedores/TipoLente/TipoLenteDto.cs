@@ -14,6 +14,7 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.TipoLente
         public string descripcion { get; set; }
         public int no_empresa { get; set; }
         public Boolean? Activo { get; set; }
+        public decimal? Price { get; set; }
         [Required(ErrorMessage = MensajesGeneralesDelSistemaDto.CodigoIdentificadorRequerido)]
         public int Identificador { get; set; }
         [Required(ErrorMessage = MensajesGeneralesDelSistemaDto.UsuarioRequerido)]

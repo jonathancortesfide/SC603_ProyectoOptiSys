@@ -1,10 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Softlithe.ERP.Abstracciones.BW.Usuarios;
 using Softlithe.ERP.Abstracciones.Contenedores;
 using Softlithe.ERP.Abstracciones.Contenedores.Usuarios;
+using Softlithe.ERP.Abstracciones.Servicios;
+using Softlithe.ERP.Api.Atributos;
 
 namespace Softlithe.ERP.Api.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class UsuarioController : ControllerBase
@@ -13,17 +17,29 @@ public class UsuarioController : ControllerBase
     private readonly IAgregarUsuarioBW _agregarUsuarioBW;
     private readonly IModificarUsuarioBW _modificarUsuarioBW;
     private readonly IModificarEstadoUsuarioBW _modificarEstadoUsuarioBW;
+    private readonly IAsignarSucursalUsuarioBW _asignarSucursalUsuarioBW;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _config;
+    private readonly ILogger<UsuarioController> _logger;
 
     public UsuarioController(
         IObtenerUsuarioBW obtenerUsuarioBW,
         IAgregarUsuarioBW agregarUsuarioBW,
         IModificarUsuarioBW modificarUsuarioBW,
-        IModificarEstadoUsuarioBW modificarEstadoUsuarioBW)
+        IModificarEstadoUsuarioBW modificarEstadoUsuarioBW,
+        IAsignarSucursalUsuarioBW asignarSucursalUsuarioBW,
+        IEmailService emailService,
+        IConfiguration config,
+        ILogger<UsuarioController> logger)
     {
         _obtenerUsuarioBW = obtenerUsuarioBW;
         _agregarUsuarioBW = agregarUsuarioBW;
         _modificarUsuarioBW = modificarUsuarioBW;
         _modificarEstadoUsuarioBW = modificarEstadoUsuarioBW;
+        _asignarSucursalUsuarioBW = asignarSucursalUsuarioBW;
+        _emailService = emailService;
+        _config = config;
+        _logger = logger;
     }
 
     /// <summary>
@@ -38,7 +54,28 @@ public class UsuarioController : ControllerBase
     [HttpPost("AgregarUsuario")]
     public async Task<ModeloValidacion> AgregarUsuario(AgregarUsuarioDto parametro)
     {
-        return await _agregarUsuarioBW.AgregarUsuario(parametro);
+        var resultado = await _agregarUsuarioBW.AgregarUsuario(parametro);
+
+        if (resultado.EsCorrecto)
+        {
+            _ = EnviarCorreoActivacionAsync(parametro.Email, parametro.Nombre);
+        }
+
+        return resultado;
+    }
+
+    private async Task EnviarCorreoActivacionAsync(string email, string nombre)
+    {
+        try
+        {
+            var baseUrl = _config["EmailConfig:UrlSpa"] ?? "http://localhost:5173";
+            var url = $"{baseUrl}/activar-cuenta?email={Uri.EscapeDataString(email)}";
+            await _emailService.EnviarInvitacionActivacionAsync(email, nombre, url);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "No se pudo enviar el correo de activación a {Email}", email);
+        }
     }
 
     /// <summary>
@@ -84,5 +121,25 @@ public class UsuarioController : ControllerBase
     public async Task<ModeloValidacionConDatos<List<UsuarioDto>>> ObtenerDoctores([FromRoute] int identificador)
     {
         return await _obtenerUsuarioBW.ObtenerDoctores(identificador);
+    }
+
+    /// <summary>
+    /// Busca usuarios que no tienen ninguna sucursal asignada (para que el admin los vincule).
+    /// </summary>
+    [RequierePermiso("USUARIO_SIN_SUCURSAL_VER")]
+    [HttpPost("BuscarParaAsignar")]
+    public async Task<ModeloValidacionConDatos<List<UsuarioDto>>> BuscarParaAsignar(BuscarUsuarioSinSucursalDto parametro)
+    {
+        return await _obtenerUsuarioBW.BuscarSinSucursal(parametro);
+    }
+
+    /// <summary>
+    /// Vincula un usuario existente a una empresa-sucursal.
+    /// </summary>
+    [RequierePermiso("USUARIO_ASIGNAR_SUCURSAL")]
+    [HttpPost("AsignarSucursal")]
+    public async Task<ModeloValidacion> AsignarSucursal(AsignarSucursalUsuarioDto parametro)
+    {
+        return await _asignarSucursalUsuarioBW.AsignarSucursal(parametro);
     }
 }
