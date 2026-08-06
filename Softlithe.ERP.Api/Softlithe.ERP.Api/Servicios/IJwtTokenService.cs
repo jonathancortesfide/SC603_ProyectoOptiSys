@@ -4,5 +4,5 @@ namespace Softlithe.ERP.Api.Servicios;
 
 public interface IJwtTokenService
 {
-    string GenerarToken(UsuarioSesionDto Usuario);
+    Task<string> GenerarTokenAsync(UsuarioSesionDto Usuario);
 }

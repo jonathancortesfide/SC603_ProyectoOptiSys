@@ -35,14 +35,26 @@ public class RegistroController : ControllerBase
         var usuario = await _autenticacionBW.RegistrarUsuarioAsync(Request);
 
         if (usuario is null)
-            return Conflict(new { error = "El email ya está registrado." });
-
-        var accessToken = _jwtTokenService.GenerarToken(usuario);
+            return Conflict(new { error = "El email ya está registrado o no se pudo completar la activación." });
 
         return Ok(new RegistrarUsuarioResponseDto
         {
-            AccessToken = accessToken,
+            AccessToken = string.Empty,
             User = usuario
         });
+    }
+
+    [HttpPost("ActivarUsuario")]
+    public async Task<IActionResult> ActivarUsuario([FromBody] ActivarUsuarioDto Request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var resultado = await _autenticacionBW.ActivarUsuarioAsync(Request);
+
+        if (!resultado)
+            return BadRequest(new { error = "No se pudo activar el usuario." });
+
+        return Ok(new { mensaje = "Usuario activado correctamente." });
     }
 }

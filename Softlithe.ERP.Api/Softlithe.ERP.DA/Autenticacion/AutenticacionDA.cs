@@ -52,7 +52,7 @@ public class AutenticacionDA : IAutenticacionDA
                 PasswordHash = Request.PasswordHash,
                 Identificador = Request.Identificador,
                 IdIdentityServer = string.Empty,
-                Activo = true
+                Activo = false
             };
 
             _contexto.Usuarios.Add(nuevoUsuario);
@@ -71,6 +71,30 @@ public class AutenticacionDA : IAutenticacionDA
         catch (Exception Ex)
         {
             throw new Exception($"Error al registrar usuario: {Ex.Message}", Ex);
+        }
+    }
+
+    public async Task<bool> ActivarUsuarioAsync(string Email, string PasswordHash)
+    {
+        try
+        {
+            var usuario = await _contexto.Usuarios
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.Trim().ToLower() == Email.Trim().ToLower());
+
+            if (usuario is null)
+            {
+                return false;
+            }
+
+            usuario.PasswordHash = PasswordHash;
+            usuario.Activo = true;
+            _contexto.Usuarios.Update(usuario);
+            await _contexto.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception Ex)
+        {
+            throw new Exception($"Error al activar usuario: {Ex.Message}", Ex);
         }
     }
 }

@@ -17,6 +17,8 @@ internal static class InyeccionDeDependenciaUsuarios
         services.AddScoped<IModificarUsuarioDA, ModificarUsuarioDA>();
         services.AddScoped<IModificarEstadoUsuarioBW, ModificarEstadoUsuarioBW>();
         services.AddScoped<IModificarEstadoUsuarioDA, ModificarEstadoUsuarioDA>();
+        services.AddScoped<IAsignarSucursalUsuarioBW, AsignarSucursalUsuarioBW>();
+        services.AddScoped<IAsignarSucursalUsuarioDA, AsignarSucursalUsuarioDA>();
 
         return services;
     }

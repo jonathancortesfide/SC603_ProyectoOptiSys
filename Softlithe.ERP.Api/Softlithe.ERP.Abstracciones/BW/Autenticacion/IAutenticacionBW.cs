@@ -6,4 +6,5 @@ public interface IAutenticacionBW
 {
     Task<UsuarioSesionDto?> ValidarCredencialesAsync(string Email, string Password);
     Task<UsuarioSesionDto?> RegistrarUsuarioAsync(RegistrarUsuarioDto Request);
+    Task<bool> ActivarUsuarioAsync(ActivarUsuarioDto Request);
 }

@@ -58,14 +58,32 @@ public class AutenticacionBW : IAutenticacionBW
     {
         try
         {
+            var passwordHash = _passwordService.HashPassword(Request.Password);
             var usuarioExistente = await _autenticacionDA.ObtenerUsuarioParaLoginAsync(Request.Email);
+
             if (usuarioExistente is not null)
             {
-                _logger.LogWarning("Intento de registro con email ya existente: {Email}", Request.Email);
-                return null;
-            }
+                if (usuarioExistente.Activo)
+                {
+                    _logger.LogWarning("Intento de registro con email ya existente y activo: {Email}", Request.Email);
+                    return null;
+                }
 
-            var passwordHash = _passwordService.HashPassword(Request.Password);
+                var activado = await _autenticacionDA.ActivarUsuarioAsync(Request.Email, passwordHash);
+                if (!activado)
+                {
+                    _logger.LogWarning("No se pudo reactivar el usuario pendiente: {Email}", Request.Email);
+                    return null;
+                }
+
+                return new UsuarioSesionDto
+                {
+                    Id = usuarioExistente.IdUsuario.ToString(),
+                    Email = usuarioExistente.Email,
+                    DisplayName = usuarioExistente.Nombre,
+                    Role = "user"
+                };
+            }
 
             var nuevoUsuario = await _autenticacionDA.RegistrarUsuarioAsync(new RegistrarUsuarioInternoDto
             {
@@ -88,6 +106,31 @@ public class AutenticacionBW : IAutenticacionBW
         catch (Exception Ex)
         {
             _logger.LogError(Ex, "Error al registrar usuario {Email}", Request.Email);
+            throw;
+        }
+    }
+
+    public async Task<bool> ActivarUsuarioAsync(ActivarUsuarioDto Request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Request.Email) || string.IsNullOrWhiteSpace(Request.Password))
+            {
+                return false;
+            }
+
+            var usuario = await _autenticacionDA.ObtenerUsuarioParaLoginAsync(Request.Email);
+            if (usuario is null)
+            {
+                return false;
+            }
+
+            var passwordHash = _passwordService.HashPassword(Request.Password);
+            return await _autenticacionDA.ActivarUsuarioAsync(Request.Email, passwordHash);
+        }
+        catch (Exception Ex)
+        {
+            _logger.LogError(Ex, "Error al activar usuario {Email}", Request.Email);
             throw;
         }
     }
