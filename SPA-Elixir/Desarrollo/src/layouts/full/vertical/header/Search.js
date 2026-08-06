@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   IconButton,
   Dialog,
@@ -10,115 +10,129 @@ import {
   ListItemButton,
   ListItemText,
   Typography,
+  CircularProgress,
 } from '@mui/material';
-import { IconSearch, IconX } from '@tabler/icons';
-import Menuitems from '../sidebar/MenuItems';
+import { IconSearch, IconX, IconUser } from '@tabler/icons';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { obtenerListaDePacientes } from 'src/requests/pacientes/RequestsPacientes';
 
 const Search = () => {
-  // drawer top
-  const [showDrawer2, setShowDrawer2] = useState(false);
-  const [search, setSerach] = useState('');
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [resultados, setResultados] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef(null);
+  const navigate = useNavigate();
 
-  const handleDrawerClose2 = () => {
-    setShowDrawer2(false);
+  useEffect(() => {
+    if (!open) {
+      setQuery('');
+      setResultados([]);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!query.trim()) {
+      setResultados([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const lista = await obtenerListaDePacientes(query.trim());
+        setResultados(lista.slice(0, 8));
+      } catch {
+        setResultados([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
+
+  const handleSelect = (paciente) => {
+    setOpen(false);
+    navigate('/pacientes', { state: { busqueda: paciente.cedula || paciente.nombre } });
   };
-
-  const filterRoutes = (rotr, cSearch) => {
-    if (rotr.length > 1)
-      return rotr.filter((t) =>
-        t.title ? t.href.toLocaleLowerCase().includes(cSearch.toLocaleLowerCase()) : '',
-      );
-
-    return rotr;
-  };
-  const searchData = filterRoutes(Menuitems, search);
 
   return (
     <>
       <IconButton
-        aria-label="show 4 new mails"
+        aria-label="Buscar paciente"
         color="inherit"
-        aria-controls="search-menu"
-        aria-haspopup="true"
-        onClick={() => setShowDrawer2(true)}
+        onClick={() => setOpen(true)}
         size="large"
       >
         <IconSearch size="16" />
       </IconButton>
+
       <Dialog
-        open={showDrawer2}
-        onClose={() => setShowDrawer2(false)}
+        open={open}
+        onClose={() => setOpen(false)}
         fullWidth
-        maxWidth={'sm'}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
+        maxWidth="sm"
         PaperProps={{ sx: { position: 'fixed', top: 30, m: 0 } }}
       >
-        <DialogContent className="testdialog">
+        <DialogContent>
           <Stack direction="row" spacing={2} alignItems="center">
             <CustomTextField
               id="tb-search"
-              placeholder="Buscar aquí"
+              placeholder="Buscar paciente por nombre o cédula..."
               fullWidth
-              onChange={(e) => setSerach(e.target.value)}
-              inputProps={{ 'aria-label': 'Buscar aquí' }}
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              inputProps={{ 'aria-label': 'Buscar paciente' }}
             />
-            <IconButton size="small" variant="outlined" onClick={handleDrawerClose2}>
+            <IconButton size="small" onClick={() => setOpen(false)}>
               <IconX size="18" />
             </IconButton>
           </Stack>
         </DialogContent>
-        <Divider />
-        <Box p={2} sx={{ maxHeight: '60vh', overflow: 'auto' }}>
-          <Typography variant="h5" p={1}>
-            Enlaces Rápidos
-          </Typography>
-          <Box>
-            <List component="nav">
-              {searchData.map((menu) => {
-                return (
-                  <Box key={menu.title ? menu.id : menu.subheader}>
-                    {menu.title && !menu.children ? (
-                      <ListItemButton sx={{ py: 0.5, px: 1 }} to={menu.href} component={Link}>
+
+        {(loading || resultados.length > 0 || (query.trim() && !loading)) && (
+          <>
+            <Divider />
+            <Box p={2} sx={{ maxHeight: '60vh', overflow: 'auto' }}>
+              {loading ? (
+                <Box display="flex" justifyContent="center" py={2}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : resultados.length > 0 ? (
+                <>
+                  <Typography variant="h5" px={1} pb={1}>
+                    Pacientes encontrados
+                  </Typography>
+                  <List disablePadding>
+                    {resultados.map((p) => (
+                      <ListItemButton
+                        key={p.noPaciente ?? p.cedula}
+                        sx={{ py: 0.75, px: 1, borderRadius: 1 }}
+                        onClick={() => handleSelect(p)}
+                      >
+                        <IconUser size="18" style={{ marginRight: 10, flexShrink: 0, opacity: 0.5 }} />
                         <ListItemText
-                          primary={menu.title}
-                          secondary={menu.href}
-                          sx={{ my: 0, py: 0.5 }}
+                          primary={p.nombre}
+                          secondary={p.cedula || '—'}
+                          primaryTypographyProps={{ fontWeight: 500 }}
                         />
                       </ListItemButton>
-                    ) : (
-                      ''
-                    )}
-                    {menu.children ? (
-                      <>
-                        {menu.children.map((child) => {
-                          return (
-                            <ListItemButton
-                              sx={{ py: 0.5, px: 1 }}
-                              to={child.href}
-                              component={Link}
-                              key={child.title ? child.id : menu.subheader}
-                            >
-                              <ListItemText
-                                primary={child.title}
-                                secondary={child.href}
-                                sx={{ my: 0, py: 0.5 }}
-                              />
-                            </ListItemButton>
-                          );
-                        })}
-                      </>
-                    ) : (
-                      ''
-                    )}
-                  </Box>
-                );
-              })}
-            </List>
-          </Box>
-        </Box>
+                    ))}
+                  </List>
+                </>
+              ) : (
+                <Typography variant="body2" color="text.secondary" px={1} py={1}>
+                  No se encontraron pacientes para "{query}"
+                </Typography>
+              )}
+            </Box>
+          </>
+        )}
       </Dialog>
     </>
   );

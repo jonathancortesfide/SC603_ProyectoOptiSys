@@ -70,13 +70,13 @@ export const getSessionClaim = (...claimNames) => {
 
 export const getCurrentUsername = () => {
     const username = getSessionClaim(
+        'nombre',
+        'name',
         'preferred_username',
         'unique_name',
         'username',
         'login',
-        'name',
         'email',
-        'sub'
     );
 
     return isNonEmptyValue(username) ? String(username).trim() : 'sistema';
