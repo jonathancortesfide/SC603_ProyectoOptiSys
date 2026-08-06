@@ -32,7 +32,7 @@ const ResolverContexto = () => {
         if (cancelled) return;
 
         if (esCorrecto === false || !lista?.length) {
-          navigate('/seleccion-empresa', { replace: true });
+          navigate('/sin-sucursal', { replace: true });
           return;
         }
 

@@ -24,7 +24,7 @@ import {
   IconFileInvoice,
 } from '@tabler/icons';
 
-const Menuitems = [
+const getMenuItems = (hasPermission) => [
   {
     navlabel: true,
     subheader: 'Home',
@@ -40,95 +40,62 @@ const Menuitems = [
     navlabel: true,
     subheader: 'Other',
   },
-  {
+  ...(hasPermission('PACIENTE_VER') ? [{
     id: uniqueId(),
     title: 'Pacientes',
     icon: IconUsers,
     href: '/pacientes',
-  },
-  {
+  }] : []),
+  ...(hasPermission('PRODUCTO_VER') ? [{
     id: uniqueId(),
     title: 'Productos',
     icon: IconPackage,
     href: '/productos',
-  },
-  {
+  }] : []),
+  ...(hasPermission('FACTURA_VER') ? [{
     id: uniqueId(),
     title: 'Facturación',
     icon: IconFileInvoice,
     href: '/facturacion',
-  },
-  {
+  }] : []),
+  ...(hasPermission('EXAMEN_VER') ? [{
     id: uniqueId(),
     title: 'Examenes',
-    icon: IconStar, 
+    icon: IconStar,
     href: '/verexamenes',
-  }, 
-  
-  {
+  }] : []),
+  ...(hasPermission('USUARIO_VER') ? [{
     id: uniqueId(),
     title: 'Seguridad',
     icon: IconKey,
     href: '/seguridad',
-  },
-  {
+  }] : []),
+  ...(hasPermission('MONEDA_VER') || hasPermission('PROVEEDOR_VER') || hasPermission('TIPO_LENTE_VER') ? [{
     id: uniqueId(),
     title: 'Mantenimientos',
     icon: IconSettings,
     href: '/mantenimientos',
     children: [
-      {
+      ...(hasPermission('MONEDA_VER') ? [{
         id: uniqueId(),
         title: 'Monedas',
         icon: IconCurrencyDollar,
         href: '/mantenimientos/moneda',
-      },
-      {
+      }] : []),
+      ...(hasPermission('PROVEEDOR_VER') ? [{
         id: uniqueId(),
         title: 'Proveedores',
         icon: IconBuildingStore,
         href: '/mantenimientos/proveedor',
-      },
-      {
-        id: uniqueId(),
-        title: 'Enfermedades',
-        icon: IconHeartbeat,
-        href: '/mantenimientos/enfermedades',
-      },
-      {
-        id: uniqueId(),
-        title: 'Marcas',
-        icon: IconTag,
-        href: '/mantenimientos/marca',
-      },
-      {
-        id: uniqueId(),
-        title: 'Listas de precio',
-        icon: IconCurrencyDollar,
-        href: '/mantenimientos/lista-precio',
-      },
-      {
+      }] : []),
+      ...(hasPermission('TIPO_LENTE_VER') ? [{
         id: uniqueId(),
         title: 'Tipo de lente',
         icon: IconAperture,
         href: '/mantenimientos/tipo-lente',
-      },
-      {
-        id: uniqueId(),
-        title: 'Clasificación pacientes',
-        icon: IconUserCheck,
-        href: '/mantenimientos/clasificacion-pacientes',
-      },
-      {
-        id: uniqueId(),
-        title: 'Grupos de productos',
-        icon: IconBoxMultiple,
-        href: '/mantenimientos/grupos-productos',
-      },
+      }] : []),
     ],
-  },
-  
-
+  }] : []),
 ];
 
-export default Menuitems;
+export default getMenuItems;

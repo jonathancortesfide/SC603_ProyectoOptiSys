@@ -1,16 +1,20 @@
 import React from 'react';
 import { Box, Avatar, Typography, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { useSelector } from 'react-redux';
-import img1 from 'src/assets/images/profile/user-1.jpg';
+import img1 from 'src/assets/images/profile/user-11.jpg';
 import { IconPower } from '@tabler/icons';
 import {Link} from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import { getCurrentUsername } from 'src/utils/session';
+import { getSessionClaim } from 'src/utils/session';
 
 export const Profile = () => {
   const customizer = useSelector((state) => state.customizer);
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
   const { t } = useTranslation();
+  const username = getCurrentUsername();
+  const email = getSessionClaim('email');
   
   return (
     <Box
@@ -21,11 +25,13 @@ export const Profile = () => {
     >
       {!hideMenu ? (
         <>
-          <Avatar alt="Remy Sharp" src={img1} />
+          <Avatar alt={username} src={img1} />
 
           <Box>
-            <Typography variant="h6"  color="textPrimary">Mathew</Typography>
-            <Typography variant="caption" color="textSecondary">{t('Designer')}</Typography>
+            <Typography variant="h6" color="textPrimary">{username}</Typography>
+            {email && (
+              <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 120, display: 'block' }}>{email}</Typography>
+            )}
           </Box>
           <Box sx={{ ml: 'auto' }}>
             <Tooltip title={t('Logout')} placement="top">

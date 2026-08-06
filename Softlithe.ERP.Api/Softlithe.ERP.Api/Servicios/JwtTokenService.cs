@@ -27,7 +27,8 @@ public class JwtTokenService : IJwtTokenService
         {
             new Claim(JwtRegisteredClaimNames.Sub, Usuario.Id),
             new Claim(JwtRegisteredClaimNames.Email, Usuario.Email),
-            new Claim(JwtRegisteredClaimNames.Name, Usuario.DisplayName),
+            new Claim(JwtRegisteredClaimNames.Name, Usuario.DisplayName ?? string.Empty),
+            new Claim("nombre", Usuario.DisplayName ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Iat,
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64)
