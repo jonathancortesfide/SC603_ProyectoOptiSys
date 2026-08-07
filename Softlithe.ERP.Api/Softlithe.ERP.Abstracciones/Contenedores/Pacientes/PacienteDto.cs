@@ -10,6 +10,8 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Pacientes
         [Required(ErrorMessage = MensajesGeneralesDelSistemaDto.CodigoIdentificadorRequerido)]
         public int Identificador { get; set; }
 
+        public int? IdTipoIdentificacion { get; set; }
+
         public string? TipoIdentificacion { get; set; }
 
         [Required(ErrorMessage = MensajeDePacienteDto.CedulaPacienteRequerida)]
