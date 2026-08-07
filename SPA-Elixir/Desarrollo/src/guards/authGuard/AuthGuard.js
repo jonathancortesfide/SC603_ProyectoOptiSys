@@ -3,14 +3,24 @@ import useAuth from './UseAuth';
 import { useEffect } from 'react';
 
 const AuthGuard = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     if (!isAuthenticated) {
       navigate('/auth/login', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isInitialized, isAuthenticated, navigate]);
+
+  if (!isInitialized) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return children;
 };

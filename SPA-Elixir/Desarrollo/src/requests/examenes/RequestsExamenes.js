@@ -1,9 +1,10 @@
-import axios from "axios";
+import axios from 'src/utils/axios';
 import { apiAgregarExamenes, apiObtenerExamenCompleto, apiExamenSnapshot } from './DireccionesRequest';
 import { getSucursalIdentificador } from '../../utils/sucursal';
 
 axios.interceptors.request.use(async (config) => {
     config.headers = {
+        ...(config.headers || {}),
         "Content-Type": "application/json",
         Accept: "application/json"
     };
