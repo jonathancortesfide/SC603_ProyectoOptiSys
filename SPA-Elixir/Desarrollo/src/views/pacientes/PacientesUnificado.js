@@ -189,6 +189,16 @@ const PacientesUnificado = () => {
   const handleGuardarCambios = async () => {
     if (!formDataPaciente || guardando) return;
 
+    const toTipoIdentificacionId = (value) => {
+      if (value === null || value === undefined || value === '') return null;
+      const numericValue = Number(value);
+      if (Number.isFinite(numericValue) && numericValue > 0) return numericValue;
+      const normalized = String(value).trim().toLowerCase();
+      if (normalized === 'juridica' || normalized === '02') return 2;
+      if (normalized === 'fisica' || normalized === '01') return 1;
+      return null;
+    };
+
     const nombre = formDataPaciente.nombre?.trim();
     const nombreComercial = formDataPaciente.nombreComercial?.trim();
     const cedula = formDataPaciente.identificacion?.trim();
@@ -196,7 +206,7 @@ const PacientesUnificado = () => {
     const telefono = formDataPaciente.telefono1?.trim();
     const fechaNacimiento = formDataPaciente.fechaNacimiento?.trim();
     const sexo = formDataPaciente.sexo?.trim();
-    const tipoId = formDataPaciente.tipoIdentificacion?.trim();
+    const tipoId = toTipoIdentificacionId(formDataPaciente.tipoIdentificacion);
 
     // Validar email
     const isValidEmail = (email) => {
@@ -205,7 +215,7 @@ const PacientesUnificado = () => {
     };
 
     // Validaciones requeridas
-    if (!tipoId) {
+    if (!Number.isFinite(tipoId) || tipoId <= 0) {
       setError('Tipo de Identificación es obligatorio');
       return;
     }
@@ -233,7 +243,7 @@ const PacientesUnificado = () => {
       setError('Email principal inválido (debe tener formato: usuario@dominio.com)');
       return;
     }
-    if (tipoId === 'juridica') {
+    if (tipoId === 2) {
       if (!nombreComercial) {
         setError('Nombre Comercial es obligatorio para cédula jurídica');
         return;

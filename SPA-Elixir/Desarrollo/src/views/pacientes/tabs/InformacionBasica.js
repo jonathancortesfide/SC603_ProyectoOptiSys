@@ -10,16 +10,25 @@ import {
   Box,
   Alert,
   Typography,
-  Autocomplete,
 } from '@mui/material';
+import { obtenerTiposIdentificacion, normalizarTipoIdentificacion } from '../../../requests/pacientes/RequestsTipoIdentificacion';
 
-const TIPOS_IDENTIFICACION = [
-  { value: 'fisica', label: 'Cédula física' },
-  { value: 'juridica', label: 'Cédula jurídica' },
-  { value: 'dimex', label: 'DIMEX' },
-  { value: 'nite', label: 'NITE' },
-  { value: 'pasaporte', label: 'Pasaporte' },
-];
+const TIPO_IDENTIFICACION_FISICA_ID = 1;
+const TIPO_IDENTIFICACION_JURIDICA_ID = 2;
+
+const toTipoIdentificacionId = (value) => {
+  if (value === null || value === undefined || value === '') return TIPO_IDENTIFICACION_FISICA_ID;
+
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue) && numericValue > 0) return numericValue;
+
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === 'juridica' || normalized === '02' || normalized === 'j') {
+    return TIPO_IDENTIFICACION_JURIDICA_ID;
+  }
+
+  return TIPO_IDENTIFICACION_FISICA_ID;
+};
 
 const SEXOS = [
   { value: 'M', label: 'Masculino' },
@@ -39,22 +48,35 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
     sexo: '',
     telefono1: '',
     email1: '',
-    nacionalidad: '',
     contactoEmergenciaNombre: '',
     contactoEmergenciaTelefono: '',
   });
 
-  const [nacionalidades, setNacionalidades] = useState([]);
+  const [tiposIdentificacion, setTiposIdentificacion] = useState([
+    { idTipoIdentificacion: TIPO_IDENTIFICACION_FISICA_ID, codigo: 'FISICA', nombre: 'Cédula Física' },
+    { idTipoIdentificacion: TIPO_IDENTIFICACION_JURIDICA_ID, codigo: 'JURIDICA', nombre: 'Cédula Jurídica' },
+  ]);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [edad, setEdad] = useState('');
 
+  const esJuridica = Number(form.tipoIdentificacion) === TIPO_IDENTIFICACION_JURIDICA_ID;
+
   useEffect(() => {
+    cargarTiposIdentificacion();
+
     if (paciente) {
       const fechaNac = paciente.fechaNacimiento || '';
+      const tipoPaciente = toTipoIdentificacionId(
+        paciente.idTipoIdentificacion
+          ?? paciente.id_tipo_identificacion
+          ?? paciente.tipoIdentificacion,
+      );
       const nuevoForm = {
         numeroDePaciente: paciente.noPaciente || paciente.numeroDePaciente || '',
-        tipoIdentificacion: paciente.tipoIdentificacion || 'fisica',
+        tipoIdentificacion: Number.isFinite(tipoPaciente) && tipoPaciente > 0
+          ? tipoPaciente
+          : TIPO_IDENTIFICACION_FISICA_ID,
         identificacion: paciente.cedula || paciente.identificacion || '',
         nombre: paciente.nombre || '',
         nombreComercial: paciente.nombreComercial || '',
@@ -63,7 +85,6 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
         sexo: paciente.sexo || '',
         telefono1: paciente.telefono1 || '',
         email1: paciente.email || paciente.email1 || '',
-        nacionalidad: paciente.nacionalidad || '',
         contactoEmergenciaNombre: paciente.nombreContactoEmergencia || paciente.contactoEmergenciaNombre || '',
         contactoEmergenciaTelefono: paciente.telefonoContactoEmergencia || paciente.contactoEmergenciaTelefono || '',
       };
@@ -75,20 +96,21 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
         setEdad('0');
       }
     }
-    cargarNacionalidades();
   }, [paciente]);
 
-  const cargarNacionalidades = async () => {
-    // Mock data - En producción debe llamar al API de tabla Pais
-    setNacionalidades([
-      { id: 1, nombre: 'Costarricense' },
-      { id: 2, nombre: 'Nicaragüense' },
-      { id: 3, nombre: 'Panameño' },
-      { id: 4, nombre: 'Colombiano' },
-      { id: 5, nombre: 'Venezolano' },
-      { id: 6, nombre: 'Estadounidense' },
-      { id: 7, nombre: 'Otro' },
-    ]);
+  const cargarTiposIdentificacion = async () => {
+    try {
+      const lista = await obtenerTiposIdentificacion();
+      const normalizada = (Array.isArray(lista) ? lista : []).map(normalizarTipoIdentificacion);
+      if (normalizada.length > 0) {
+        setTiposIdentificacion(normalizada);
+      }
+    } catch {
+      setTiposIdentificacion([
+        { idTipoIdentificacion: TIPO_IDENTIFICACION_FISICA_ID, codigo: 'FISICA', nombre: 'Cédula Física' },
+        { idTipoIdentificacion: TIPO_IDENTIFICACION_JURIDICA_ID, codigo: 'JURIDICA', nombre: 'Cédula Jurídica' },
+      ]);
+    }
   };
 
   const isValidEmail = (email) => {
@@ -102,6 +124,10 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
 
   const handleChange = (field) => (event) => {
     let value = event.target.value;
+
+    if (field === 'tipoIdentificacion') {
+      value = Number(value);
+    }
     
     // Validar campos numéricos
     if (['identificacion', 'telefono1', 'contactoEmergenciaTelefono'].includes(field)) {
@@ -163,7 +189,7 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
     }
     
     // Validar nombre o nombre comercial según tipo de identificación
-    if (form.tipoIdentificacion === 'juridica') {
+    if (Number(form.tipoIdentificacion) === TIPO_IDENTIFICACION_JURIDICA_ID) {
       if (!form.nombreComercial) {
         newErrors.nombreComercial = 'Nombre comercial es obligatorio para cédula jurídica';
       }
@@ -197,9 +223,9 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
               label="Tipo Identificación *"
               onChange={handleChange('tipoIdentificacion')}
             >
-              {TIPOS_IDENTIFICACION.map((tipo) => (
-                <MenuItem key={tipo.value} value={tipo.value}>
-                  {tipo.label}
+              {tiposIdentificacion.map((tipo) => (
+                <MenuItem key={tipo.idTipoIdentificacion} value={tipo.idTipoIdentificacion}>
+                  {tipo.nombre}
                 </MenuItem>
               ))}
             </Select>
@@ -225,11 +251,11 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
           <TextField
             fullWidth
             size="small"
-            label={form.tipoIdentificacion === 'juridica' ? 'Nombre Comercial *' : 'Nombre *'}
-            value={form.tipoIdentificacion === 'juridica' ? form.nombreComercial : form.nombre}
-            onChange={handleChange(form.tipoIdentificacion === 'juridica' ? 'nombreComercial' : 'nombre')}
-            error={form.tipoIdentificacion === 'juridica' ? !!errors.nombreComercial : !!errors.nombre}
-            helperText={form.tipoIdentificacion === 'juridica' ? errors.nombreComercial : errors.nombre}
+            label={esJuridica ? 'Nombre Comercial *' : 'Nombre *'}
+            value={esJuridica ? form.nombreComercial : form.nombre}
+            onChange={handleChange(esJuridica ? 'nombreComercial' : 'nombre')}
+            error={esJuridica ? !!errors.nombreComercial : !!errors.nombre}
+            helperText={esJuridica ? errors.nombreComercial : errors.nombre}
           />
         </Grid>
 
@@ -240,7 +266,7 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
             label="Nombre Comercial"
             value={form.nombreComercial}
             onChange={handleChange('nombreComercial')}
-            disabled={form.tipoIdentificacion !== 'juridica'}
+            disabled={!esJuridica}
           />
         </Grid>
 
@@ -298,29 +324,6 @@ const InformacionBasica = ({ paciente, onUpdate, hideGuardarButton = false, onFo
               ))}
             </Select>
           </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Autocomplete
-            freeSolo
-            size="small"
-            options={nacionalidades.map((nac) => nac.nombre)}
-            value={form.nacionalidad || ''}
-            onChange={(event, newValue) => {
-              setForm({ ...form, nacionalidad: newValue || '' });
-            }}
-            inputValue={form.nacionalidad}
-            onInputChange={(event, newInputValue) => {
-              setForm({ ...form, nacionalidad: newInputValue });
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Nacionalidad"
-                placeholder="Escriba o seleccione..."
-              />
-            )}
-          />
         </Grid>
 
         <Grid item xs={12} sm={4}>
