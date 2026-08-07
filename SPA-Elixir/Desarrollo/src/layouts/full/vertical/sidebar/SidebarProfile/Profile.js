@@ -22,7 +22,7 @@ export const Profile = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate('/auth/login', { replace: true });
     } catch (error) {
       console.error(error);
     }

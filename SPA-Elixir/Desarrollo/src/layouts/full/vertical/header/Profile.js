@@ -30,7 +30,7 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate('/auth/login', { replace: true });
       if (mounted.current) {
         handleClose2();
       }
