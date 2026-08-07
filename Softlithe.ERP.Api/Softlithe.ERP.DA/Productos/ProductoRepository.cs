@@ -1,9 +1,7 @@
-using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Softlithe.ERP.Abstracciones.Contenedores.Productos;
 using Softlithe.ERP.Abstracciones.DA.Productos;
 using Softlithe.ERP.DA.Modelos;
-using System.Data;
 
 namespace Softlithe.ERP.DA.Productos
 {
@@ -16,235 +14,66 @@ namespace Softlithe.ERP.DA.Productos
             _contexto = contexto;
         }
 
-        public async Task<List<ProductoDto>> ObtenerProductosARAsync(int noEmpresa, string descripcion)
-        {
-            try
-            {
-                var conexion = await ObtenerConexionAsync();
-
-                var parametros = new DynamicParameters();
-                parametros.Add("@no_empresa", noEmpresa);
-                parametros.Add("@filtro", descripcion);
-
-                var filas = await conexion.QueryAsync(
-                    "sp_ObtenerProductosAR",
-                    parametros,
-                    commandType: CommandType.StoredProcedure);
-
-                var productos = new List<ProductoDto>();
-
-                foreach (var fila in filas)
-                {
-                    var dict = (IDictionary<string, object?>)fila;
-
-                    int? GetInt(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                        {
-                            if (val is int i) return i;
-                            if (int.TryParse(val.ToString(), out var r)) return r;
-                        }
-                        return null;
-                    }
-
-                    decimal? GetDecimal(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                        {
-                            if (val is decimal d) return d;
-                            if (val is double dd) return (decimal)dd;
-                            if (val is float f) return (decimal)f;
-                            if (decimal.TryParse(val.ToString(), out var r)) return r;
-                        }
-                        return null;
-                    }
-
-                    bool? GetBool(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                        {
-                            if (val is bool b) return b;
-                            if (val is byte bt) return bt != 0;
-                            if (val is int i) return i != 0;
-                            if (bool.TryParse(val.ToString(), out var r)) return r;
-                        }
-                        return null;
-                    }
-
-                    string? GetString(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                            return val.ToString();
-                        return null;
-                    }
-
-                    var producto = new ProductoDto
-                    {
-                        IdProducto = GetInt("id_producto") ?? 0,
-                        NoEmpresa = GetInt("no_empresa") ?? noEmpresa,
-                        Codigo = GetString("codigo") ?? string.Empty,
-                        CodigoBarra = GetString("codigo_barra"),
-                        CodigoProveedor = GetString("codigo_proveedor"),
-                        Descripcion = GetString("descripcion") ?? string.Empty,
-                        NoGrupo = GetInt("no_grupo") ?? 0,
-                        Activo = GetBool("activo"),
-                        NoUnidadMedida = GetInt("no_unidad_medida"),
-                        CostoPromedio = GetDecimal("costo_promedio"),
-                        UltimoCosto = GetDecimal("ultimo_costo"),
-                        UltimoPrecioCosto = GetDecimal("ultimo_precio_costo"),
-                        TipoProducto = GetString("tipo_producto"),
-                        NoTipo = GetInt("no_tipo"),
-                        NoMarca = GetInt("no_marca"),
-                        CodigoMaterial = GetString("codigo_material"),
-                        CodigoImpuesto = GetString("codigo_impuesto"),
-                        NoTarifa = GetString("no_tarifa"),
-                        CodigoCabys = GetString("codigo_cabys"),
-                        // Precios: algunos stored procedures devuelven distintos alias; intentamos varias claves
-                        PrecioSinImpuesto = GetDecimal("precio_sin_impuesto") ?? GetDecimal("precio_venta") ?? GetDecimal("precio_neto"),
-                        PrecioConImpuesto = GetDecimal("precio_con_impuesto") ?? GetDecimal("precio_neto") ?? GetDecimal("precio_venta")
-                    };
-
-                    producto.Identificador = 0;
-                    producto.Usuario = string.Empty;
-
-                    productos.Add(producto);
-                }
-
-                return productos;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al obtener productos AR", ex);
-            }
-        }
-
-        public async Task<List<ProductoDto>> ObtenerProductosMTAsync(int noEmpresa, int noTipo)
-        {
-            try
-            {
-                var conexion = await ObtenerConexionAsync();
-
-                var parametros = new DynamicParameters();
-                parametros.Add("@no_empresa", noEmpresa);
-                parametros.Add("@no_tipo", noTipo);
-
-                var filas = await conexion.QueryAsync(
-                    "sp_ObtenerProductosMT",
-                    parametros,
-                    commandType: CommandType.StoredProcedure);
-
-                var productos = new List<ProductoDto>();
-
-
-                foreach (var fila in filas)
-                {
-                    // Dapper devuelve un objeto dinámico; tratarlo como diccionario para mapeo explícito
-                    var dict = (IDictionary<string, object?>)fila;
-
-                    int? GetInt(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                        {
-                            if (val is int i) return i;
-                            if (int.TryParse(val.ToString(), out var r)) return r;
-                        }
-                        return null;
-                    }
-
-                    decimal? GetDecimal(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                        {
-                            if (val is decimal d) return d;
-                            if (val is double dd) return (decimal)dd;
-                            if (val is float f) return (decimal)f;
-                            if (decimal.TryParse(val.ToString(), out var r)) return r;
-                        }
-                        return null;
-                    }
-
-                    bool? GetBool(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                        {
-                            if (val is bool b) return b;
-                            if (val is byte bt) return bt != 0;
-                            if (val is int i) return i != 0;
-                            if (bool.TryParse(val.ToString(), out var r)) return r;
-                        }
-                        return null;
-                    }
-
-                    string? GetString(string key)
-                    {
-                        if (dict.TryGetValue(key, out var val) && val != null)
-                            return val.ToString();
-                        return null;
-                    }
-
-                    var producto = new ProductoDto
-                    {
-                        IdProducto = GetInt("id_producto") ?? 0,
-                        NoEmpresa = GetInt("no_empresa") ?? noEmpresa,
-                        Codigo = GetString("codigo") ?? string.Empty,
-                        CodigoBarra = GetString("codigo_barra"),
-                        CodigoProveedor = GetString("codigo_proveedor"),
-                        Descripcion = GetString("descripcion") ?? string.Empty,
-                        NoGrupo = GetInt("no_grupo") ?? 0,
-                        Activo = GetBool("activo"),
-                        NoUnidadMedida = GetInt("no_unidad_medida"),
-                        CostoPromedio = GetDecimal("costo_promedio"),
-                        UltimoCosto = GetDecimal("ultimo_costo"),
-                        UltimoPrecioCosto = GetDecimal("ultimo_precio_costo"),
-                        TipoProducto = GetString("tipo_producto"),
-                        NoTipo = GetInt("no_tipo"),
-                        NoMarca = GetInt("no_marca"),
-                        CodigoMaterial = GetString("codigo_material"),
-                        CodigoImpuesto = GetString("codigo_impuesto"),
-                        NoTarifa = GetString("no_tarifa"),
-                        CodigoCabys = GetString("codigo_cabys"),
-                        PrecioSinImpuesto = GetDecimal("precio_sin_impuesto") ?? GetDecimal("precio_venta") ?? GetDecimal("precio_neto"),
-                        PrecioConImpuesto = GetDecimal("precio_con_impuesto") ?? GetDecimal("precio_neto") ?? GetDecimal("precio_venta")
-                    };
-
-                    // Campos obligatorios de DTO que no devuelve el SP: Identificador y Usuario
-                    producto.Identificador = 0;
-                    producto.Usuario = string.Empty;
-
-                    productos.Add(producto);
-                }
-
-                return productos;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al obtener productos MT", ex);
-            }
-        }
-        private async Task<IDbConnection> ObtenerConexionAsync()
-        {
-            var conexion = _contexto.Database.GetDbConnection();
-
-            if (conexion.State == ConnectionState.Closed)
-                await conexion.OpenAsync();
-
-            return conexion;
-        }
-
+        /// <summary>
+        /// Obtiene lista de productos filtrados por empresa y búsqueda
+        /// </summary>
         public async Task<List<ProductoDto>> ObtenerProductosAsync(int noEmpresa, string? textoBusqueda)
         {
             try
             {
-                var conexion = await ObtenerConexionAsync();
+                IQueryable<Producto> query = _contexto.Productos
+                    .Where(p => p.NoEmpresa == noEmpresa);
 
-                var parametros = new DynamicParameters();
-                parametros.Add("@NoEmpresa", noEmpresa);
-                parametros.Add("@TextoBusqueda", string.IsNullOrWhiteSpace(textoBusqueda) ? null : textoBusqueda);
+                // Aplicar filtro de búsqueda si se proporciona
+                if (!string.IsNullOrWhiteSpace(textoBusqueda))
+                {
+                    var busqueda = textoBusqueda.ToLower().Trim();
+                    query = query.Where(p =>
+                        p.Codigo.ToLower().Contains(busqueda) ||
+                        p.Descripcion.ToLower().Contains(busqueda) ||
+                        (p.CodigoBarra != null && p.CodigoBarra.ToLower().Contains(busqueda)) ||
+                        (p.CodigoProveedor != null && p.CodigoProveedor.ToLower().Contains(busqueda))
+                    );
+                }
 
-                List<ProductoDto> productos = (await conexion.QueryAsync<ProductoDto>(
-                    "sp_Producto_Obtener",
-                    parametros,
-                    commandType: CommandType.StoredProcedure)).ToList();
+                // Traer entidades completas, luego convertir a DTOs en memoria
+                var productosEntidades = await query
+                    .Include(p => p.ProductoDetalle)
+                    .ToListAsync();
+
+                // Convertir a DTOs en memoria para evitar casting exception
+                var productos = productosEntidades.Select(p => new ProductoDto
+                {
+                    IdProducto = p.IdProducto,
+                    NoEmpresa = p.NoEmpresa,
+                    Codigo = p.Codigo,
+                    CodigoBarra = p.CodigoBarra,
+                    CodigoProveedor = p.CodigoProveedor,
+                    Descripcion = p.Descripcion,
+                    NoGrupo = p.NoGrupo,
+                    Activo = p.Activo,
+                    NoUnidadMedida = p.NoUnidadMedida,
+                    CostoPromedio = p.CostoPromedio,
+                    UltimoCosto = p.UltimoCosto,
+                    UltimoPrecioCosto = p.UltimoPrecioCosto,
+                    TipoProducto = p.TipoProducto,
+                    NoTipo = p.NoTipo,
+                    NoMarca = p.NoMarca,
+                    CodigoMaterial = p.CodigoMaterial,
+                    CodigoImpuesto = p.CodigoImpuesto,
+                    NoTarifa = p.NoTarifa,
+                    CodigoCabys = p.CodigoCabys,
+                    PrecioSinImpuesto = null,
+                    PrecioConImpuesto = null,
+                    // Campos de ProductoDetalle
+                    Existencia = p.ProductoDetalle != null ? p.ProductoDetalle.Existencia : 0,
+                    Minimo = p.ProductoDetalle != null ? p.ProductoDetalle.Minimo : null,
+                    Perecedero = p.ProductoDetalle != null ? p.ProductoDetalle.Perecedero : null,
+                    CaracteristicasAdicionales = p.ProductoDetalle != null ? p.ProductoDetalle.CaracteristicasAdicionales : null,
+                    Foto = p.ProductoDetalle != null ? p.ProductoDetalle.Foto : null,
+                    Identificador = 0,
+                    Usuario = string.Empty
+                }).ToList();
 
                 return productos;
             }
@@ -254,19 +83,53 @@ namespace Softlithe.ERP.DA.Productos
             }
         }
 
+        /// <summary>
+        /// Obtiene un producto específico por ID con todos sus detalles
+        /// </summary>
         public async Task<ProductoDetalleDto?> ObtenerProductoPorIdAsync(int idProducto)
         {
             try
             {
-                var conexion = await ObtenerConexionAsync();
+                var productoEntidad = await _contexto.Productos
+                    .Where(p => p.IdProducto == idProducto)
+                    .Include(p => p.ProductoDetalle)
+                    .FirstOrDefaultAsync();
 
-                var parametros = new DynamicParameters();
-                parametros.Add("@IdProducto", idProducto);
+                if (productoEntidad == null)
+                    return null;
 
-                var producto = await conexion.QueryFirstOrDefaultAsync<ProductoDetalleDto>(
-                    "sp_Producto_ObtenerPorId",
-                    parametros,
-                    commandType: CommandType.StoredProcedure);
+                var producto = new ProductoDetalleDto
+                {
+                    IdProducto = productoEntidad.IdProducto,
+                    NoEmpresa = productoEntidad.NoEmpresa,
+                    Codigo = productoEntidad.Codigo,
+                    CodigoBarra = productoEntidad.CodigoBarra,
+                    CodigoProveedor = productoEntidad.CodigoProveedor,
+                    Descripcion = productoEntidad.Descripcion,
+                    NoGrupo = productoEntidad.NoGrupo,
+                    Activo = productoEntidad.Activo,
+                    NoUnidadMedida = productoEntidad.NoUnidadMedida,
+                    CostoPromedio = productoEntidad.CostoPromedio,
+                    UltimoCosto = productoEntidad.UltimoCosto,
+                    UltimoPrecioCosto = productoEntidad.UltimoPrecioCosto,
+                    TipoProducto = productoEntidad.TipoProducto,
+                    NoTipo = productoEntidad.NoTipo,
+                    NoMarca = productoEntidad.NoMarca,
+                    CodigoMaterial = productoEntidad.CodigoMaterial,
+                    CodigoImpuesto = productoEntidad.CodigoImpuesto,
+                    NoTarifa = productoEntidad.NoTarifa,
+                    CodigoCabys = productoEntidad.CodigoCabys,
+                    PrecioSinImpuesto = null,
+                    PrecioConImpuesto = null,
+                    // Campos de ProductoDetalle
+                    Existencia = productoEntidad.ProductoDetalle != null ? productoEntidad.ProductoDetalle.Existencia : 0,
+                    Minimo = productoEntidad.ProductoDetalle != null ? productoEntidad.ProductoDetalle.Minimo : null,
+                    Perecedero = productoEntidad.ProductoDetalle != null ? productoEntidad.ProductoDetalle.Perecedero : null,
+                    CaracteristicasAdicionales = productoEntidad.ProductoDetalle != null ? productoEntidad.ProductoDetalle.CaracteristicasAdicionales : null,
+                    Foto = productoEntidad.ProductoDetalle != null ? productoEntidad.ProductoDetalle.Foto : null,
+                    Identificador = 0,
+                    Usuario = string.Empty
+                };
 
                 return producto;
             }
@@ -276,104 +139,312 @@ namespace Softlithe.ERP.DA.Productos
             }
         }
 
+        /// <summary>
+        /// Obtiene productos filtrados por tipo
+        /// </summary>
+        public async Task<List<ProductoDto>> ObtenerProductosMTAsync(int noEmpresa, int noTipo)
+        {
+            try
+            {
+                var productosEntidades = await _contexto.Productos
+                    .Where(p => p.NoEmpresa == noEmpresa && p.NoTipo == noTipo)
+                    .Include(p => p.ProductoDetalle)
+                    .ToListAsync();
+
+                var productos = productosEntidades.Select(p => new ProductoDto
+                {
+                    IdProducto = p.IdProducto,
+                    NoEmpresa = p.NoEmpresa,
+                    Codigo = p.Codigo,
+                    CodigoBarra = p.CodigoBarra,
+                    CodigoProveedor = p.CodigoProveedor,
+                    Descripcion = p.Descripcion,
+                    NoGrupo = p.NoGrupo,
+                    Activo = p.Activo,
+                    NoUnidadMedida = p.NoUnidadMedida,
+                    CostoPromedio = p.CostoPromedio,
+                    UltimoCosto = p.UltimoCosto,
+                    UltimoPrecioCosto = p.UltimoPrecioCosto,
+                    TipoProducto = p.TipoProducto,
+                    NoTipo = p.NoTipo,
+                    NoMarca = p.NoMarca,
+                    CodigoMaterial = p.CodigoMaterial,
+                    CodigoImpuesto = p.CodigoImpuesto,
+                    NoTarifa = p.NoTarifa,
+                    CodigoCabys = p.CodigoCabys,
+                    PrecioSinImpuesto = null,
+                    PrecioConImpuesto = null,
+                    // Campos de ProductoDetalle
+                    Existencia = p.ProductoDetalle != null ? p.ProductoDetalle.Existencia : 0,
+                    Minimo = p.ProductoDetalle != null ? p.ProductoDetalle.Minimo : null,
+                    Perecedero = p.ProductoDetalle != null ? p.ProductoDetalle.Perecedero : null,
+                    CaracteristicasAdicionales = p.ProductoDetalle != null ? p.ProductoDetalle.CaracteristicasAdicionales : null,
+                    Foto = p.ProductoDetalle != null ? p.ProductoDetalle.Foto : null,
+                    Identificador = 0,
+                    Usuario = string.Empty
+                }).ToList();
+
+                return productos;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener productos por tipo", ex);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene productos filtrados por descripción
+        /// </summary>
+        public async Task<List<ProductoDto>> ObtenerProductosARAsync(int noEmpresa, string descripcion)
+        {
+            try
+            {
+                var busqueda = descripcion.ToLower().Trim();
+                var productosEntidades = await _contexto.Productos
+                    .Where(p => p.NoEmpresa == noEmpresa && 
+                                p.Descripcion.ToLower().Contains(busqueda))
+                    .Include(p => p.ProductoDetalle)
+                    .ToListAsync();
+
+                var productos = productosEntidades.Select(p => new ProductoDto
+                {
+                    IdProducto = p.IdProducto,
+                    NoEmpresa = p.NoEmpresa,
+                    Codigo = p.Codigo,
+                    CodigoBarra = p.CodigoBarra,
+                    CodigoProveedor = p.CodigoProveedor,
+                    Descripcion = p.Descripcion,
+                    NoGrupo = p.NoGrupo,
+                    Activo = p.Activo,
+                    NoUnidadMedida = p.NoUnidadMedida,
+                    CostoPromedio = p.CostoPromedio,
+                    UltimoCosto = p.UltimoCosto,
+                    UltimoPrecioCosto = p.UltimoPrecioCosto,
+                    TipoProducto = p.TipoProducto,
+                    NoTipo = p.NoTipo,
+                    NoMarca = p.NoMarca,
+                    CodigoMaterial = p.CodigoMaterial,
+                    CodigoImpuesto = p.CodigoImpuesto,
+                    NoTarifa = p.NoTarifa,
+                    CodigoCabys = p.CodigoCabys,
+                    PrecioSinImpuesto = null,
+                    PrecioConImpuesto = null,
+                    // Campos de ProductoDetalle
+                    Existencia = p.ProductoDetalle != null ? p.ProductoDetalle.Existencia : 0,
+                    Minimo = p.ProductoDetalle != null ? p.ProductoDetalle.Minimo : null,
+                    Perecedero = p.ProductoDetalle != null ? p.ProductoDetalle.Perecedero : null,
+                    CaracteristicasAdicionales = p.ProductoDetalle != null ? p.ProductoDetalle.CaracteristicasAdicionales : null,
+                    Foto = p.ProductoDetalle != null ? p.ProductoDetalle.Foto : null,
+                    Identificador = 0,
+                    Usuario = string.Empty
+                }).ToList();
+
+                return productos;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener productos por descripción", ex);
+            }
+        }
+
+        /// <summary>
+        /// Inserta un nuevo producto con su detalle
+        /// </summary>
         public async Task<int> InsertarProductoAsync(ProductoDto productoDto)
         {
-            try
+            using (var transaction = _contexto.Database.BeginTransaction())
             {
-                var conexion = await ObtenerConexionAsync();
+                try
+                {
+                    // Crear nuevo Producto
+                    var producto = new Producto
+                    {
+                        NoEmpresa = productoDto.NoEmpresa,
+                        Codigo = productoDto.Codigo.Trim(),
+                        CodigoBarra = productoDto.CodigoBarra?.Trim(),
+                        CodigoProveedor = productoDto.CodigoProveedor?.Trim(),
+                        Descripcion = productoDto.Descripcion.Trim(),
+                        NoGrupo = productoDto.NoGrupo,
+                        Activo = productoDto.Activo ?? true,
+                        NoUnidadMedida = productoDto.NoUnidadMedida,
+                        CostoPromedio = productoDto.CostoPromedio,
+                        UltimoCosto = productoDto.UltimoCosto,
+                        UltimoPrecioCosto = productoDto.UltimoPrecioCosto,
+                        TipoProducto = productoDto.TipoProducto?.Trim(),
+                        NoTipo = productoDto.NoTipo,
+                        NoMarca = productoDto.NoMarca,
+                        CodigoMaterial = productoDto.CodigoMaterial?.Trim(),
+                        CodigoImpuesto = productoDto.CodigoImpuesto?.Trim(),
+                        NoTarifa = productoDto.NoTarifa?.Trim(),
+                        CodigoCabys = productoDto.CodigoCabys?.Trim()
+                    };
 
-                var parametros = new DynamicParameters();
-                parametros.Add("@Codigo", productoDto.Codigo);
-                parametros.Add("@NoEmpresa", productoDto.NoEmpresa);
-                parametros.Add("@CodigoBarra", string.IsNullOrWhiteSpace(productoDto.CodigoBarra) ? null : productoDto.CodigoBarra);
-                parametros.Add("@CodigoProveedor", string.IsNullOrWhiteSpace(productoDto.CodigoProveedor) ? null : productoDto.CodigoProveedor);
-                parametros.Add("@Descripcion", productoDto.Descripcion);
-                parametros.Add("@NoGrupo", productoDto.NoGrupo);
-                parametros.Add("@Activo", productoDto.Activo);
-                parametros.Add("@NoUnidadMedida", productoDto.NoUnidadMedida);
-                parametros.Add("@CostoPromedio", productoDto.CostoPromedio);
-                parametros.Add("@UltimoCosto", productoDto.UltimoCosto);
-                parametros.Add("@UltimoPrecioCosto", productoDto.UltimoPrecioCosto);
-                parametros.Add("@TipoProducto", string.IsNullOrWhiteSpace(productoDto.TipoProducto) ? null : productoDto.TipoProducto);
-                parametros.Add("@NoTipo", productoDto.NoTipo);
-                parametros.Add("@NoMarca", productoDto.NoMarca);
-                parametros.Add("@CodigoMaterial", string.IsNullOrWhiteSpace(productoDto.CodigoMaterial) ? null : productoDto.CodigoMaterial);
-                parametros.Add("@CodigoImpuesto", string.IsNullOrWhiteSpace(productoDto.CodigoImpuesto) ? null : productoDto.CodigoImpuesto);
-                parametros.Add("@NoTarifa", string.IsNullOrWhiteSpace(productoDto.NoTarifa) ? null : productoDto.NoTarifa);
-                parametros.Add("@CodigoCabys", string.IsNullOrWhiteSpace(productoDto.CodigoCabys) ? null : productoDto.CodigoCabys);
+                    _contexto.Productos.Add(producto);
+                    await _contexto.SaveChangesAsync();
 
-                var resultado = await conexion.ExecuteAsync(
-                    "sp_Producto_Insertar",
-                    parametros,
-                    commandType: CommandType.StoredProcedure);
+                    // Crear ProductoDetalle asociado
+                    var productoDetalle = new ProductoDetalle
+                    {
+                        IdProducto = producto.IdProducto,
+                        Existencia = productoDto.Existencia ?? 0,
+                        Minimo = productoDto.Minimo,
+                        Perecedero = productoDto.Perecedero,
+                        CaracteristicasAdicionales = productoDto.CaracteristicasAdicionales?.Trim(),
+                        Foto = productoDto.Foto
+                    };
 
-                return resultado;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al insertar producto", ex);
+                    _contexto.ProductosDetalle.Add(productoDetalle);
+                    await _contexto.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    return producto.IdProducto;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception("Error al insertar producto", ex);
+                }
             }
         }
 
+        /// <summary>
+        /// Actualiza un producto existente
+        /// </summary>
         public async Task<int> ActualizarProductoAsync(ProductoDto productoDto)
         {
-            try
+            using (var transaction = _contexto.Database.BeginTransaction())
             {
-                var conexion = await ObtenerConexionAsync();
+                try
+                {
+                    // Obtener producto existente
+                    var producto = await _contexto.Productos
+                        .Include(p => p.ProductoDetalle)
+                        .FirstOrDefaultAsync(p => p.IdProducto == productoDto.IdProducto);
 
-                var parametros = new DynamicParameters();
-                parametros.Add("@IdProducto", productoDto.IdProducto);
-                parametros.Add("@Codigo", productoDto.Codigo);
-                parametros.Add("@CodigoBarra", string.IsNullOrWhiteSpace(productoDto.CodigoBarra) ? null : productoDto.CodigoBarra);
-                parametros.Add("@CodigoProveedor", string.IsNullOrWhiteSpace(productoDto.CodigoProveedor) ? null : productoDto.CodigoProveedor);
-                parametros.Add("@Descripcion", productoDto.Descripcion);
-                parametros.Add("@NoGrupo", productoDto.NoGrupo);
-                parametros.Add("@Activo", productoDto.Activo);
-                parametros.Add("@NoUnidadMedida", productoDto.NoUnidadMedida);
-                parametros.Add("@CostoPromedio", productoDto.CostoPromedio);
-                parametros.Add("@UltimoCosto", productoDto.UltimoCosto);
-                parametros.Add("@UltimoPrecioCosto", productoDto.UltimoPrecioCosto);
-                parametros.Add("@TipoProducto", string.IsNullOrWhiteSpace(productoDto.TipoProducto) ? null : productoDto.TipoProducto);
-                parametros.Add("@NoTipo", productoDto.NoTipo);
-                parametros.Add("@NoMarca", productoDto.NoMarca);
-                parametros.Add("@CodigoMaterial", string.IsNullOrWhiteSpace(productoDto.CodigoMaterial) ? null : productoDto.CodigoMaterial);
-                parametros.Add("@CodigoImpuesto", string.IsNullOrWhiteSpace(productoDto.CodigoImpuesto) ? null : productoDto.CodigoImpuesto);
-                parametros.Add("@NoTarifa", string.IsNullOrWhiteSpace(productoDto.NoTarifa) ? null : productoDto.NoTarifa);
-                parametros.Add("@CodigoCabys", string.IsNullOrWhiteSpace(productoDto.CodigoCabys) ? null : productoDto.CodigoCabys);
+                    if (producto == null)
+                        throw new Exception("Producto no encontrado");
 
-                var resultado = await conexion.ExecuteAsync(
-                    "sp_Producto_Actualizar",
-                    parametros,
-                    commandType: CommandType.StoredProcedure);
+                    // Actualizar datos de Producto
+                    producto.Codigo = productoDto.Codigo.Trim();
+                    producto.CodigoBarra = productoDto.CodigoBarra?.Trim();
+                    producto.CodigoProveedor = productoDto.CodigoProveedor?.Trim();
+                    producto.Descripcion = productoDto.Descripcion.Trim();
+                    producto.NoGrupo = productoDto.NoGrupo;
+                    producto.Activo = productoDto.Activo ?? true;
+                    producto.NoUnidadMedida = productoDto.NoUnidadMedida;
+                    producto.CostoPromedio = productoDto.CostoPromedio;
+                    producto.UltimoCosto = productoDto.UltimoCosto;
+                    producto.UltimoPrecioCosto = productoDto.UltimoPrecioCosto;
+                    producto.TipoProducto = productoDto.TipoProducto?.Trim();
+                    producto.NoTipo = productoDto.NoTipo;
+                    producto.NoMarca = productoDto.NoMarca;
+                    producto.CodigoMaterial = productoDto.CodigoMaterial?.Trim();
+                    producto.CodigoImpuesto = productoDto.CodigoImpuesto?.Trim();
+                    producto.NoTarifa = productoDto.NoTarifa?.Trim();
+                    producto.CodigoCabys = productoDto.CodigoCabys?.Trim();
 
-                return resultado;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al actualizar producto", ex);
+                    _contexto.Productos.Update(producto);
+                    await _contexto.SaveChangesAsync();
+
+                    // Actualizar o crear ProductoDetalle
+                    if (producto.ProductoDetalle == null)
+                    {
+                        producto.ProductoDetalle = new ProductoDetalle
+                        {
+                            IdProducto = producto.IdProducto
+                        };
+                        _contexto.ProductosDetalle.Add(producto.ProductoDetalle);
+                    }
+
+                    producto.ProductoDetalle.Existencia = productoDto.Existencia ?? 0;
+                    producto.ProductoDetalle.Minimo = productoDto.Minimo;
+                    producto.ProductoDetalle.Perecedero = productoDto.Perecedero;
+                    producto.ProductoDetalle.CaracteristicasAdicionales = productoDto.CaracteristicasAdicionales?.Trim();
+                    if (productoDto.Foto != null)
+                    {
+                        producto.ProductoDetalle.Foto = productoDto.Foto;
+                    }
+
+                    _contexto.ProductosDetalle.Update(producto.ProductoDetalle);
+                    await _contexto.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    return 1;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception("Error al actualizar producto", ex);
+                }
             }
         }
 
+        /// <summary>
+        /// Cambia el estado (activo/inactivo) de un producto
+        /// </summary>
         public async Task<int> ModificaEstadoProductoAsync(ProductoInActivaDto productoInActivaDto)
         {
             try
             {
-                var conexion = await ObtenerConexionAsync();
+                var producto = await _contexto.Productos
+                    .FirstOrDefaultAsync(p => p.IdProducto == productoInActivaDto.IdProducto);
 
-                var parametros = new DynamicParameters();
-                parametros.Add("@IdProducto", productoInActivaDto.IdProducto);
-                parametros.Add("@EsActivo", productoInActivaDto.EsActivo);
+                if (producto == null)
+                    throw new Exception("Producto no encontrado");
 
-                var resultado = await conexion.ExecuteAsync(
-                    "sp_Producto_ModificaEstado",
-                    parametros,
-                    commandType: CommandType.StoredProcedure);
+                producto.Activo = productoInActivaDto.EsActivo;
 
-                return resultado;
+                _contexto.Productos.Update(producto);
+                await _contexto.SaveChangesAsync();
+
+                return 1;
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al modificar estado del producto", ex);
+                throw new Exception("Error al cambiar estado del producto", ex);
+            }
+        }
+
+        /// <summary>
+        /// Elimina un producto y su detalle
+        /// </summary>
+        public async Task<int> EliminarProductoAsync(int idProducto)
+        {
+            using (var transaction = _contexto.Database.BeginTransaction())
+            {
+                try
+                {
+                    // Eliminar ProductoDetalle primero (por FK)
+                    var productoDetalle = await _contexto.ProductosDetalle
+                        .FirstOrDefaultAsync(pd => pd.IdProducto == idProducto);
+
+                    if (productoDetalle != null)
+                    {
+                        _contexto.ProductosDetalle.Remove(productoDetalle);
+                        await _contexto.SaveChangesAsync();
+                    }
+
+                    // Eliminar Producto
+                    var producto = await _contexto.Productos
+                        .FirstOrDefaultAsync(p => p.IdProducto == idProducto);
+
+                    if (producto == null)
+                        throw new Exception("Producto no encontrado");
+
+                    _contexto.Productos.Remove(producto);
+                    await _contexto.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    return 1;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception("Error al eliminar producto", ex);
+                }
             }
         }
     }

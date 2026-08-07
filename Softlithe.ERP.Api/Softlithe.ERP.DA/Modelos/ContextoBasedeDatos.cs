@@ -30,13 +30,15 @@ public partial class ContextoBasedeDatos : DbContext
     public virtual DbSet<ListaPrecioAD> ListaPrecioContexto { get; set; }
     public virtual DbSet<Bitacora> Bitacoras { get; set; }
     public virtual DbSet<Marca> Marcas { get; set; }
+    public virtual DbSet<Grupo> Grupos { get; set; }
+    public virtual DbSet<Producto> Productos { get; set; }
+    public virtual DbSet<ProductoDetalle> ProductosDetalle { get; set; }
     public virtual DbSet<Pais> Paises { get; set; }
     public virtual DbSet<EnfermedadCatalogo> EnfermedadCatalogos { get; set; }
     public virtual DbSet<EnfermedadTipo> EnfermedadTipos { get; set; }
     public virtual DbSet<MonedaSucursal> MonedasSucursal { get; set; }
     public virtual DbSet<EnfermedadSucursal> Enfermedades { get; set; }
     public virtual DbSet<PacienteClasificacion> PacienteClasificaciones { get; set; }
-    public virtual DbSet<Grupo> Grupos { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<Seccion> Secciones { get; set; }
@@ -144,6 +146,23 @@ public partial class ContextoBasedeDatos : DbContext
     .HasNoKey();
         modelBuilder.Entity<ObtenerGraduacionPorSucursalSPDto>()
            .HasNoKey();
+
+        // Configuración explícita para Producto y ProductoDetalle
+        modelBuilder.Entity<Producto>()
+            .Property(e => e.CostoPromedio)
+            .HasPrecision(19, 4);
+            
+        modelBuilder.Entity<Producto>()
+            .Property(e => e.UltimoCosto)
+            .HasPrecision(19, 4);
+            
+        modelBuilder.Entity<Producto>()
+            .Property(e => e.UltimoPrecioCosto)
+            .HasPrecision(19, 4);
+            
+        modelBuilder.Entity<ProductoDetalle>()
+            .Property(e => e.Minimo)
+            .HasColumnType("float");
 
         OnModelCreatingPartial(modelBuilder);
     }
