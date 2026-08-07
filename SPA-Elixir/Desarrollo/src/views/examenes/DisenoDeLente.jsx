@@ -1,5 +1,3 @@
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import {
   Autocomplete,
   Box,
@@ -11,7 +9,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   obtenerLaboratorios,
   obtenerMaterialesPorTipo,
@@ -58,9 +56,6 @@ export default function DisenoDeLente({ examen, setExamen }) {
   const [aroSearchLoading, setAroSearchLoading] = useState(false);
   const [aroComboOpen, setAroComboOpen] = useState(false);
 
-  const [aroPreview, setAroPreview] = useState(null);
-  const [aroFileName, setAroFileName] = useState('');
-
   const [laboratorio, setLaboratorio] = useState('');
   const [numOrden, setNumOrden] = useState('');
   const [numLaboratorio, setNumLaboratorio] = useState('');
@@ -75,8 +70,6 @@ export default function DisenoDeLente({ examen, setExamen }) {
   const [labOptions, setLabOptions] = useState([]);
   const [labSearchLoading, setLabSearchLoading] = useState(false);
   const [labSelected, setLabSelected] = useState(null);
-
-  const fileInputRef = useRef();
 
   // ── Cargar tipos de lente al montar ────────────────────────────────────────
   useEffect(() => {
@@ -156,19 +149,6 @@ export default function DisenoDeLente({ examen, setExamen }) {
       item.costoPromedio ??
       ''
     );
-  };
-
-  const handleAroUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setAroFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target.result;
-      setAroPreview(base64);
-      setExamen((prev) => ({ ...prev, Imagen: base64 }));
-    };
-    reader.readAsDataURL(file);
   };
 
   const buscarAroMaterial = async () => {
@@ -273,154 +253,90 @@ export default function DisenoDeLente({ examen, setExamen }) {
 
       {/* SECCIÓN 2: Aro */}
       <SectionCard title="Aro">
-        <Box display="flex" gap={2} alignItems="flex-start" flexWrap="wrap">
-          {/* Preview */}
-          <Box
-            sx={{
-              width: 72,
-              height: 72,
-              flexShrink: 0,
-              borderRadius: 2,
-              border: '1px dashed',
-              borderColor: 'divider',
-              bgcolor: 'action.hover',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
+        <Box display="flex" gap={1}>
+          <Autocomplete
+            freeSolo
+            open={aroComboOpen}
+            onClose={() => setAroComboOpen(false)}
+            options={aroOptions}
+            filterOptions={(options) => options}
+            getOptionLabel={(option) =>
+              typeof option === 'string' ? option : option.descripcion || ''
+            }
+            value={aroSelected}
+            inputValue={aroMaterial}
+            onInputChange={(_, newInputValue, reason) => {
+              if (reason === 'reset') return;
+
+              setAroMaterial(newInputValue);
+              setAroSelected(null);
+              setAroProductoId(null);
+              setExamen((prev) => ({ ...prev, Aro: newInputValue }));
+
+              if (!newInputValue) {
+                setAroOptions([]);
+                setAroComboOpen(false);
+              }
             }}
-          >
-            {aroPreview ? (
-              <Box
-                component="img"
-                src={aroPreview}
-                alt="Aro"
-                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <ImageOutlinedIcon sx={{ color: 'text.disabled', fontSize: 30 }} />
-            )}
-          </Box>
+            onChange={(_, newValue) => {
+              if (!newValue) {
+                setAroSelected(null);
+                setAroProductoId(null);
+                setExamen((prev) => ({ ...prev, Aro: '', CodigoAro: '', CostoAro: '' }));
+                return;
+              }
 
-          {/* Info + botón */}
-          <Box flex={1} minWidth={260}>
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="space-between"
-              gap={1}
-              mb={1}
-              flexWrap="wrap"
-            >
-              <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: '70%' }}>
-                {aroFileName || 'Sin foto del aro'}
-              </Typography>
+              if (typeof newValue === 'string') {
+                setAroMaterial(newValue);
+                return;
+              }
 
-              <Button
-                variant="outlined"
+              setAroSelected(newValue);
+              setAroMaterial(newValue.descripcion);
+              setAroProductoId(newValue.idProducto);
+              setAroComboOpen(false);
+
+              const precio = getPrecioDeItem(newValue);
+              setExamen((prev) => ({
+                ...prev,
+                Aro: newValue.descripcion || '',
+                CodigoAro: newValue.idProducto ?? '',
+                CostoAro: precio !== null ? precio : '',
+              }));
+            }}
+            onOpen={() => {
+              if (aroOptions.length > 0) setAroComboOpen(true);
+            }}
+            fullWidth
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Buscar aro"
+                placeholder="Descripción del artículo"
                 size="small"
-                startIcon={<PhotoCamera />}
-                onClick={() => fileInputRef.current.click()}
-                sx={{ textTransform: 'none' }}
-              >
-                Subir foto
-              </Button>
-            </Box>
-
-            <Box display="flex" gap={1}>
-              <Autocomplete
-                freeSolo
-                open={aroComboOpen}
-                onClose={() => setAroComboOpen(false)}
-                options={aroOptions}
-                filterOptions={(options) => options}
-                getOptionLabel={(option) =>
-                  typeof option === 'string' ? option : option.descripcion || ''
-                }
-                value={aroSelected}
-                inputValue={aroMaterial}
-                onInputChange={(_, newInputValue, reason) => {
-                  if (reason === 'reset') return;
-
-                  setAroMaterial(newInputValue);
-                  setAroSelected(null);
-                  setAroProductoId(null);
-                  setExamen((prev) => ({ ...prev, Aro: newInputValue }));
-
-                  if (!newInputValue) {
-                    setAroOptions([]);
-                    setAroComboOpen(false);
-                  }
-                }}
-                onChange={(_, newValue) => {
-                  if (!newValue) {
-                    setAroSelected(null);
-                    setAroProductoId(null);
-                    setExamen((prev) => ({ ...prev, Aro: '', CodigoAro: '', CostoAro: '' }));
-                    return;
-                  }
-
-                  if (typeof newValue === 'string') {
-                    setAroMaterial(newValue);
-                    return;
-                  }
-
-                  setAroSelected(newValue);
-                  setAroMaterial(newValue.descripcion);
-                  setAroProductoId(newValue.idProducto);
-                  setAroComboOpen(false);
-
-                  const precio = getPrecioDeItem(newValue);
-                  setExamen((prev) => ({
-                    ...prev,
-                    Aro: newValue.descripcion || '',
-                    CodigoAro: newValue.idProducto ?? '',
-                    CostoAro: precio !== null ? precio : '',
-                  }));
-                }}
-                onOpen={() => {
+                required
+                onFocus={() => {
                   if (aroOptions.length > 0) setAroComboOpen(true);
                 }}
-                fullWidth
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Buscar aro"
-                    placeholder="Descripción del artículo"
-                    size="small"
-                    required
-                    onFocus={() => {
-                      if (aroOptions.length > 0) setAroComboOpen(true);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        buscarAroMaterial();
-                      }
-                    }}
-                  />
-                )}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    buscarAroMaterial();
+                  }
+                }}
               />
+            )}
+          />
 
-              <Button
-                variant="contained"
-                size="small"
-                onClick={buscarAroMaterial}
-                disabled={aroSearchLoading}
-                sx={{ whiteSpace: 'nowrap', textTransform: 'none', minWidth: 90 }}
-              >
-                Buscar
-              </Button>
-            </Box>
-
-            <input
-              ref={fileInputRef}
-              hidden
-              accept="image/*"
-              type="file"
-              onChange={handleAroUpload}
-            />
-          </Box>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={buscarAroMaterial}
+            disabled={aroSearchLoading}
+            sx={{ whiteSpace: 'nowrap', textTransform: 'none', minWidth: 90 }}
+          >
+            Buscar
+          </Button>
         </Box>
       </SectionCard>
 

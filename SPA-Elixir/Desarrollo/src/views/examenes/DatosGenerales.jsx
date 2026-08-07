@@ -60,6 +60,18 @@ const CampoMotivo = ({ value, onCommit }) => {
 };
 
 const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const minFechaExamen = now.toISOString().slice(0, 16);
+
+  const fechaExamenTexto = String(examen?.FechaExamen ?? '').trim();
+  const fechaExamenDate = fechaExamenTexto ? new Date(fechaExamenTexto) : null;
+  const fechaExamenInvalida =
+    !fechaExamenTexto ||
+    !fechaExamenDate ||
+    Number.isNaN(fechaExamenDate.getTime()) ||
+    fechaExamenDate.getTime() <= Date.now();
+
     const handlePacienteChange = useCallback((paciente) => {
         setExamen((prev) => ({
             ...prev,
@@ -120,10 +132,8 @@ const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
             label="Fecha y hora del examen"
             type="datetime-local"
             required
-            error={!String(examen?.FechaExamen ?? '').trim()}
-            helperText={
-              !String(examen?.FechaExamen ?? '').trim() ? 'Debe seleccionar una fecha y hora.' : ''
-            }
+            error={fechaExamenInvalida}
+            helperText={fechaExamenInvalida ? 'Debe seleccionar una fecha y hora válida.' : ''}
             value={examen?.FechaExamen ?? ''}
             onChange={(e) =>
               setExamen((prev) => ({
@@ -131,6 +141,7 @@ const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
                 FechaExamen: e.target.value,
               }))
             }
+            inputProps={{ min: minFechaExamen }}
             InputLabelProps={{
               shrink: true,
             }}

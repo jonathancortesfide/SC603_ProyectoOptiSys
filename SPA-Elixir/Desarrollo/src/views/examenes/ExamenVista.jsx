@@ -17,7 +17,6 @@ import {
     Alert,
 } from "@mui/material";
 import PageContainer from "../../components/container/PageContainer";
-import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
 import ParentCard from "../../components/shared/ParentCard";
 import axiosServices from "../../utils/axios";
 import { getSucursalIdentificador } from "../../utils/sucursal";
@@ -63,30 +62,37 @@ const createInitialExamenState = () => ({
   PrecioFinal: 0,
 });
 
-const initialExamenState = createInitialExamenState();
+const esFechaExamenValida = (valor) => {
+  const fecha = String(valor ?? '').trim();
+  if (!fecha) return false;
+  const parsed = new Date(fecha);
+  return !Number.isNaN(parsed.getTime());
+};
 
-const loadDraft = () => {
-  try {
-    const raw = sessionStorage.getItem(EXAMEN_STORAGE_KEY);
-    if (!raw) return initialExamenState;
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : initialExamenState;
-  } catch (error) {
-    console.warn('No se pudo cargar el examen guardado en sesión:', error);
-    return initialExamenState;
-  }
+const esFechaExamenFutura = (valor) => {
+  if (!esFechaExamenValida(valor)) return false;
+  return new Date(valor).getTime() > Date.now();
 };
 
 const ExamenVista = () => {
   const location = useLocation();
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
   const [validationError, setValidationError] = useState('');
-  const [examen, setExamen] = useState(loadDraft);
+  const [examen, setExamen] = useState(createInitialExamenState);
   const [activeStep, setActiveStep] = useState(0);
-  const [guardadoExitoso, setGuardadoExitoso] = useState(false);
   const [numeroExamenGuardado, setNumeroExamenGuardado] = useState('');
-  const navigate = useNavigate();
+
+  useEffect(() => {
+    setExamen(createInitialExamenState());
+    setActiveStep(0);
+    setValidationError('');
+    setOpenConfirmDialog(false);
+    setOpenSuccessDialog(false);
+    setNumeroExamenGuardado('');
+    sessionStorage.removeItem(EXAMEN_STORAGE_KEY);
+  }, [location.key]);
 
   useEffect(() => {
     const pacienteDesdeRuta = location.state?.paciente;
@@ -161,8 +167,8 @@ const ExamenVista = () => {
       if (response && response.esCorrecto) {
         setOpenConfirmDialog(false);
         setOpenSnackbar(true);
-        setGuardadoExitoso(true);
         setNumeroExamenGuardado(response?.data?.NoExamen ?? examen?.NoExamen ?? '');
+        setOpenSuccessDialog(true);
         // Limpiar el draft después de guardar exitosamente
         sessionStorage.removeItem(EXAMEN_STORAGE_KEY);
         setExamen(createInitialExamenState());
@@ -212,10 +218,15 @@ const ExamenVista = () => {
   }, []);
 
   const isStep0Valid = () => {
-    const fechaExamen = String(examen?.FechaExamen ?? '').trim();
-
-    if (!fechaExamen) {
+    const fechaExamenTexto = String(examen?.FechaExamen ?? '').trim();
+    if (!fechaExamenTexto) {
       return { valid: false, message: 'Debe seleccionar una fecha de examen.' };
+    }
+    if (!esFechaExamenFutura(fechaExamenTexto)) {
+      return {
+        valid: false,
+        message: 'La fecha y hora del examen debe ser posterior a la hora actual.',
+      };
     }
     if (!examen.NoPaciente) {
       return { valid: false, message: 'Debe seleccionar un paciente antes de continuar.' };
@@ -323,14 +334,6 @@ const ExamenVista = () => {
     }
   };
 
-  React.useEffect(() => {
-    try {
-      sessionStorage.setItem(EXAMEN_STORAGE_KEY, JSON.stringify(examen));
-    } catch (error) {
-      console.warn('No se pudo guardar el examen en sesión:', error);
-    }
-  }, [examen]);
-
   const stepsContent = [
 
     <Box key="datos-generales" sx={{ display: activeStep === 0 ? "block" : "none" }}>
@@ -347,56 +350,8 @@ const ExamenVista = () => {
     </Box>,
   ];
 
-  const irAVerExamenes = () => {
-    navigate('/verexamenes', { replace: true });
-  };
-
-  const crearOtroExamen = () => {
-    setGuardadoExitoso(false);
-    setNumeroExamenGuardado('');
-    setExamen(createInitialExamenState());
-    setActiveStep(0);
-    setValidationError('');
-  };
-
-  if (guardadoExitoso) {
-    return (
-      <PageContainer>
-        <Breadcrumb title="Examen" description="Registro completado" />
-
-        <ParentCard title="Examen creado correctamente">
-          <Box width="100%" textAlign="center" py={4}>
-            <Alert severity="success" variant="filled" sx={{ mb: 3, justifyContent: 'center' }}>
-              El examen se registró correctamente.
-            </Alert>
-
-            <Typography variant="h6" gutterBottom>
-              {numeroExamenGuardado
-                ? `Examen N° ${numeroExamenGuardado}`
-                : 'El examen quedó guardado con éxito'}
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 3 }}>
-              Puedes revisar el registro en la vista general de exámenes.
-            </Typography>
-
-            <Box display="flex" justifyContent="center" gap={2} flexWrap="wrap">
-              <Button variant="contained" color="primary" onClick={irAVerExamenes}>
-                Ver consulta de exámenes
-              </Button>
-              <Button variant="outlined" onClick={crearOtroExamen}>
-                Crear otro examen
-              </Button>
-            </Box>
-          </Box>
-        </ParentCard>
-      </PageContainer>
-    );
-  }
-
   return (
     <PageContainer>
-      <Breadcrumb title="Examen" description="Registrar nuevo examen" />
-
       <ParentCard title="Crear nuevo examen">
         <Box width="100%">
           {/* STEP INDICATOR */}
@@ -490,6 +445,27 @@ const ExamenVista = () => {
           <Button onClick={handleCloseConfirmDialog}>Regresar</Button>
           <Button variant="contained" color="primary" onClick={handleSendExam}>
             Enviar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openSuccessDialog}
+        onClose={() => setOpenSuccessDialog(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Examen guardado</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {numeroExamenGuardado
+              ? `El examen N° ${numeroExamenGuardado} se registró correctamente.`
+              : 'El examen se registró correctamente.'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setOpenSuccessDialog(false)}>
+            Aceptar
           </Button>
         </DialogActions>
       </Dialog>
