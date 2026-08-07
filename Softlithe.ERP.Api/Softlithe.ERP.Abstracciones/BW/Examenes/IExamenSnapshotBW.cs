@@ -13,5 +13,7 @@ namespace Softlithe.ERP.Abstracciones.BW.Examenes
         Task<ModeloValidacionConDatos<ExamenSnapshotDto>> ObtenerPorNoExamen(int noExamen);
 
         Task<ModeloValidacionConDatos<bool>> Crear(ExamenSnapshotDto examenSnapshot);
+
+        Task<ModeloValidacionConDatos<List<ExamenSnapshotDto>>> ObtenerPorNoPaciente(int noPaciente);
     }
 }
