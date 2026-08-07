@@ -10,7 +10,7 @@ const Menuitems = [
     id: uniqueId(),
     title: 'Inicio',
     icon: IconAperture,
-    href: '/sample-page',
+    href: '/',
   },
   {
     id: uniqueId(),

@@ -34,7 +34,7 @@ const getMenuItems = (hasPermission) => [
     id: uniqueId(),
     title: 'Inicio',
     icon: IconAperture,
-    href: '/sample-page',
+    href: '/',
   },
   {
     navlabel: true,
@@ -51,12 +51,6 @@ const getMenuItems = (hasPermission) => [
     title: 'Productos',
     icon: IconPackage,
     href: '/productos',
-  }] : []),
-  ...(hasPermission('FACTURA_VER') ? [{
-    id: uniqueId(),
-    title: 'Facturación',
-    icon: IconFileInvoice,
-    href: '/facturacion',
   }] : []),
   ...(hasPermission('EXAMEN_VER') ? [{
     id: uniqueId(),

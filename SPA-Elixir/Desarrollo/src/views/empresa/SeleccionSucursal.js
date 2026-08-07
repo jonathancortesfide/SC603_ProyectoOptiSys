@@ -55,7 +55,7 @@ const SeleccionSucursal = () => {
       setError(null);
       setIdentificadorSucursalSeleccionado(id);
       setNombreSucursalSesion(nombreDe(sucursal));
-      navigate('/sample-page', { replace: true });
+      navigate('/', { replace: true });
     },
     [navigate],
   );
@@ -118,7 +118,7 @@ const SeleccionSucursal = () => {
     autoSeleccionHecha.current = true;
     setIdentificadorSucursalSeleccionado(id);
     setNombreSucursalSesion(nombreDe(sucursales[0]));
-    navigate('/sample-page', { replace: true });
+    navigate('/', { replace: true });
   }, [cargando, sucursales, navigate]);
 
   const idUnicaLista =

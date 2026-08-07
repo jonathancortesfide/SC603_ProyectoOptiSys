@@ -99,16 +99,27 @@ function  AuthProvider({ children }) {
         if (accessToken && isValidToken(accessToken)) {
           setSession(accessToken);
 
-          const response = await axios.get('/api/account/my-account');
-          const { user } = response.data;
+          try {
+            const response = await axios.get('/api/account/my-account');
+            const { user } = response.data || {};
 
-          dispatch({
-            type: 'INITIALIZE',
-            payload: {
-              isAuthenticated: true,
-              user,
-            },
-          });
+            dispatch({
+              type: 'INITIALIZE',
+              payload: {
+                isAuthenticated: true,
+                user: user ?? null,
+              },
+            });
+          } catch (profileError) {
+            console.warn('No se pudo cargar el perfil del usuario al reiniciar la sesión, se mantendrá autenticado.', profileError);
+            dispatch({
+              type: 'INITIALIZE',
+              payload: {
+                isAuthenticated: true,
+                user: null,
+              },
+            });
+          }
         } else {
           dispatch({
             type: 'INITIALIZE',
@@ -134,24 +145,34 @@ function  AuthProvider({ children }) {
   }, []);
 
   const signin = async (email, password, rememberMe) => {
+    setSession(null);
+    dispatch({ type: 'LOGOUT' });
+
     const params = new URLSearchParams();
     params.append('client_id', 'js');
     params.append('grant_type', 'password');
     params.append('scope', 'openid profile scope2');
     params.append('username', email);
     params.append('password', password);
-    const response = await authAxios.post(apiObtenerTokenOauth, params, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-    const user = '';
-    const accessToken = response.data.access_token;
-    setSession(accessToken);
-    dispatch({
-      type: 'LOGIN',
-      payload: {
-        user,
-      },
-    });
+
+    try {
+      const response = await authAxios.post(apiObtenerTokenOauth, params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+      const user = '';
+      const accessToken = response.data.access_token;
+      setSession(accessToken);
+      dispatch({
+        type: 'LOGIN',
+        payload: {
+          user,
+        },
+      });
+    } catch (error) {
+      setSession(null);
+      dispatch({ type: 'LOGOUT' });
+      throw error;
+    }
   };
 
   const signup = async (email, password, firstName, lastName) => {

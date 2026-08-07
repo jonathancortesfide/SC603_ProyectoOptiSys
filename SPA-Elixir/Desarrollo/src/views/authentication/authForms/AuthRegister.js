@@ -1,5 +1,6 @@
-import React from 'react';
-import { Box, Typography, Button, Divider, Alert, Stack } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Button, Divider, Alert, Stack, IconButton, InputAdornment } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Form, useFormik, FormikProvider } from 'formik';
 import * as Yup from 'yup';
@@ -13,6 +14,7 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
   const mounted = useMounted();
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const registerSchema = Yup.object().shape({
     firstName: Yup.string().required('El nombre es requerido'),
@@ -105,9 +107,23 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
                 id="password"
                 variant="outlined"
                 fullWidth
+                type={showPassword ? 'text' : 'password'}
                 {...getFieldProps('password')}
                 error={Boolean(touched.password && errors.password)}
                 helperText={touched.password && errors.password}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Stack>
             <Button
@@ -118,8 +134,23 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
               type="submit"
               disabled={isSubmitting}
             >
-              Sign Up
+              Registrarse
             </Button>
+
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              sx={{
+                mt: 2,
+                fontSize: '0.8rem',
+                lineHeight: 1.4,
+                maxWidth: '100%',
+                px: 0.5,
+                textAlign: 'left',
+              }}
+            >
+              Si el usuario se registra pero aún no ha sido activado o no tiene un contexto de empresa/sucursal asignado, no podrá acceder a las funcionalidades del sistema hasta que se complete ese proceso.
+            </Typography>
           </Form>
         </FormikProvider>
       </Box>
