@@ -1,20 +1,20 @@
-import { useCallback, useState, useEffect, useRef } from "react";
-import { Box, Grid, TextField, Typography } from "@mui/material";
-import BusquedaDePaciente from "../../components/forms/formularioPacientes/BusquedaDePaciente.js";
-import BusquedaDeDoctor from "../../components/forms/formularioPacientes/BusquedaDeDoctor.js";
+import { Box, Grid, TextField, Typography } from '@mui/material';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import BusquedaDeDoctor from '../../components/forms/formularioPacientes/BusquedaDeDoctor.js';
+import BusquedaDePaciente from '../../components/forms/formularioPacientes/BusquedaDePaciente.js';
 
 // Campo aislado: mantiene su propio estado local mientras el usuario
 // escribe, y solo "empuja" el valor hacia arriba (setExamen del padre)
 // con un debounce. Así, escribir NO dispara un re-render del padre
 // (ni de todo lo que el padre renderiza) en cada tecla.
 const CampoMotivo = ({ value, onCommit }) => {
-  const [local, setLocal] = useState(value ?? "");
+  const [local, setLocal] = useState(value ?? '');
   const debounceRef = useRef(null);
 
   // Si el valor externo cambia (ej: se carga un examen distinto),
   // sincronizamos el estado local.
   useEffect(() => {
-    setLocal(value ?? "");
+    setLocal(value ?? '');
   }, [value]);
 
   const handleChange = (e) => {
@@ -60,32 +60,41 @@ const CampoMotivo = ({ value, onCommit }) => {
 };
 
 const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
-  const handlePacienteChange = useCallback((paciente) => {
-    setExamen(prev => ({
-      ...prev,
-      NoPaciente: paciente?.noPaciente ?? 0,
-      NombrePaciente: paciente?.nombre ?? paciente?.Nombre ?? prev.NombrePaciente ?? "",
-      Paciente: paciente ?? null,
-    }));
-  }, [setExamen]);
+    const handlePacienteChange = useCallback((paciente) => {
+        setExamen((prev) => ({
+            ...prev,
+            NoPaciente: paciente?.noPaciente ?? 0,
+            NombrePaciente: paciente?.nombre ?? paciente?.Nombre ?? prev.NombrePaciente ?? "",
+            Paciente: paciente ?? null,
+        }));
+    }, [setExamen]);
 
-  const handleDoctorChange = useCallback((doctor) => {
-    setExamen(prev => ({
-      ...prev,
-      NombreProfesional: doctor?.nombre || doctor?.Nombre || "",
-      CodigoProfesional: doctor?.codigoProfesional || doctor?.CodigoProfesional || "",
-      IdProfesional: doctor?.idUsuario ?? doctor?.identificador ?? doctor?.id ?? null
-    }));
-  }, [setExamen]);
+    const handleDoctorChange = useCallback((doctor) => {
+        setExamen((prev) => ({
+            ...prev,
+            NombreProfesional: doctor?.nombre || doctor?.Nombre || "",
+            CodigoProfesional: doctor?.codigoProfesional || doctor?.CodigoProfesional || "",
+            IdProfesional:
+                doctor?.idUsuario ??
+                doctor?.identificador ??
+                doctor?.id ??
+                null,
+        }));
+    }, [setExamen]);
 
   // Callback estable para "commitear" el Motivo al estado del padre
-  const handleMotivoCommit = useCallback((nuevoMotivo) => {
-    setExamen(prev => ({ ...prev, Motivo: nuevoMotivo }));
-  }, [setExamen]);
+  const handleMotivoCommit = useCallback(
+    (nuevoMotivo) => {
+      setExamen((prev) => ({ ...prev, Motivo: nuevoMotivo }));
+    },
+    [setExamen],
+  );
 
   return (
     <Box>
-      <Typography variant="h6" mb={2}>Información médica</Typography>
+      <Typography variant="h6" mb={2}>
+        Información médica
+      </Typography>
 
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
@@ -96,10 +105,12 @@ const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
             InputProps={{
               readOnly: true,
             }}
-            onChange={(e) => setExamen(prev => ({
-              ...prev,
-              NoExamen: e.target.value
-            }))}
+            onChange={(e) =>
+              setExamen((prev) => ({
+                ...prev,
+                NoExamen: e.target.value,
+              }))
+            }
           />
         </Grid>
 
@@ -110,12 +121,16 @@ const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
             type="datetime-local"
             required
             error={!String(examen?.FechaExamen ?? '').trim()}
-            helperText={!String(examen?.FechaExamen ?? '').trim() ? 'Debe seleccionar una fecha y hora.' : ''}
+            helperText={
+              !String(examen?.FechaExamen ?? '').trim() ? 'Debe seleccionar una fecha y hora.' : ''
+            }
             value={examen?.FechaExamen ?? ''}
-            onChange={(e) => setExamen(prev => ({
-              ...prev,
-              FechaExamen: e.target.value
-            }))}
+            onChange={(e) =>
+              setExamen((prev) => ({
+                ...prev,
+                FechaExamen: e.target.value,
+              }))
+            }
             InputLabelProps={{
               shrink: true,
             }}
@@ -133,10 +148,7 @@ const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
         </Grid>
 
         <Grid item xs={12} sm={12}>
-          <CampoMotivo
-            value={examen.Motivo}
-            onCommit={handleMotivoCommit}
-          />
+          <CampoMotivo value={examen.Motivo} onCommit={handleMotivoCommit} />
         </Grid>
 
         <Grid item xs={12}>
@@ -146,11 +158,8 @@ const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
         </Grid>
 
         <Grid item xs={12} sm={12}>
-          <BusquedaDeDoctor
-            onDoctorChange={handleDoctorChange}
-          />
+          <BusquedaDeDoctor onDoctorChange={handleDoctorChange} />
         </Grid>
-
       </Grid>
     </Box>
   );

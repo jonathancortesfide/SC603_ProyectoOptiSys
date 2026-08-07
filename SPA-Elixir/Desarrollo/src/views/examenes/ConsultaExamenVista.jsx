@@ -616,8 +616,6 @@ const ConsultaExamenVista = () => {
 
   return (
     <PageContainer>
-      <Breadcrumb title="Consulta de Exámenes" description="Buscar examen por número" />
-
       <ParentCard title="Búsqueda">
         <Grid container spacing={2} alignItems="stretch">
           <Grid item xs={12} md={8}>
@@ -854,94 +852,98 @@ const ConsultaExamenVista = () => {
       </ParentCard>
 
       {!examen && !loading && !error && (
-        <ParentCard title="Resultado">
-          {buscado ? (
-            <Alert severity="info">No se encontró un snapshot para el examen indicado.</Alert>
-          ) : (
-            <EstadoVacio />
-          )}
-        </ParentCard>
+        <Box mt={3}>
+          <ParentCard title="Resultado">
+            {buscado ? (
+              <Alert severity="info">No se encontró un snapshot para el examen indicado.</Alert>
+            ) : (
+              <EstadoVacio />
+            )}
+          </ParentCard>
+        </Box>
       )}
 
       {examen && (
-        <ParentCard title="Detalle del snapshot">
-          <ResumenExamen examen={examen} />
+        <Box mt={3}>
+          <ParentCard title="Detalle del snapshot">
+            <ResumenExamen examen={examen} />
 
-          {SECCIONES_EXAMEN.map((seccion) => (
-            <SectionCard key={seccion.titulo} title={seccion.titulo}>
-              <Grid container spacing={2}>
-                {seccion.campos.map((campo) => (
-                  <Grid
-                    item
-                    xs={12}
-                    md={campo.multiline || campo.destacado ? 12 : 6}
-                    key={campo.key}
-                  >
-                    <CampoSoloLectura
-                      label={campo.label}
-                      value={formatearValor(examen[campo.key], campo.tipo)}
-                      multiline={campo.multiline}
-                      destacado={campo.destacado}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </SectionCard>
-          ))}
+            {SECCIONES_EXAMEN.map((seccion) => (
+              <SectionCard key={seccion.titulo} title={seccion.titulo}>
+                <Grid container spacing={2}>
+                  {seccion.campos.map((campo) => (
+                    <Grid
+                      item
+                      xs={12}
+                      md={campo.multiline || campo.destacado ? 12 : 6}
+                      key={campo.key}
+                    >
+                      <CampoSoloLectura
+                        label={campo.label}
+                        value={formatearValor(examen[campo.key], campo.tipo)}
+                        multiline={campo.multiline}
+                        destacado={campo.destacado}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </SectionCard>
+            ))}
 
-          {graduaciones && (
-            <SectionCard title="Graduaciones">
-              <TablaGraduaciones graduaciones={graduaciones} />
-            </SectionCard>
-          )}
+            {graduaciones && (
+              <SectionCard title="Graduaciones">
+                <TablaGraduaciones graduaciones={graduaciones} />
+              </SectionCard>
+            )}
 
-          {otrosDatos.length > 0 && (
-            <SectionCard title="Otros datos">
-              <Grid container spacing={2}>
-                {otrosDatos.map(([key, valor]) => (
-                  <Grid item xs={12} md={6} key={key}>
-                    <CampoSoloLectura
-                      label={key}
-                      value={valor === null || valor === undefined ? '—' : String(valor)}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </SectionCard>
-          )}
+            {otrosDatos.length > 0 && (
+              <SectionCard title="Otros datos">
+                <Grid container spacing={2}>
+                  {otrosDatos.map(([key, valor]) => (
+                    <Grid item xs={12} md={6} key={key}>
+                      <CampoSoloLectura
+                        label={key}
+                        value={valor === null || valor === undefined ? '—' : String(valor)}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </SectionCard>
+            )}
 
-          <Box
-            mt={1}
-            p={2}
-            borderRadius={2}
-            sx={{
-              bgcolor: alpha(theme.palette.grey[500], 0.04),
-              border: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Vista de solo lectura del snapshot almacenado. Para registrar un examen nuevo usá{' '}
-              <Box
-                component="button"
-                onClick={() => navigate('/crearexamen')}
-                sx={{
-                  border: 0,
-                  background: 'none',
-                  p: 0,
-                  m: 0,
-                  color: 'primary.main',
-                  font: 'inherit',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                Crear nuevo examen
-              </Box>
-              .
-            </Typography>
-          </Box>
-        </ParentCard>
+            <Box
+              mt={1}
+              p={2}
+              borderRadius={2}
+              sx={{
+                bgcolor: alpha(theme.palette.grey[500], 0.04),
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Vista de solo lectura del snapshot almacenado. Para registrar un examen nuevo usá{' '}
+                <Box
+                  component="button"
+                  onClick={() => navigate('/crearexamen')}
+                  sx={{
+                    border: 0,
+                    background: 'none',
+                    p: 0,
+                    m: 0,
+                    color: 'primary.main',
+                    font: 'inherit',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Crear nuevo examen
+                </Box>
+                .
+              </Typography>
+            </Box>
+          </ParentCard>
+        </Box>
       )}
     </PageContainer>
   );

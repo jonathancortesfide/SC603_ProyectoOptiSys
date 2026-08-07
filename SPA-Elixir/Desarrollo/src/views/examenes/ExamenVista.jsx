@@ -1,55 +1,66 @@
 // ExamenVista.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { Box, Button, Stepper, Step, StepButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Paper } from "@mui/material";
+import {
+    Box,
+    Button,
+    Stepper,
+    Step,
+    StepButton,
+    Typography,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Paper,
+    Snackbar,
+    Alert,
+} from "@mui/material";
 import PageContainer from "../../components/container/PageContainer";
 import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
 import ParentCard from "../../components/shared/ParentCard";
-import { Snackbar, Alert } from "@mui/material";
 import axiosServices from "../../utils/axios";
 import { getSucursalIdentificador } from "../../utils/sucursal";
 import { AgregarExamen } from "../../requests/examenes/RequestsExamenes";
 
-
 // Subcomponentes
-import DatosGenerales from "./DatosGenerales";
-import GraduacionRx from "./GraduacionRx";
-import DisenoDeLente from "./DisenoDeLente";
-import DetalleDeCosto from "./DetalleDeCosto";
+import DatosGenerales from './DatosGenerales';
+import DetalleDeCosto from './DetalleDeCosto';
+import DisenoDeLente from './DisenoDeLente';
+import GraduacionRx from './GraduacionRx';
 
-const steps = ["Datos Generales", "Graduación RX", "Diseño de Lente", "Detalle de Costo"];
+const steps = ['Datos Generales', 'Graduación RX', 'Diseño de Lente', 'Detalle de Costo'];
 
 const apiBase = import.meta.env.VITE_ApiBase;
-const EXAMEN_STORAGE_KEY = "examenDraft";
+const EXAMEN_STORAGE_KEY = 'examenDraft';
 
 const createInitialExamenState = () => ({
   NoExamen: 0,
   NoPaciente: 0,
-  FechaExamen: "",
-  Motivo: "",
-  NombrePaciente: "",
+  FechaExamen: '',
+  Motivo: '',
+  NombrePaciente: '',
   Paciente: null,
-  NombreProfesional: "",
-  CodigoProfesional: "",
+  NombreProfesional: '',
+  CodigoProfesional: '',
   IdProfesional: null,
 
-  observacionesGenerales: "",
-  TipoLente: "",
+  observacionesGenerales: '',
+  TipoLente: '',
   TipoLenteId: null,
-  Material: "",
-  Aro: "",
-  CodigoAro: "",
-  Laboratorio: "",
-  NumeroOrdenLaboratorio: "",
-  NumeroPedidoLaboratorio: "",
-  Disposicion: "",
-  Tratamiento: "",
-  CostoAro: "",
-  CostoLente: "",
-  CostoMaterial: "",
-  CostoExamen: "",
+  Material: '',
+  Aro: '',
+  CodigoAro: '',
+  Laboratorio: '',
+  NumeroOrdenLaboratorio: '',
+  NumeroPedidoLaboratorio: '',
+  Disposicion: '',
+  Tratamiento: '',
+  CostoAro: '',
+  CostoLente: '',
+  CostoMaterial: '',
+  CostoExamen: '',
   PrecioFinal: 0,
-
 });
 
 const initialExamenState = createInitialExamenState();
@@ -59,9 +70,9 @@ const loadDraft = () => {
     const raw = sessionStorage.getItem(EXAMEN_STORAGE_KEY);
     if (!raw) return initialExamenState;
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : initialExamenState;
+    return parsed && typeof parsed === 'object' ? parsed : initialExamenState;
   } catch (error) {
-    console.warn("No se pudo cargar el examen guardado en sesión:", error);
+    console.warn('No se pudo cargar el examen guardado en sesión:', error);
     return initialExamenState;
   }
 };
@@ -70,9 +81,12 @@ const ExamenVista = () => {
   const location = useLocation();
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-  const [validationError, setValidationError] = useState("");
+  const [validationError, setValidationError] = useState('');
   const [examen, setExamen] = useState(loadDraft);
   const [activeStep, setActiveStep] = useState(0);
+  const [guardadoExitoso, setGuardadoExitoso] = useState(false);
+  const [numeroExamenGuardado, setNumeroExamenGuardado] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const pacienteDesdeRuta = location.state?.paciente;
@@ -98,9 +112,9 @@ const ExamenVista = () => {
       const items = keys.map((k) => {
         let raw = examen[k];
         let value;
-        if (raw === undefined || raw === null || raw === "") {
-          value = "-";
-        } else if (typeof raw === "object") {
+        if (raw === undefined || raw === null || raw === '') {
+          value = '-';
+        } else if (typeof raw === 'object') {
           try {
             value = JSON.stringify(raw, null, 0);
           } catch (e) {
@@ -116,18 +130,18 @@ const ExamenVista = () => {
 
         // Etiqueta más amigable para algunos campos conocidos
         const labelMap = {
-          NoExamen: "Número de examen",
-          NoPaciente: "Paciente",
-          FechaExamen: "Fecha de examen",
-          Motivo: "Motivo",
-          observacionesGenerales: "Observaciones",
+          NoExamen: 'Número de examen',
+          NoPaciente: 'Paciente',
+          FechaExamen: 'Fecha de examen',
+          Motivo: 'Motivo',
+          observacionesGenerales: 'Observaciones',
         };
 
         return { label: labelMap[k] ?? k, key: k, value };
       });
       return items;
     } catch (err) {
-      return [{ label: "Resumen", value: "No se pudo generar el resumen del examen." }];
+      return [{ label: 'Resumen', value: 'No se pudo generar el resumen del examen.' }];
     }
   }, [examen]);
 
@@ -142,16 +156,18 @@ const ExamenVista = () => {
   const handleSendExam = async () => {
     try {
       const response = await AgregarExamen(examen);
-      console.log("Respuesta del servidor:", response);
+      console.log('Respuesta del servidor:', response);
 
       if (response && response.esCorrecto) {
         setOpenConfirmDialog(false);
         setOpenSnackbar(true);
+        setGuardadoExitoso(true);
+        setNumeroExamenGuardado(response?.data?.NoExamen ?? examen?.NoExamen ?? '');
         // Limpiar el draft después de guardar exitosamente
         sessionStorage.removeItem(EXAMEN_STORAGE_KEY);
         setExamen(createInitialExamenState());
         setActiveStep(0);
-        setValidationError("");
+        setValidationError('');
       } else {
         console.error('Error al guardar examen:', response?.mensaje);
         setValidationError(response?.mensaje || 'Error al guardar el examen');
@@ -169,26 +185,26 @@ const ExamenVista = () => {
         const identificadorSucursal = getSucursalIdentificador();
 
         if (!identificadorSucursal) {
-          console.warn("No se encontró identificador de sucursal en sesión");
+          console.warn('No se encontró identificador de sucursal en sesión');
           return;
         }
 
-        console.log("Llamando a API para obtener próximo número de examen...");
+        console.log('Llamando a API para obtener próximo número de examen...');
         const response = await axiosServices.get(
-          `${apiBase}/Examenes/ObtenerProximoNumeroExamen/${identificadorSucursal}`
+          `${apiBase}/Examenes/ObtenerProximoNumeroExamen/${identificadorSucursal}`,
         );
 
-        console.log("Respuesta de API:", response.data);
+        console.log('Respuesta de API:', response.data);
 
         if (response.data && typeof response.data === 'number') {
-          console.log("Actualizando NoExamen a:", response.data);
+          console.log('Actualizando NoExamen a:', response.data);
           setExamen((prev) => ({
             ...prev,
             NoExamen: response.data,
           }));
         }
       } catch (error) {
-        console.error("Error al obtener próximo número de examen:", error);
+        console.error('Error al obtener próximo número de examen:', error);
       }
     };
 
@@ -196,19 +212,44 @@ const ExamenVista = () => {
   }, []);
 
   const isStep0Valid = () => {
-    const fechaExamen = String(examen?.FechaExamen ?? "").trim();
+    const fechaExamen = String(examen?.FechaExamen ?? '').trim();
 
     if (!fechaExamen) {
-      return { valid: false, message: "Debe seleccionar una fecha de examen." };
+      return { valid: false, message: 'Debe seleccionar una fecha de examen.' };
     }
     if (!examen.NoPaciente) {
-      return { valid: false, message: "Debe seleccionar un paciente antes de continuar." };
+      return { valid: false, message: 'Debe seleccionar un paciente antes de continuar.' };
     }
-    if (!examen.Motivo || examen.Motivo.trim() === "") {
-      return { valid: false, message: "Debe ingresar el motivo de la consulta." };
+    if (!examen.Motivo || examen.Motivo.trim() === '') {
+      return { valid: false, message: 'Debe ingresar el motivo de la consulta.' };
     }
     if (!examen.IdProfesional) {
-      return { valid: false, message: "Debe seleccionar un profesional tratante." };
+      return { valid: false, message: 'Debe seleccionar un profesional tratante.' };
+    }
+    return { valid: true };
+  };
+
+  const isStep2Valid = () => {
+    if (!examen?.TipoLenteId && !examen?.TipoLente) {
+      return { valid: false, message: 'Debe seleccionar el tipo de lente.' };
+    }
+    if (!examen?.MaterialId && !examen?.Material) {
+      return { valid: false, message: 'Debe seleccionar el material.' };
+    }
+    if (!examen?.Aro && !examen?.CodigoAro) {
+      return { valid: false, message: 'Debe seleccionar o buscar un aro.' };
+    }
+    if (!examen?.Laboratorio) {
+      return { valid: false, message: 'Debe seleccionar un laboratorio.' };
+    }
+    if (!String(examen?.NumeroOrdenLaboratorio ?? '').trim()) {
+      return { valid: false, message: 'Debe ingresar el número de orden del laboratorio.' };
+    }
+    if (!String(examen?.Disposicion ?? '').trim()) {
+      return { valid: false, message: 'Debe ingresar la disposición.' };
+    }
+    if (!String(examen?.Tratamiento ?? '').trim()) {
+      return { valid: false, message: 'Debe ingresar el tratamiento.' };
     }
     return { valid: true };
   };
@@ -221,19 +262,28 @@ const ExamenVista = () => {
         return;
       }
     }
-    setValidationError("");
+
+    if (activeStep === 2) {
+      const validation = isStep2Valid();
+      if (!validation.valid) {
+        setValidationError(validation.message);
+        return;
+      }
+    }
+
+    setValidationError('');
     setActiveStep((prev) => Math.min(steps.length - 1, prev + 1));
   };
 
   const handleBack = () => {
-    setValidationError("");
+    setValidationError('');
     setActiveStep((prev) => Math.max(0, prev - 1));
   };
 
   const handleIrAPaso = (index) => {
     if (index === 0) {
       setActiveStep(index);
-      setValidationError("");
+      setValidationError('');
       return;
     }
 
@@ -245,18 +295,27 @@ const ExamenVista = () => {
       }
     }
 
+    if (activeStep === 2 && index > activeStep) {
+      const validation = isStep2Valid();
+      if (!validation.valid) {
+        setValidationError(validation.message);
+        return;
+      }
+    }
+
     if (index >= 0 && index < steps.length) {
       setActiveStep(index);
-      setValidationError("");
+      setValidationError('');
     }
   };
 
   const handleFinish = () => {
-
     try {
       const payload = { ...examen };
-      if (payload.FechaExamen instanceof Date) payload.FechaExamen = payload.FechaExamen.toISOString();
-      if (payload.UltimoExamen instanceof Date) payload.UltimoExamen = payload.UltimoExamen.toISOString();
+      if (payload.FechaExamen instanceof Date)
+        payload.FechaExamen = payload.FechaExamen.toISOString();
+      if (payload.UltimoExamen instanceof Date)
+        payload.UltimoExamen = payload.UltimoExamen.toISOString();
 
       setOpenSnackbar(true);
     } catch (err) {
@@ -268,24 +327,71 @@ const ExamenVista = () => {
     try {
       sessionStorage.setItem(EXAMEN_STORAGE_KEY, JSON.stringify(examen));
     } catch (error) {
-      console.warn("No se pudo guardar el examen en sesión:", error);
+      console.warn('No se pudo guardar el examen en sesión:', error);
     }
   }, [examen]);
 
   const stepsContent = [
+
     <Box key="datos-generales" sx={{ display: activeStep === 0 ? "block" : "none" }}>
       <DatosGenerales examen={examen} setExamen={setExamen} initialPaciente={examen.Paciente} />
     </Box>,
-    <Box key="graduacion-rx" sx={{ display: activeStep === 1 ? "block" : "none" }}>
+    <Box key="graduacion-rx" sx={{ display: activeStep === 1 ? 'block' : 'none' }}>
       <GraduacionRx examen={examen} setExamen={setExamen} />
     </Box>,
-    <Box key="diseno-de-lente" sx={{ display: activeStep === 2 ? "block" : "none" }}>
+    <Box key="diseno-de-lente" sx={{ display: activeStep === 2 ? 'block' : 'none' }}>
       <DisenoDeLente examen={examen} setExamen={setExamen} />
     </Box>,
-    <Box key="detalle-de-costo" sx={{ display: activeStep === 3 ? "block" : "none" }}>
+    <Box key="detalle-de-costo" sx={{ display: activeStep === 3 ? 'block' : 'none' }}>
       <DetalleDeCosto examen={examen} setExamen={setExamen} />
     </Box>,
   ];
+
+  const irAVerExamenes = () => {
+    navigate('/verexamenes', { replace: true });
+  };
+
+  const crearOtroExamen = () => {
+    setGuardadoExitoso(false);
+    setNumeroExamenGuardado('');
+    setExamen(createInitialExamenState());
+    setActiveStep(0);
+    setValidationError('');
+  };
+
+  if (guardadoExitoso) {
+    return (
+      <PageContainer>
+        <Breadcrumb title="Examen" description="Registro completado" />
+
+        <ParentCard title="Examen creado correctamente">
+          <Box width="100%" textAlign="center" py={4}>
+            <Alert severity="success" variant="filled" sx={{ mb: 3, justifyContent: 'center' }}>
+              El examen se registró correctamente.
+            </Alert>
+
+            <Typography variant="h6" gutterBottom>
+              {numeroExamenGuardado
+                ? `Examen N° ${numeroExamenGuardado}`
+                : 'El examen quedó guardado con éxito'}
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              Puedes revisar el registro en la vista general de exámenes.
+            </Typography>
+
+            <Box display="flex" justifyContent="center" gap={2} flexWrap="wrap">
+              <Button variant="contained" color="primary" onClick={irAVerExamenes}>
+                Ver consulta de exámenes
+              </Button>
+              <Button variant="outlined" onClick={crearOtroExamen}>
+                Crear otro examen
+              </Button>
+            </Box>
+          </Box>
+        </ParentCard>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -300,7 +406,7 @@ const ExamenVista = () => {
                 <StepButton
                   color="inherit"
                   onClick={() => handleIrAPaso(index)}
-                  sx={{ flexDirection: "column", py: 1, minWidth: 0 }}
+                  sx={{ flexDirection: 'column', py: 1, minWidth: 0 }}
                 >
                   <Typography variant="caption" color="text.secondary" lineHeight={1.2}>
                     {index + 1}
@@ -318,12 +424,22 @@ const ExamenVista = () => {
 
           {/* BOTONES */}
           <Box display="flex" justifyContent="space-between" mt={4}>
-            <Button type="button" disabled={activeStep === 0} variant="outlined" onClick={handleBack}>
+            <Button
+              type="button"
+              disabled={activeStep === 0}
+              variant="outlined"
+              onClick={handleBack}
+            >
               Atrás
             </Button>
 
             {activeStep === steps.length - 1 ? (
-              <Button type="button" variant="contained" color="success" onClick={handleOpenConfirmDialog}>
+              <Button
+                type="button"
+                variant="contained"
+                color="success"
+                onClick={handleOpenConfirmDialog}
+              >
                 Guardar examen
               </Button>
             ) : (
@@ -352,14 +468,17 @@ const ExamenVista = () => {
           <Typography variant="subtitle1" gutterBottom>
             Revisa la información del examen antes de enviarlo.
           </Typography>
-          <Paper variant="outlined" sx={{ p: 2, bgcolor: "background.paper", overflow: "auto", maxHeight: 360 }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, bgcolor: 'background.paper', overflow: 'auto', maxHeight: 360 }}
+          >
             <Box display="grid" gridTemplateColumns="max-content 1fr" gap={1}>
               {examenResumen.map((item) => (
                 <React.Fragment key={item.label}>
                   <Typography variant="subtitle2" color="text.secondary">
                     {item.label}:
                   </Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                     {item.value}
                   </Typography>
                 </React.Fragment>
@@ -379,14 +498,10 @@ const ExamenVista = () => {
         open={openSnackbar}
         autoHideDuration={3000}
         onClose={() => setOpenSnackbar(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert
-          severity="success"
-          variant="filled"
-          onClose={() => setOpenSnackbar(false)}
-        >
-          Examen número  guardado correctamente
+        <Alert severity="success" variant="filled" onClose={() => setOpenSnackbar(false)}>
+          Examen número guardado correctamente
         </Alert>
       </Snackbar>
     </PageContainer>
