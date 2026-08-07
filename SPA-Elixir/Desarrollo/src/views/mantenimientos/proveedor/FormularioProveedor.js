@@ -7,7 +7,6 @@ import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import { alpha } from '@mui/material/styles';
 import { agregarProveedor, actualizarProveedor, noProveedorDe } from '../../../requests/mantenimientos/proveedor/RequestsProveedores';
 import { construirProveedorDto, fechaIsoDesdeLocal } from '../../../requests/mantenimientos/proveedor/proveedorDto';
-import { obtenerPaises, normalizarListaPaises, noPaisDe, nombrePaisDe } from '../../../requests/mantenimientos/pais/RequestsPaises';
 import {
     obtenerMonedasPorGetIdentificador,
     normalizarListaMonedas,
@@ -19,10 +18,6 @@ import {
     descripcionMonedaDe,
 } from '../../../requests/mantenimientos/moneda/RequestsMonedas';
 import { getSucursalIdentificador } from '../../../utils/sucursal';
-
-const filterPaises = createFilterOptions({
-    stringify: (option) => `${nombrePaisDe(option)} ${noPaisDe(option) ?? ''}`,
-});
 
 const filterMonedas = createFilterOptions({
     stringify: (option) => `${labelMonedaDe(option)} ${numeroMonedaCatalogoDe(option) ?? ''} ${signoMonedaDe(option)} ${descripcionMonedaDe(option)}`,
@@ -67,10 +62,6 @@ const FormularioProveedor = ({ proveedor, modoEdicion, onGuardar, onCancel }) =>
     const [fechaRegistro, setFechaRegistro] = useState(fechaLocalInicial);
     const [plazo, setPlazo] = useState('');
     const [email, setEmail] = useState('');
-    const [paises, setPaises] = useState([]);
-    const [cargandoPaises, setCargandoPaises] = useState(true);
-    const [errorPaises, setErrorPaises] = useState(null);
-    const [paisSeleccionado, setPaisSeleccionado] = useState(null);
     const [esActivo, setEsActivo] = useState(true);
     const [limiteCredito, setLimiteCredito] = useState('');
     const [monedas, setMonedas] = useState([]);
@@ -84,23 +75,6 @@ const FormularioProveedor = ({ proveedor, modoEdicion, onGuardar, onCancel }) =>
 
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        let cancelado = false;
-        (async () => {
-            setCargandoPaises(true);
-            setErrorPaises(null);
-            const resp = await obtenerPaises('');
-            const lista = normalizarListaPaises(resp);
-            if (cancelado) return;
-            if (resp && (resp.esCorrecto === false || resp.EsCorrecto === false)) {
-                setErrorPaises(resp.mensaje ?? resp.Mensaje ?? 'No se pudieron cargar los países');
-            }
-            setPaises(lista);
-            setCargandoPaises(false);
-        })();
-        return () => { cancelado = true; };
-    }, []);
 
     useEffect(() => {
         let cancelado = false;
@@ -152,7 +126,6 @@ const FormularioProveedor = ({ proveedor, modoEdicion, onGuardar, onCancel }) =>
             setFechaRegistro(fechaLocalInicial());
             setPlazo('');
             setEmail('');
-            setPaisSeleccionado(null);
             setEsActivo(true);
             setLimiteCredito('');
             setMonedaSeleccionada(null);
@@ -163,22 +136,6 @@ const FormularioProveedor = ({ proveedor, modoEdicion, onGuardar, onCancel }) =>
         }
         setError(null);
     }, [proveedor, modoEdicion]);
-
-    useEffect(() => {
-        if (!paises.length) return;
-        if (modoEdicion && proveedor) {
-            const nid = proveedor.noNacionalidad ?? proveedor.NoNacionalidad;
-            const n = Number.parseInt(String(nid ?? ''), 10);
-            if (Number.isFinite(n)) {
-                const found = paises.find((p) => Number(noPaisDe(p)) === n);
-                setPaisSeleccionado(found ?? null);
-            } else {
-                setPaisSeleccionado(null);
-            }
-        } else if (!modoEdicion) {
-            setPaisSeleccionado(null);
-        }
-    }, [proveedor, modoEdicion, paises]);
 
     useEffect(() => {
         if (!monedas.length) return;
@@ -225,15 +182,11 @@ const FormularioProveedor = ({ proveedor, modoEdicion, onGuardar, onCancel }) =>
             return;
         }
 
-        if (!paisSeleccionado) {
-            setError('Seleccione la nacionalidad (país)');
-            return;
-        }
-        const noNat = Number.parseInt(String(noPaisDe(paisSeleccionado)), 10);
-        if (!Number.isFinite(noNat)) {
-            setError('Nacionalidad no válida');
-            return;
-        }
+        const nacionalidadExistente = Number.parseInt(
+            String(proveedor?.noNacionalidad ?? proveedor?.NoNacionalidad ?? 0),
+            10,
+        );
+        const noNat = Number.isFinite(nacionalidadExistente) ? nacionalidadExistente : 0;
         const pl = parseIntSafe(plazo, 'Plazo');
         if (!pl.ok) {
             setError(pl.error);
@@ -293,7 +246,6 @@ const FormularioProveedor = ({ proveedor, modoEdicion, onGuardar, onCancel }) =>
             <DialogTitle>{modoEdicion ? 'Editar proveedor' : 'Agregar proveedor'}</DialogTitle>
             <DialogContent sx={{ maxHeight: '78vh', overflowY: 'auto' }}>
                 {error && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{error}</Alert>}
-                {errorPaises && <Alert severity="warning" sx={{ mb: 2, mt: 1 }}>{errorPaises}</Alert>}
                 {errorMonedas && <Alert severity="warning" sx={{ mb: 2, mt: 1 }}>{errorMonedas}</Alert>}
                 <Box sx={{ mt: 1 }}>
                     <Grid container spacing={2}>
@@ -364,36 +316,6 @@ const FormularioProveedor = ({ proveedor, modoEdicion, onGuardar, onCancel }) =>
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 fullWidth
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Autocomplete
-                                options={paises}
-                                loading={cargandoPaises}
-                                value={paisSeleccionado}
-                                onChange={(e, newValue) => setPaisSeleccionado(newValue)}
-                                getOptionLabel={(opt) => (opt ? nombrePaisDe(opt) : '')}
-                                isOptionEqualToValue={(a, b) => noPaisDe(a) === noPaisDe(b)}
-                                filterOptions={filterPaises}
-                                noOptionsText="Sin coincidencias"
-                                loadingText="Cargando países…"
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Nacionalidad (país)"
-                                        required
-                                        placeholder="Buscar por nombre o código…"
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            endAdornment: (
-                                                <>
-                                                    {cargandoPaises ? <CircularProgress color="inherit" size={20} /> : null}
-                                                    {params.InputProps.endAdornment}
-                                                </>
-                                            ),
-                                        }}
-                                    />
-                                )}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>

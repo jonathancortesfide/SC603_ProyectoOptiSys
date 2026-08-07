@@ -129,7 +129,7 @@ const PacientesUnificado = () => {
       alert('Seleccione un paciente primero');
       return;
     }
-    alert(`Abrir examen para ${pacienteSeleccionado.nombre}`);
+    navigate('/verexamenes', { state: { paciente: pacienteSeleccionado } });
   };
 
   const handleEliminarPaciente = () => {

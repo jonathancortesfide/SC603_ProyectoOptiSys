@@ -38,18 +38,24 @@ const BusquedaDePaciente = ({ noPaciente: initialNoPaciente = 0, initialPaciente
 
   // Pre-seleccionar paciente si viene desde fuera (ej: desde /pacientes)
   useEffect(() => {
-    if (initialPaciente) {
-      const nro = initialPaciente.noPaciente || initialPaciente.numeroDePaciente;
-      const opcion = {
-        label: `${initialPaciente.cedula}-${initialPaciente.nombre}`,
-        value: nro,
-      };
-      setSelectedPaciente(initialPaciente);
-      setSelectedOption(opcion);
-      setNoPaciente(nro);
-      setIsVisible(true);
-    }
-  }, []);
+    if (!initialPaciente) return;
+
+    const nro = initialPaciente.noPaciente || initialPaciente.numeroDePaciente || initialPaciente.NoPaciente;
+    const cedula = initialPaciente.cedula || initialPaciente.Cedula || initialPaciente.identificacion || '';
+    const nombre = initialPaciente.nombre || initialPaciente.Nombre || initialPaciente.nombrePaciente || '';
+
+    if (!nro) return;
+
+    const opcion = {
+      label: `${cedula}-${nombre}`,
+      value: nro,
+    };
+
+    setSelectedPaciente(initialPaciente);
+    setSelectedOption(opcion);
+    setNoPaciente(nro);
+    setIsVisible(true);
+  }, [initialPaciente]);
   // Cargar opciones por defecto
   const loadDefaultData = async (inputValue, callback) => {
     if(inputValue.length === 0) {
