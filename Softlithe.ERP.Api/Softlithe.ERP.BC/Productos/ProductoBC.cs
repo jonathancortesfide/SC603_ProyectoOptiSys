@@ -43,11 +43,10 @@ namespace Softlithe.ERP.BC.Productos
                 return Task.FromResult(validacion);
             }
 
-            if (productoDto.NoGrupo <= 0)
+            // Asignar grupo por defecto si es null o 0
+            if (!productoDto.NoGrupo.HasValue || productoDto.NoGrupo <= 0)
             {
-                validacion.Mensaje = "El grupo del producto es requerido.";
-                validacion.EsCorrecto = false;
-                return Task.FromResult(validacion);
+                productoDto.NoGrupo = 1; // Grupo por defecto
             }
 
             if (string.IsNullOrWhiteSpace(productoDto.Usuario))
@@ -104,11 +103,10 @@ namespace Softlithe.ERP.BC.Productos
                 return Task.FromResult(validacion);
             }
 
-            if (productoDto.NoGrupo <= 0)
+            // Asignar grupo por defecto si es null o 0
+            if (!productoDto.NoGrupo.HasValue || productoDto.NoGrupo <= 0)
             {
-                validacion.Mensaje = "El grupo del producto es requerido.";
-                validacion.EsCorrecto = false;
-                return Task.FromResult(validacion);
+                productoDto.NoGrupo = 1; // Grupo por defecto
             }
 
             if (string.IsNullOrWhiteSpace(productoDto.Usuario))

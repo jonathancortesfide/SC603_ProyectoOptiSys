@@ -28,8 +28,8 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Productos
         [Required(ErrorMessage = MensajeDeProductoDto.DescripcionProductoRequerida)]
         public string Descripcion { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El grupo del producto es requerido.")]
-        public int NoGrupo { get; set; }
+        // NoGrupo es opcional
+        public int? NoGrupo { get; set; }
 
         public bool? Activo { get; set; }
 
