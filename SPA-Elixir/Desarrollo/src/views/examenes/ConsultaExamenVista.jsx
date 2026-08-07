@@ -484,7 +484,13 @@ const ConsultaExamenVista = () => {
                 paciente?.esactivo ??
                 true;
 
-              return activo === true || activo === 1 || activo === '1' || activo === 'true' || activo === 'True';
+              return (
+                activo === true ||
+                activo === 1 ||
+                activo === '1' ||
+                activo === 'true' ||
+                activo === 'True'
+              );
             });
 
             setPacientes(pacientesActivos);
@@ -789,7 +795,9 @@ const ConsultaExamenVista = () => {
                               item?.fechaExamen ??
                               item?.fecha ??
                               null;
-                            const fechaTexto = fechaExamen ? formatearValor(fechaExamen, 'fecha') : '—';
+                            const fechaTexto = fechaExamen
+                              ? formatearValor(fechaExamen, 'fecha')
+                              : '—';
 
                             return (
                               <TableRow key={noExamen ?? `examen-${index}`}>
