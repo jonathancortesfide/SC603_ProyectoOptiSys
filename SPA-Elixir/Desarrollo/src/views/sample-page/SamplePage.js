@@ -142,13 +142,6 @@ const SamplePage = () => {
       ruta: '/verexamenes',
     },
     {
-      icono: <ReceiptOutlinedIcon />,
-      color: theme.palette.warning.main,
-      titulo: 'Facturación',
-      descripcion: 'Emisión y consulta de facturas.',
-      ruta: '/facturacion',
-    },
-    {
       icono: <Inventory2OutlinedIcon />,
       color: theme.palette.error.main,
       titulo: 'Productos',
@@ -304,15 +297,6 @@ const SamplePage = () => {
               sx={{ borderRadius: 2 }}
             >
               Buscar examen
-            </Button>
-            <Button
-              variant="outlined"
-              color="warning"
-              startIcon={<ReceiptOutlinedIcon />}
-              onClick={() => navigate('/facturacion')}
-              sx={{ borderRadius: 2 }}
-            >
-              Nueva factura
             </Button>
           </Stack>
         </Box>

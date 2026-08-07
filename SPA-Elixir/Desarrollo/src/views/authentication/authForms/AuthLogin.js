@@ -2,18 +2,14 @@ import React from 'react';
 import {
   Box,
   Typography,
-  FormGroup,
-  FormControlLabel,
   Button,
   Stack,
-  Divider,
   Alert,
 } from '@mui/material';
 import { Form, useFormik, FormikProvider } from 'formik';
 import * as Yup from 'yup';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import useAuth from 'src/guards/authGuard/UseAuth';
@@ -54,18 +50,34 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
         if (mounted.current) {
           setStatus({ success: true });
           setSubmitting(false);
-          navigate('/resolver-contexto', { replace: true });
+
+          const redirectTo = location.state?.from || '/resolver-contexto';
+          navigate(redirectTo, { replace: true });
         }
       } catch (err) {
         if (mounted.current) {
           setStatus({ success: false });
-          setErrors({ submit: err.message });
+          setErrors({ submit: getFriendlyErrorMessage(err) });
           setSubmitting(false);
         }
       }
     },
   });
   const { errors, touched, handleSubmit, isSubmitting, getFieldProps } = formik;
+
+  const getFriendlyErrorMessage = (error) => {
+    if (typeof error === 'string') return error;
+
+    const status = error?.response?.status;
+    if (status === 401) {
+      return 'Credenciales inválidas o la cuenta aún no está activada. Si acaba de registrarse, espere a que se complete el proceso de activación.';
+    }
+
+    if (error?.response?.data?.error) return error.response.data.error;
+    if (error?.response?.data?.message) return error.response.data.message;
+    if (error?.message) return error.message;
+    return 'No se pudo iniciar sesión. Verifique sus credenciales e intente de nuevo.';
+  };
 
   return (
     <>
@@ -117,27 +129,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                 helperText={touched.password && errors.password}
               />
             </Box>
-            <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-              <FormGroup>
-                <FormControlLabel
-                  control={<CustomCheckbox defaultChecked />}
-                  label="Remeber this Device"
-                />
-              </FormGroup>
-              <Typography
-                component={Link}
-                to="/auth/reset-password"
-                fontWeight="500"
-                sx={{
-                  textDecoration: 'none',
-                  color: 'primary.main',
-                }}
-              >
-                Forgot Password ?
-              </Typography>
-            </Stack>
           </Stack>
-          <Box>
+          <Box sx={{ mt: 2.5 }}>
             <Button
               color="primary"
               variant="contained"
@@ -146,7 +139,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
               type="submit"
               disabled={isSubmitting}
             >
-              Sign In
+              Iniciar Sesión
             </Button>
           </Box>
         </Form>
