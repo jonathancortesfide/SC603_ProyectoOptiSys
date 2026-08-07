@@ -32,18 +32,7 @@ namespace Softlithe.ERP.Api.Controllers.Examenes
             return Ok(respuesta);
         }
 
-        [HttpGet("paciente/{noPaciente}")]
-        public async Task<IActionResult> ObtenerExamenNoPaciente(int noPaciente)
-        {
-            var respuesta = await _examenSnapshotBW.ObtenerPorNoPaciente(noPaciente);   
 
-            if(!respuesta.EsCorrecto)
-            {
-                return BadRequest(respuesta);
-            }
-            return Ok(respuesta);
-
-        }
 
         [HttpPost]
         public async Task<IActionResult> Crear(

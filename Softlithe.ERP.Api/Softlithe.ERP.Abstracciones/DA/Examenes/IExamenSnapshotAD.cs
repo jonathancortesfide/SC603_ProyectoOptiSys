@@ -10,7 +10,7 @@ namespace Softlithe.ERP.Abstracciones.DA.Examenes
     public interface IExamenSnapshotAD
     {
         Task<ExamenSnapshotDto> Obtener(int noExamen);
-
+        Task<List<ExamenSnapshotDto>> ObtenerPorNoPaciente(int noPaciente);
         Task<bool> Crear(ExamenSnapshotDto examenSnapshot);
     }
 }

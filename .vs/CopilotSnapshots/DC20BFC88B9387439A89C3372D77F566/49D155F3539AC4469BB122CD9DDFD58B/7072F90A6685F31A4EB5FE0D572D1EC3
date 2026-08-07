@@ -1,0 +1,88 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Softlithe.ERP.Abstracciones.BW.Examenes;
+using Softlithe.ERP.Abstracciones.Contenedores.Examenes;
+using System.Threading.Tasks;
+
+namespace Softlithe.ERP.Api.Controllers.Examenes
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ExamenSnapshotController : ControllerBase
+    {
+        private readonly IExamenSnapshotBW _examenSnapshotBW;
+
+
+        public ExamenSnapshotController(
+            IExamenSnapshotBW examenSnapshotBW)
+        {
+            _examenSnapshotBW = examenSnapshotBW;
+        }
+
+
+        [HttpGet("{noExamen}")]
+        public async Task<IActionResult> Obtener(int noExamen)
+        {
+            var respuesta = await _examenSnapshotBW.ObtenerPorNoExamen(noExamen);
+
+            if (!respuesta.EsCorrecto)
+            {
+                return BadRequest(respuesta);
+            }
+
+            return Ok(respuesta);
+        }
+
+        [RequierePermiso("EXAMEN_VER")]
+        [HttpGet("NumerosPorPaciente/{noPaciente}")]
+        public async Task<IActionResult> NumerosPorPaciente([FromRoute] int noPaciente)
+        {
+            var respuesta = new Softlithe.ERP.Abstracciones.Contenedores.RespuestaBaseDto<System.Collections.Generic.List<int>>();
+
+            try
+            {
+                if (noPaciente <= 0)
+                {
+                    respuesta.EsCorrecto = false;
+                    respuesta.Mensaje = Softlithe.ERP.Abstracciones.Contenedores.MensajesDelSistema.MensajesGeneralesDelSistemaDto.OcurrioUnErrorEnElSistema;
+                    respuesta.Datos = new System.Collections.Generic.List<int>();
+                    return BadRequest(respuesta);
+                }
+
+                var numeros = await _context
+                    .Set<Softlithe.ERP.Abstracciones.Contenedores.Examenes.ExamenSnapshotDto>()
+                    .AsNoTracking()
+                    .Where(e => e.no_paciente == noPaciente)
+                    .Select(e => e.no_examen)
+                    .Distinct()
+                    .ToListAsync();
+
+                respuesta.EsCorrecto = true;
+                respuesta.Mensaje = Softlithe.ERP.Abstracciones.Contenedores.MensajesDelSistema.MensajesGeneralesDelSistemaDto.DatosObtenidosDeManeraCorrecta;
+                respuesta.Datos = numeros;
+                return Ok(respuesta);
+            }
+            catch (System.Exception)
+            {
+                respuesta.EsCorrecto = false;
+                respuesta.Mensaje = Softlithe.ERP.Abstracciones.Contenedores.MensajesDelSistema.MensajesGeneralesDelSistemaDto.OcurrioUnErrorEnElSistema;
+                respuesta.Datos = new System.Collections.Generic.List<int>();
+                return BadRequest(respuesta);
+            }
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> Crear(
+            [FromBody] ExamenSnapshotDto examenSnapshot)
+        {
+            var respuesta = await _examenSnapshotBW.Crear(examenSnapshot);
+
+            if (!respuesta.EsCorrecto)
+            {
+                return BadRequest(respuesta);
+            }
+
+            return Ok(respuesta);
+        }
+    }
+}

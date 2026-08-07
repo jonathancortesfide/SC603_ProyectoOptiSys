@@ -31,6 +31,32 @@ namespace Softlithe.ERP.DA.Examenes.ExamenSnapshot
             return conexion;
         }
 
+        public async Task<List<ExamenSnapshotDto>> ObtenerPorNoPaciente(int noPaciente)
+        {
+            try
+            {
+                var conexion = await ObtenerConexionAsync();
+
+                const string sql = @"
+            SELECT
+                no_examen,
+                fecha_examen
+            FROM ExamenSnapshot
+            WHERE no_paciente = @noPaciente";
+
+                return (await conexion.QueryAsync<ExamenSnapshotDto>(
+                    sql,
+                    new { noPaciente }
+                )).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    "Error al obtener los exámenes por número de paciente.",
+                    ex);
+            }
+        }
+
 
         public async Task<ExamenSnapshotDto> Obtener(int noExamen)
         {
