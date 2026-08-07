@@ -460,12 +460,14 @@ const Productos = () => {
 
         {/* Diálogo de formulario */}
         <Dialog open={openDialog} onClose={handleCerrarFormulario} maxWidth="lg" fullWidth>
-          <FormularioProducto
-            producto={productoSeleccionado}
-            modoEdicion={modoEdicion}
-            onGuardar={handleGuardar}
-            onCancel={handleCerrarFormulario}
-          />
+          <Box sx={{ maxHeight: '90vh', overflow: 'auto' }}>
+            <FormularioProducto
+              producto={productoSeleccionado}
+              modoEdicion={modoEdicion}
+              onGuardar={handleGuardar}
+              onCancel={handleCerrarFormulario}
+            />
+          </Box>
         </Dialog>
 
         {/* Confirmación de eliminación */}
@@ -478,8 +480,7 @@ const Productos = () => {
               </Box>
             </Box>
             <Box sx={{ mb: 3, color: '#666' }}>
-              ¿Está seguro que desea eliminar el producto "
-              <strong>{confirmDelete?.nombre || confirmDelete?.codigoInterno}</strong>"?
+              ¿Está seguro que desea eliminar el producto?
               Esta acción no se puede deshacer.
             </Box>
             <Stack direction="row" spacing={2} justifyContent="flex-end">

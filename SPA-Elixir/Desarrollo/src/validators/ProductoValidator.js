@@ -255,37 +255,41 @@ export const obtenerPrimerError = (errores) => {
 export const normalizarProducto = (producto) => {
   if (!producto) return {};
 
+  // Determinar el estado activo: buscar en esActivo, activo, o Activo
+  const esActivo = producto.esActivo !== undefined 
+    ? Boolean(producto.esActivo) 
+    : (producto.activo !== undefined ? Boolean(producto.activo) : true);
+
   return {
-    idProducto: producto.idProducto || 0,
-    noEmpresa: Number(producto.noEmpresa) || 1,
-    codigo: String(producto.codigo || '').trim(),
-    nombre: String(producto.nombre || '').trim(),
-    descripcion: String(producto.descripcion || '').trim(),
-    codigoBarras: String(producto.codigoBarras || '').trim(),
-    codigoAuxiliar: String(producto.codigoAuxiliar || '').trim(),
-    codigoCabys: String(producto.codigoCabys || '').trim(),
-    codigoProveedor: String(producto.codigoProveedor || '').trim(),
-    tipoArticulo: producto.tipoArticulo || 'Material',
-    noGrupo: Number(producto.noGrupo) || 0,
-    noMarca: producto.noMarca ? Number(producto.noMarca) : null,
-    tipoProducto: String(producto.tipoProducto || 'AR').trim(),
-    noTipo: Number(producto.noTipo) || 1,
-    tipoImpuesto: producto.tipoImpuesto || 'IVA',
-    porcentajeImpuesto: Number(producto.porcentajeImpuesto) || 0,
-    unidadMedida: String(producto.unidadMedida || '').trim(),
-    existencia: Number(producto.existencia) || 0,
-    minimo: Number(producto.minimo) || 0,
-    esPerecedero: Boolean(producto.esPerecedero),
-    esActivo: producto.esActivo !== undefined ? Boolean(producto.esActivo) : true,
-    activo: producto.activo !== undefined ? Boolean(producto.activo) : true,
-    costoPromedio: producto.costoPromedio ? Number(producto.costoPromedio) : 0,
-    ultimoCosto: producto.ultimoCosto ? Number(producto.ultimoCosto) : 0,
-    ultimoPrecioCosto: producto.ultimoPrecioCosto ? Number(producto.ultimoPrecioCosto) : 0,
-    usuario: String(producto.usuario || '').trim(),
-    identificador: Number(producto.identificador) || 1,
-    tipoLente: producto.tipoLente ? String(producto.tipoLente).trim() : null,
-    caracteristicas: String(producto.caracteristicas || '').trim(),
-    foto: producto.foto || null,
+    IdProducto: producto.idProducto || 0, // PascalCase para coincidir con el DTO del backend
+    NoEmpresa: Number(producto.noEmpresa) || 1,
+    Codigo: String(producto.codigo || '').trim(),
+    Nombre: String(producto.nombre || '').trim(),
+    Descripcion: String(producto.descripcion || '').trim(),
+    CodigoBarra: String(producto.codigoBarras || '').trim(),
+    CodigoAuxiliar: String(producto.codigoAuxiliar || '').trim(),
+    CodigoCabys: String(producto.codigoCabys || '').trim(),
+    CodigoProveedor: String(producto.codigoProveedor || '').trim(),
+    TipoArticulo: producto.tipoArticulo || 'Material',
+    NoGrupo: Number(producto.noGrupo) || 0,
+    NoMarca: producto.noMarca ? Number(producto.noMarca) : null,
+    TipoProducto: String(producto.tipoProducto || 'AR').trim(),
+    NoTipo: Number(producto.noTipo) || 1,
+    TipoImpuesto: producto.tipoImpuesto || 'IVA',
+    PorcentajeImpuesto: Number(producto.porcentajeImpuesto) || 0,
+    UnidadMedida: String(producto.unidadMedida || '').trim(),
+    Existencia: Number(producto.existencia) || 0,
+    Minimo: Number(producto.minimo) || 0,
+    Perecedero: Boolean(producto.esPerecedero),
+    Activo: esActivo, // Propiedad esperada por el backend (PascalCase, singular)
+    CostoPromedio: producto.costoPromedio ? Number(producto.costoPromedio) : 0,
+    UltimoCosto: producto.ultimoCosto ? Number(producto.ultimoCosto) : 0,
+    UltimoPrecioCosto: producto.ultimoPrecioCosto ? Number(producto.ultimoPrecioCosto) : 0,
+    Usuario: String(producto.usuario || '').trim(),
+    Identificador: Number(producto.identificador) || 1,
+    TipoLente: producto.tipoLente ? String(producto.tipoLente).trim() : null,
+    CaracteristicasAdicionales: String(producto.caracteristicas || '').trim(),
+    Foto: producto.foto || null,
   };
 };
 

@@ -121,13 +121,24 @@ export const deleteProducto = createAsyncThunk(
   'productos/deleteProducto',
   async (id, { rejectWithValue }) => {
     try {
+      console.log('🗑️ Iniciando eliminación de producto ID:', id);
       const response = await eliminarProducto(id);
-      if (response && response.EsCorrecto !== false) {
+      console.log('📨 Respuesta del servidor:', response);
+      
+      // Verificar si la eliminación fue exitosa
+      // EsCorrecto viene en PascalCase desde el backend .NET
+      const esExitoso = response?.EsCorrecto === true || response?.esCorrecto === true;
+      
+      if (esExitoso) {
+        console.log('✅ Producto eliminado correctamente');
         return id;
       } else {
-        return rejectWithValue(response?.Mensaje || 'Error al eliminar producto');
+        const mensajeError = response?.Mensaje || response?.mensaje || 'Error al eliminar producto';
+        console.error('❌ Error en eliminación:', mensajeError);
+        return rejectWithValue(mensajeError);
       }
     } catch (error) {
+      console.error('❌ Excepción al eliminar:', error);
       return rejectWithValue(error.message || 'Error al eliminar producto');
     }
   }

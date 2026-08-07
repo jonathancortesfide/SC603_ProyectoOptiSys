@@ -28,6 +28,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import { getNombreEmpresaSesion } from '../../utils/empresa';
 import { getNombreSucursalSesion } from '../../utils/sucursal';
 import { obtenerListaDePacientes } from '../../requests/pacientes/RequestsPacientes';
+import useProductos from '../../hooks/useProductos';
 
 const DIAS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const MESES_ES = [
@@ -107,6 +108,10 @@ const SamplePage = () => {
   const nombreSucursal = getNombreSucursalSesion();
 
   const [totalPacientes, setTotalPacientes] = useState('—');
+  const [productosEnStock, setProductosEnStock] = useState('—');
+  
+  // Hook para obtener productos
+  const { productos, cargarProductos } = useProductos();
 
   useEffect(() => {
     obtenerListaDePacientes()
@@ -118,6 +123,25 @@ const SamplePage = () => {
       })
       .catch(() => setTotalPacientes('—'));
   }, []);
+
+  // Cargar productos y contar los que tienen existencia
+  useEffect(() => {
+    cargarProductos(1, '');
+  }, [cargarProductos]);
+
+  // Contar productos activos con existencia > 0
+  useEffect(() => {
+    if (Array.isArray(productos) && productos.length > 0) {
+      const conStock = productos.filter((p) => {
+        const existencia = Number(p.existencia) || 0;
+        const activo = p.Activo !== false; // Verifica que esté activo
+        return existencia > 0 && activo;
+      }).length;
+      setProductosEnStock(conStock);
+    } else {
+      setProductosEnStock('—');
+    }
+  }, [productos]);
 
   const modulos = [
     {
@@ -249,7 +273,7 @@ const SamplePage = () => {
             <StatCard
               icono={<Inventory2OutlinedIcon />}
               color={theme.palette.error.main}
-              valor="—"
+              valor={productosEnStock}
               etiqueta="Productos en stock"
             />
           </Grid>

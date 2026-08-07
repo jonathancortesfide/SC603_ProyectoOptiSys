@@ -133,8 +133,10 @@ const obtenerProductoPorId = async (idProducto) => {
     });
 
     if (response.status === 200) {
-      // Backend devuelve estructura ProductoDetalleConModeloDeValidacion con propiedad Producto
-      return response.data?.producto || response.data || null;
+      // Backend devuelve estructura ProductoDetalleConModeloDeValidacion con propiedad Producto (capital P)
+      const productoDetalle = response.data?.Producto || response.data?.producto || null;
+      console.log('✅ Producto obtenido del backend:', productoDetalle);
+      return productoDetalle;
     }
     return null;
   } catch (err) {

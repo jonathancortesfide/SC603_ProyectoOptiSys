@@ -108,16 +108,21 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
   useEffect(() => {
     if (modoEdicion && producto) {
       // Primero, llenar con los datos del producto de la lista (al menos tiene el ID)
+      const idProducto = producto.idProducto || producto.id;
+      
       setForm((prev) => ({
         ...prev,
         ...producto,
+        idProducto: idProducto, // Asegurar que se preserva el ID
         nombre: producto.nombre || producto.descripcion,
         usuario: usuarioActual || 'sistema',
       }));
       
+      console.log('📝 Modo edición, cargando producto con ID:', idProducto);
+      
       // Luego, si tiene ID, cargar los datos completos del backend
-      if (producto.idProducto) {
-        cargarProductoPorId(producto.idProducto);
+      if (idProducto) {
+        cargarProductoPorId(idProducto);
       }
     } else if (!modoEdicion) {
       // Modo crear: resetear con valores por defecto
@@ -126,6 +131,7 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
         idProducto: 0,
         usuario: usuarioActual || 'sistema',
       }));
+      console.log('📝 Modo creación, idProducto = 0');
     }
     setErrores({});
   }, [modoEdicion, producto, usuarioActual, cargarProductoPorId]);
@@ -134,14 +140,19 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
   useEffect(() => {
     if (productoActual && modoEdicion) {
       // Datos completos del backend - actualizamos, pero preservamos el idProducto
+      const idProducto = productoActual.idProducto || form.idProducto;
+      
       setForm((prev) => ({
         ...prev,
         ...productoActual,
+        idProducto: idProducto, // Asegurar que se preserva el ID
         nombre: productoActual.nombre || productoActual.descripcion,
         usuario: usuarioActual || 'sistema',
       }));
+      
+      console.log('✅ Datos del backend recibidos, ID:', idProducto);
     }
-  }, [productoActual, modoEdicion, usuarioActual]);
+  }, [productoActual, modoEdicion, usuarioActual, form.idProducto]);
 
   // ============================================
   // CARGA DE DATOS
