@@ -13,17 +13,20 @@ namespace Softlithe.ERP.Api.Controllers
         private readonly IAgregarProductoBW _agregarProductoBW;
         private readonly IModificarProductoBW _modificarProductoBW;
         private readonly IModificarEstadoProductoBW _modificarEstadoProductoBW;
+        private readonly IEliminarProductoBW _eliminarProductoBW;
 
         public ProductosController(
             IObtenerProductoBW obtenerProductoBW,
             IAgregarProductoBW agregarProductoBW,
             IModificarProductoBW modificarProductoBW,
-            IModificarEstadoProductoBW modificarEstadoProductoBW)
+            IModificarEstadoProductoBW modificarEstadoProductoBW,
+            IEliminarProductoBW eliminarProductoBW)
         {
             _obtenerProductoBW = obtenerProductoBW;
             _agregarProductoBW = agregarProductoBW;
             _modificarProductoBW = modificarProductoBW;
             _modificarEstadoProductoBW = modificarEstadoProductoBW;
+            _eliminarProductoBW = eliminarProductoBW;
         }
 
         /// <summary>
@@ -85,6 +88,16 @@ namespace Softlithe.ERP.Api.Controllers
         public async Task<ProductoConModeloDeValidacion> ObtenerProductosAR([FromRoute] int noEmpresa, [FromRoute] string descripcion)
         {
             ProductoConModeloDeValidacion resultado = await _obtenerProductoBW.ObtenerProductosAR(noEmpresa, descripcion);
+            return resultado;
+        }
+
+        /// <summary>
+        /// Elimina un producto por su ID
+        /// </summary>
+        [HttpDelete("{id}")]
+        public async Task<ModeloValidacion> EliminarProducto([FromRoute] int id)
+        {
+            ModeloValidacion resultado = await _eliminarProductoBW.EliminarProducto(id);
             return resultado;
         }
     }

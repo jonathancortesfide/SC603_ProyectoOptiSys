@@ -15,6 +15,7 @@ namespace Softlithe.ERP.Api.Inyeccion
             services.AddScoped<IAgregarProductoBW, AgregarProductoBW>();
             services.AddScoped<IModificarProductoBW, ModificarProductoBW>();
             services.AddScoped<IModificarEstadoProductoBW, ModificarEstadoProductoBW>();
+            services.AddScoped<IEliminarProductoBW, EliminarProductoBW>();
             services.AddScoped<IProductoBC, ProductoBC>();
             services.AddScoped<IProductoRepository, ProductoRepository>();
 

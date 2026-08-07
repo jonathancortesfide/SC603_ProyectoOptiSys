@@ -1,299 +1,711 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Grid, TextField, Button, Checkbox, FormControlLabel, MenuItem, Accordion, AccordionSummary, AccordionDetails, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, InputAdornment, IconButton } from '@mui/material';
-import { IconChevronDown, IconSearch } from '@tabler/icons';
-import { AgregarProducto } from '../../requests/mantenimientos/producto/RequestsProductos';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Box,
+  Grid,
+  TextField,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  MenuItem,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableContainer,
+  InputAdornment,
+  IconButton,
+  Alert,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  Divider,
+} from '@mui/material';
+import {
+  IconChevronDown,
+  IconSearch,
+  IconTrash,
+  IconAlertCircle,
+  IconCheck,
+  IconX,
+} from '@tabler/icons';
+import ParentCard from '../../components/shared/ParentCard';
+import useProductos from '../../hooks/useProductos';
+import { getCurrentUsername } from '../../utils/session';
+import {
+  validarProducto,
+  tieneErrores,
+  formatearErrores,
+  normalizarProducto,
+  obtenerPrimerError,
+} from '../../validators/ProductoValidator';
 import { obtenerTipoLente } from '../../requests/mantenimientos/TipoLente/RequestsTipoLente';
 
-const tiposArticulo = [ 'Material', 'Servicio', 'Servicio-Externo' ];
-const tiposImpuesto = [ 'Exento', 'IVA', 'Otro' ];
-const listasPreciosBase = [
-  { id: 'lp-001', nombre: 'General', utilidad: 0, precioNeto: 0, precioCliente: 0 },
-  { id: 'lp-002', nombre: 'Mayoreo', utilidad: 0, precioNeto: 0, precioCliente: 0 },
-  { id: 'lp-003', nombre: 'Preferencial', utilidad: 0, precioNeto: 0, precioCliente: 0 },
-];
+const TIPOS_ARTICULO = ['Material', 'Servicio', 'Servicio-Externo'];
+const TIPOS_IMPUESTO = ['Exento', 'IVA', 'Otro'];
 
+/**
+ * Formulario para crear y editar productos
+ * Incluye validaciones completas según el manual
+ */
 const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
+  const { crearProducto, actualizarProducto, loading, error, cargarProductoPorId, productoActual } = useProductos();
+  const usuarioActual = getCurrentUsername();
+
+  // Estado del formulario
   const [form, setForm] = useState({
-    tipoArticulo: 'Material',
-    tipoImpuesto: 'IVA',
-    porcentajeImpuesto: 13,
-    codigoInterno: '',
+    idProducto: 0,
+    noEmpresa: 1,
+    codigo: '',
+    nombre: '',
+    descripcion: '',
     codigoBarras: '',
     codigoAuxiliar: '',
-    nombre: '',
     codigoCabys: '',
-    esActivo: true,
+    codigoProveedor: '',
+    tipoArticulo: 'Material',
+    noGrupo: '',
+    noMarca: '',
+    tipoImpuesto: 'IVA',
+    porcentajeImpuesto: 13,
     unidadMedida: '',
-    grupo: '',
-    marca: '',
-    tipoLente: '',
     existencia: 0,
-    caracteristicas: '',
-    foto: '',
     minimo: 0,
     esPerecedero: false,
-    costoPromedioPonderado: 0,
-    costoUltimaCompra: 0,
-    costoFinal: 0,
-    listasPrecios: [],
+    esActivo: true,
+    costoPromedio: 0,
+    ultimoCosto: 0,
+    ultimoPrecioCosto: 0,
+    tipoProducto: 'AR',
+    noTipo: 1,
+    usuario: usuarioActual || 'sistema',
+    identificador: 1,
+    tipoLente: '',
+    caracteristicas: '',
+    foto: '',
   });
 
+  const [errores, setErrores] = useState({});
   const [tiposLente, setTiposLente] = useState([]);
+  const [enviando, setEnviando] = useState(false);
+
+  // ============================================
+  // EFECTOS
+  // ============================================
 
   useEffect(() => {
-    if (producto) {
-      setForm((p) => ({ ...p, ...producto }));
-    } else {
-      setForm((p) => ({ ...p, listasPrecios: p.listasPrecios?.length ? p.listasPrecios : listasPreciosBase }));
-    }
     cargarTiposLente();
-  }, [producto]);
+  }, []);
+
+  // Cargar datos iniciales cuando se abre el formulario
+  useEffect(() => {
+    if (modoEdicion && producto) {
+      // Primero, llenar con los datos del producto de la lista (al menos tiene el ID)
+      const idProducto = producto.idProducto || producto.id;
+      
+      setForm((prev) => ({
+        ...prev,
+        ...producto,
+        idProducto: idProducto, // Asegurar que se preserva el ID
+        nombre: producto.nombre || producto.descripcion,
+        usuario: usuarioActual || 'sistema',
+      }));
+      
+      console.log('📝 Modo edición, cargando producto con ID:', idProducto);
+      
+      // Luego, si tiene ID, cargar los datos completos del backend
+      if (idProducto) {
+        cargarProductoPorId(idProducto);
+      }
+    } else if (!modoEdicion) {
+      // Modo crear: resetear con valores por defecto
+      setForm((prev) => ({
+        ...prev,
+        idProducto: 0,
+        usuario: usuarioActual || 'sistema',
+      }));
+      console.log('📝 Modo creación, idProducto = 0');
+    }
+    setErrores({});
+  }, [modoEdicion, producto, usuarioActual, cargarProductoPorId]);
+
+  // Cuando lleguen los datos completos del backend, actualizar el formulario
+  useEffect(() => {
+    if (productoActual && modoEdicion) {
+      // Datos completos del backend - actualizamos, pero preservamos el idProducto
+      const idProducto = productoActual.idProducto || form.idProducto;
+      
+      setForm((prev) => ({
+        ...prev,
+        ...productoActual,
+        idProducto: idProducto, // Asegurar que se preserva el ID
+        nombre: productoActual.nombre || productoActual.descripcion,
+        usuario: usuarioActual || 'sistema',
+      }));
+      
+      console.log('✅ Datos del backend recibidos, ID:', idProducto);
+    }
+  }, [productoActual, modoEdicion, usuarioActual, form.idProducto]);
+
+  // ============================================
+  // CARGA DE DATOS
+  // ============================================
 
   const cargarTiposLente = async () => {
-    const data = await obtenerTipoLente();
-    if (data && Array.isArray(data) && data.length > 0) {
-      setTiposLente(data.filter(t => t.activo).map(t => ({ value: t.no_tipo, label: t.descripcion })));
-    } else {
-      setTiposLente([
-        { value: 'Monofocal', label: 'Monofocal' },
-        { value: 'Bifocal', label: 'Bifocal' },
-        { value: 'Progresivo', label: 'Progresivo' },
-        { value: 'Otro', label: 'Otro' }
-      ]);
-    }
-  };
-
-  const handleChange = (key) => (e) => {
-    const value = e?.target?.type === 'checkbox' ? e.target.checked : e.target.value;
-    setForm((s) => ({ ...s, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
-
-  const [errors, setErrors] = useState({});
-
-  const validate = () => {
-    const e = {};
-    if (!form.codigoInterno || !String(form.codigoInterno).trim()) e.codigoInterno = 'Código interno es obligatorio';
-    if (!form.nombre || !String(form.nombre).trim()) e.nombre = 'Nombre es obligatorio';
-    if (isNaN(Number(form.porcentajeImpuesto)) || Number(form.porcentajeImpuesto) < 0) e.porcentajeImpuesto = 'Porcentaje inválido';
-    if (isNaN(Number(form.existencia)) || Number(form.existencia) < 0) e.existencia = 'Existencia inválida';
-    if (isNaN(Number(form.minimo)) || Number(form.minimo) < 0) e.minimo = 'Mínimo inválido';
-    ['costoPromedioPonderado','costoUltimaCompra','costoFinal'].forEach(k => {
-      if (form[k] !== '' && (isNaN(Number(form[k])) || Number(form[k]) < 0)) e[k] = 'Valor inválido';
-    });
-
-    if (Array.isArray(form.listasPrecios)) {
-      const listasErr = {};
-      form.listasPrecios.forEach((lp, idx) => {
-        const rowErr = {};
-        if (!lp.nombre || !String(lp.nombre).trim()) rowErr.nombre = 'Nombre es obligatorio';
-        if (isNaN(Number(lp.utilidad)) || Number(lp.utilidad) < 0) rowErr.utilidad = 'Utilidad inválida';
-        if (isNaN(Number(lp.precioNeto)) || Number(lp.precioNeto) < 0) rowErr.precioNeto = 'Precio neto inválido';
-        if (Object.keys(rowErr).length) listasErr[idx] = rowErr;
-      });
-      if (Object.keys(listasErr).length) e.listasPrecios = listasErr;
-    }
-
-    return e;
-  };
-
-  const handleSubmit = async () => {
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
-
-    const payload = { ...form };
     try {
-      const res = await AgregarProducto(payload);
-      if (res && res.EsCorrecto !== false) { onGuardar && onGuardar(); }
-      else setErrors({ submit: res?.Mensaje || 'Error al guardar producto' });
-    } catch (err) { console.error(err); setErrors({ submit: 'Error al guardar' }); }
-  };
-
-  const handleListaChange = (idx, key) => (e) => {
-    const value = e?.target?.type === 'number' ? (e.target.value === '' ? '' : parseFloat(e.target.value)) : e.target.value;
-    setForm(s => {
-      const listas = [...(s.listasPrecios || [])];
-      listas[idx] = { ...listas[idx], [key]: value };
-      const impuestoFactor = 1 + (Number(s.porcentajeImpuesto) || 0) / 100;
-      listas[idx].precioCliente = Number(listas[idx].precioNeto || 0) * impuestoFactor;
-      return { ...s, listasPrecios: listas };
-    });
-    setErrors(err => {
-      if (!err.listasPrecios) return err;
-      const copy = { ...err };
-      if (copy.listasPrecios && copy.listasPrecios[idx]) {
-        const row = { ...copy.listasPrecios };
-        delete row[idx];
-        copy.listasPrecios = Object.keys(row).length ? row : undefined;
+      const data = await obtenerTipoLente();
+      if (data && Array.isArray(data) && data.length > 0) {
+        setTiposLente(
+          data
+            .filter((t) => t.activo)
+            .map((t) => ({ value: t.no_tipo, label: t.descripcion }))
+        );
+      } else {
+        setTiposLente([
+          { value: 'Monofocal', label: 'Monofocal' },
+          { value: 'Bifocal', label: 'Bifocal' },
+          { value: 'Progresivo', label: 'Progresivo' },
+          { value: 'Otro', label: 'Otro' },
+        ]);
       }
-      return copy;
-    });
+    } catch (err) {
+      console.error('Error cargando tipos de lente:', err);
+    }
   };
 
-  // Photo upload
-  const handleFotoChange = (e) => {
+  // ============================================
+  // MANEJADORES DE CAMBIOS
+  // ============================================
+
+  const handleChange = useCallback(
+    (campo) => (e) => {
+      const valor =
+        e?.target?.type === 'checkbox' ? e.target.checked : e.target.value;
+      setForm((prev) => ({ ...prev, [campo]: valor }));
+      // Limpiar error del campo
+      setErrores((prev) => ({ ...prev, [campo]: undefined }));
+    },
+    []
+  );
+
+  const handleFotoChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => {
-      setForm(s => ({ ...s, foto: reader.result }));
-      setErrors(err => ({ ...err, foto: undefined }));
+      setForm((prev) => ({ ...prev, foto: reader.result }));
+      setErrores((prev) => ({ ...prev, foto: undefined }));
     };
     reader.readAsDataURL(file);
+  }, []);
+
+  // ============================================
+  // ENVÍO DE FORMULARIO
+  // ============================================
+
+  const handleSubmit = async () => {
+    // Validar
+    const erroresValidacion = validarProducto(form);
+
+    if (tieneErrores(erroresValidacion)) {
+      setErrores(erroresValidacion);
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      // Normalizar datos
+      const productoNormalizado = normalizarProducto(form);
+
+      // Enviar
+      if (modoEdicion) {
+        await actualizarProducto(productoNormalizado);
+      } else {
+        await crearProducto(productoNormalizado);
+      }
+
+      // Si llegó aquí, fue exitoso
+      onGuardar && onGuardar();
+    } catch (err) {
+      console.error('Error al guardar producto:', err);
+      setErrores({
+        general: err.message || 'Error al guardar el producto',
+      });
+    } finally {
+      setEnviando(false);
+    }
   };
 
+  // ============================================
+  // RENDERIZADO
+  // ============================================
+
+  const mensajesError = formatearErrores(errores).slice(0, 3);
+  const primerError = obtenerPrimerError(errores);
+
   return (
-    <Box sx={{ p: 2 }}>
-      <Accordion defaultExpanded>
-        <AccordionSummary expandIcon={<IconChevronDown />}>
-          <Typography variant="subtitle1" fontWeight={600}>Información básica</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
-              <TextField select label="Tipo de artículo" fullWidth size="small" value={form.tipoArticulo} onChange={handleChange('tipoArticulo')}>
-                {tiposArticulo.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={4}><TextField label="Código interno" fullWidth size="small" value={form.codigoInterno} onChange={handleChange('codigoInterno')} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Nombre producto" fullWidth size="small" value={form.nombre} onChange={handleChange('nombre')} /></Grid>
+    <ParentCard
+      title={
+        modoEdicion
+          ? `Editar Producto - ${form.codigo}`
+          : 'Crear Nuevo Producto'
+      }
+    >
+      <Box sx={{ p: 2 }}>
+        {/* Errores generales */}
+        {(error || errores.general) && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <strong>Error:</strong> {error || errores.general}
+          </Alert>
+        )}
 
-            <Grid item xs={12} sm={4}>
-              <TextField select label="Tipo de impuesto" fullWidth size="small" value={form.tipoImpuesto} onChange={handleChange('tipoImpuesto')}>
-                {tiposImpuesto.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField label="Porcentaje de impuesto" type="number" fullWidth size="small" value={form.porcentajeImpuesto} onChange={handleChange('porcentajeImpuesto')} />
-            </Grid>
-            <Grid item xs={12} sm={4}><TextField label="Código CABYS" fullWidth size="small" value={form.codigoCabys} onChange={handleChange('codigoCabys')} /></Grid>
+        {/* Errores de validación */}
+        {mensajesError.length > 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <strong>Validación requerida:</strong>
+            <ul style={{ margin: '8px 0 0 0' }}>
+              {mensajesError.map((msg, idx) => (
+                <li key={idx}>{msg}</li>
+              ))}
+            </ul>
+          </Alert>
+        )}
 
-            <Grid item xs={12} sm={4}><TextField label="Código barras" fullWidth size="small" value={form.codigoBarras} onChange={handleChange('codigoBarras')} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Código auxiliar" fullWidth size="small" value={form.codigoAuxiliar} onChange={handleChange('codigoAuxiliar')} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Unidad de medida" fullWidth size="small" value={form.unidadMedida} onChange={handleChange('unidadMedida')} /></Grid>
+        {/* Formulario */}
+        <Grid container spacing={2}>
+          {/* INFORMACIÓN BÁSICA */}
+          <Grid item xs={12}>
+            <Accordion defaultExpanded>
+              <AccordionSummary expandIcon={<IconChevronDown />}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  📋 Información Básica
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Tipo de artículo *"
+                      select
+                      fullWidth
+                      size="small"
+                      value={form.tipoArticulo}
+                      onChange={handleChange('tipoArticulo')}
+                      error={Boolean(errores.tipoArticulo)}
+                      helperText={errores.tipoArticulo}
+                    >
+                      {TIPOS_ARTICULO.map((t) => (
+                        <MenuItem key={t} value={t}>
+                          {t}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Grupo"
-                fullWidth
-                size="small"
-                value={form.grupo}
-                onChange={handleChange('grupo')}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton size="small" aria-label="buscar grupo">
-                        <IconSearch size={18} />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Marca"
-                fullWidth
-                size="small"
-                value={form.marca}
-                onChange={handleChange('marca')}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton size="small" aria-label="buscar marca">
-                        <IconSearch size={18} />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}><FormControlLabel control={<Checkbox checked={form.esActivo} onChange={handleChange('esActivo')} />} label="Es activo" /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Existencia" type="number" fullWidth size="small" value={form.existencia} onChange={handleChange('existencia')} /></Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Código interno *"
+                      fullWidth
+                      size="small"
+                      value={form.codigo}
+                      onChange={handleChange('codigo')}
+                      error={Boolean(errores.codigo)}
+                      helperText={errores.codigo}
+                      placeholder="Ej: PROD-001"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Nombre del producto *"
+                      fullWidth
+                      size="small"
+                      value={form.nombre}
+                      onChange={handleChange('nombre')}
+                      error={Boolean(errores.nombre)}
+                      helperText={errores.nombre}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Descripción *"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      size="small"
+                      value={form.descripcion}
+                      onChange={handleChange('descripcion')}
+                      error={Boolean(errores.descripcion)}
+                      helperText={errores.descripcion}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Código de barras"
+                      fullWidth
+                      size="small"
+                      value={form.codigoBarras}
+                      onChange={handleChange('codigoBarras')}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Código auxiliar"
+                      fullWidth
+                      size="small"
+                      value={form.codigoAuxiliar}
+                      onChange={handleChange('codigoAuxiliar')}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Código CABYS"
+                      fullWidth
+                      size="small"
+                      value={form.codigoCabys}
+                      onChange={handleChange('codigoCabys')}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Unidad de medida"
+                      fullWidth
+                      size="small"
+                      value={form.unidadMedida}
+                      onChange={handleChange('unidadMedida')}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Código proveedor"
+                      fullWidth
+                      size="small"
+                      value={form.codigoProveedor || ''}
+                      onChange={handleChange('codigoProveedor')}
+                      error={Boolean(errores.codigoProveedor)}
+                      helperText={errores.codigoProveedor}
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
           </Grid>
-        </AccordionDetails>
-      </Accordion>
 
-      <Accordion>
-        <AccordionSummary expandIcon={<IconChevronDown />}>
-          <Typography variant="subtitle1" fontWeight={600}>Información adicional</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={2}>
-            {form.tipoArticulo === 'Material' && (
-              <Grid item xs={12} sm={4}>
-                <TextField select label="Tipo de lente" fullWidth size="small" value={form.tipoLente} onChange={handleChange('tipoLente')}>
-                  {tiposLente.map(t => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
-                </TextField>
-              </Grid>
-            )}
-            <Grid item xs={12}><TextField label="Características adicionales" fullWidth size="small" multiline rows={2} value={form.caracteristicas} onChange={handleChange('caracteristicas')} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Mínimo" type="number" fullWidth size="small" value={form.minimo} onChange={handleChange('minimo')} error={!!errors.minimo} helperText={errors.minimo} /></Grid>
-            <Grid item xs={12} sm={4}><FormControlLabel control={<Checkbox checked={form.esPerecedero} onChange={handleChange('esPerecedero')} />} label="Es perecedero" /></Grid>
-            <Grid item xs={12} sm={4}>
-              <Button variant="outlined" component="label">Subir foto<input hidden accept="image/*" type="file" onChange={handleFotoChange} /></Button>
-              {form.foto && <Box component="img" src={form.foto} alt="Preview" sx={{ maxWidth: 120, display: 'block', mt: 1 }} />}
-            </Grid>
+          {/* CLASIFICACIÓN */}
+          <Grid item xs={12}>
+            <Accordion defaultExpanded>
+              <AccordionSummary expandIcon={<IconChevronDown />}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  🏷️ Clasificación
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Tipo de producto"
+                      select
+                      fullWidth
+                      size="small"
+                      value={form.tipoProducto || 'AR'}
+                      onChange={handleChange('tipoProducto')}
+                      error={Boolean(errores.tipoProducto)}
+                      helperText={errores.tipoProducto}
+                    >
+                      <MenuItem value="AR">Aro (AR)</MenuItem>
+                      <MenuItem value="MT">Material (MT)</MenuItem>
+                      <MenuItem value="SV">Servicio (SV)</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Número de tipo"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={form.noTipo || 1}
+                      onChange={handleChange('noTipo')}
+                      error={Boolean(errores.noTipo)}
+                      helperText={errores.noTipo}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Grupo *"
+                      select
+                      fullWidth
+                      size="small"
+                      value={form.noGrupo}
+                      onChange={handleChange('noGrupo')}
+                      error={Boolean(errores.noGrupo)}
+                      helperText={errores.noGrupo}
+                    >
+                      <MenuItem value="">Seleccionar grupo</MenuItem>
+                      <MenuItem value={1}>Lentes</MenuItem>
+                      <MenuItem value={2}>Accesorios</MenuItem>
+                      <MenuItem value={3}>Armazones</MenuItem>
+                      <MenuItem value={4}>Otros</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Marca"
+                      select
+                      fullWidth
+                      size="small"
+                      value={form.noMarca || ''}
+                      onChange={handleChange('noMarca')}
+                    >
+                      <MenuItem value="">Sin marca</MenuItem>
+                      <MenuItem value={1}>Marca A</MenuItem>
+                      <MenuItem value={2}>Marca B</MenuItem>
+                      <MenuItem value={3}>Marca C</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {form.tipoArticulo === 'Material' && (
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Tipo de lente"
+                        select
+                        fullWidth
+                        size="small"
+                        value={form.tipoLente}
+                        onChange={handleChange('tipoLente')}
+                      >
+                        <MenuItem value="">Seleccionar</MenuItem>
+                        {tiposLente.map((t) => (
+                          <MenuItem key={t.value} value={t.value}>
+                            {t.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                  )}
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Características"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      size="small"
+                      value={form.caracteristicas}
+                      onChange={handleChange('caracteristicas')}
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
           </Grid>
-        </AccordionDetails>
-      </Accordion>
 
-      <Accordion>
-        <AccordionSummary expandIcon={<IconChevronDown />}>
-          <Typography variant="subtitle1" fontWeight={600}>Costos y precios de venta</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}><TextField label="Costo promedio ponderado" type="number" fullWidth size="small" value={form.costoPromedioPonderado} onChange={handleChange('costoPromedioPonderado')} error={!!errors.costoPromedioPonderado} helperText={errors.costoPromedioPonderado} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Costo última compra" type="number" fullWidth size="small" value={form.costoUltimaCompra} onChange={handleChange('costoUltimaCompra')} error={!!errors.costoUltimaCompra} helperText={errors.costoUltimaCompra} /></Grid>
-            <Grid item xs={12} sm={4}><TextField label="Costo final" type="number" fullWidth size="small" value={form.costoFinal} onChange={handleChange('costoFinal')} error={!!errors.costoFinal} helperText={errors.costoFinal} /></Grid>
-            <Grid item xs={12}>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Nombre de la lista de precios</TableCell>
-                      <TableCell>Utilidad</TableCell>
-                      <TableCell>Precio neto (sin impuesto)</TableCell>
-                      <TableCell>Precio al cliente</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(form.listasPrecios || []).length > 0 ? (
-                      (form.listasPrecios || []).map((lp, idx) => (
-                        <TableRow key={lp.id || idx}>
-                          <TableCell>
-                            <TextField size="small" fullWidth value={lp.nombre} InputProps={{ readOnly: true }} />
-                          </TableCell>
-                          <TableCell>
-                            <TextField size="small" type="number" value={lp.utilidad} onChange={handleListaChange(idx, 'utilidad')} />
-                          </TableCell>
-                          <TableCell>
-                            <TextField size="small" type="number" value={lp.precioNeto} onChange={handleListaChange(idx, 'precioNeto')} />
-                          </TableCell>
-                          <TableCell>
-                            {lp.precioCliente?.toFixed ? lp.precioCliente.toFixed(2) : lp.precioCliente}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center">No hay listas de precios</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
+          {/* IMPUESTOS Y PRECIOS */}
+          <Grid item xs={12}>
+            <Accordion defaultExpanded>
+              <AccordionSummary expandIcon={<IconChevronDown />}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  💰 Impuestos y Precios
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Tipo de impuesto"
+                      select
+                      fullWidth
+                      size="small"
+                      value={form.tipoImpuesto}
+                      onChange={handleChange('tipoImpuesto')}
+                    >
+                      {TIPOS_IMPUESTO.map((t) => (
+                        <MenuItem key={t} value={t}>
+                          {t}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Porcentaje de impuesto"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={form.porcentajeImpuesto}
+                      onChange={handleChange('porcentajeImpuesto')}
+                      error={Boolean(errores.porcentajeImpuesto)}
+                      helperText={errores.porcentajeImpuesto}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Costo promedio"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={form.costoPromedio}
+                      onChange={handleChange('costoPromedio')}
+                      error={Boolean(errores.costoPromedio)}
+                      helperText={errores.costoPromedio}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₡</InputAdornment>,
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Último costo"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={form.ultimoCosto}
+                      onChange={handleChange('ultimoCosto')}
+                      error={Boolean(errores.ultimoCosto)}
+                      helperText={errores.ultimoCosto}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₡</InputAdornment>,
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Último precio costo"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={form.ultimoPrecioCosto}
+                      onChange={handleChange('ultimoPrecioCosto')}
+                      error={Boolean(errores.ultimoPrecioCosto)}
+                      helperText={errores.ultimoPrecioCosto}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">₡</InputAdornment>,
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
           </Grid>
-        </AccordionDetails>
-      </Accordion>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-        <Button variant="outlined" onClick={onCancel}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>{modoEdicion ? 'Guardar' : 'Crear'}</Button>
+          {/* INVENTARIO */}
+          <Grid item xs={12}>
+            <Accordion>
+              <AccordionSummary expandIcon={<IconChevronDown />}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  📦 Inventario
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Existencia actual"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={form.existencia}
+                      onChange={handleChange('existencia')}
+                      error={Boolean(errores.existencia)}
+                      helperText={errores.existencia}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Stock mínimo"
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={form.minimo}
+                      onChange={handleChange('minimo')}
+                      error={Boolean(errores.minimo)}
+                      helperText={errores.minimo}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={form.esPerecedero}
+                          onChange={handleChange('esPerecedero')}
+                        />
+                      }
+                      label="¿Es perecedero?"
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+
+          {/* ESTADO */}
+          <Grid item xs={12}>
+            <Divider />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={form.esActivo}
+                  onChange={handleChange('esActivo')}
+                />
+              }
+              label="Producto Activo"
+              sx={{ mt: 2 }}
+            />
+          </Grid>
+
+          {/* BOTONES */}
+          <Grid item xs={12}>
+            <Stack direction="row" spacing={2} justifyContent="flex-end">
+              <Button variant="outlined" onClick={onCancel}>
+                <IconX size={18} style={{ marginRight: 4 }} />
+                Cancelar
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={enviando || loading}
+              >
+                {enviando || loading ? (
+                  <>
+                    <CircularProgress size={18} sx={{ mr: 1 }} />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <IconCheck size={18} style={{ marginRight: 4 }} />
+                    {modoEdicion ? 'Actualizar' : 'Crear'} Producto
+                  </>
+                )}
+              </Button>
+            </Stack>
+          </Grid>
+        </Grid>
       </Box>
-    </Box>
+    </ParentCard>
   );
 };
 
