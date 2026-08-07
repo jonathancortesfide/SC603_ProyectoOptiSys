@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'src/utils/axios';
 import { getSucursalIdentificador } from '../../utils/sucursal';
 
 const apiHost = import.meta.env.VITE_API_HOST || 'https://localhost:44352';
