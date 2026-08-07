@@ -1,27 +1,27 @@
 // ExamenVista.jsx
+import React, { useState, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Paper,
-  Snackbar,
-  Step,
-  StepButton,
-  Stepper,
-  Typography,
-} from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PageContainer from '../../components/container/PageContainer';
-import ParentCard from '../../components/shared/ParentCard';
-import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
-import { AgregarExamen } from '../../requests/examenes/RequestsExamenes';
-import axiosServices from '../../utils/axios';
-import { getSucursalIdentificador } from '../../utils/sucursal';
+    Box,
+    Button,
+    Stepper,
+    Step,
+    StepButton,
+    Typography,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Paper,
+    Snackbar,
+    Alert,
+} from "@mui/material";
+import PageContainer from "../../components/container/PageContainer";
+import Breadcrumb from "../../layouts/full/shared/breadcrumb/Breadcrumb";
+import ParentCard from "../../components/shared/ParentCard";
+import axiosServices from "../../utils/axios";
+import { getSucursalIdentificador } from "../../utils/sucursal";
+import { AgregarExamen } from "../../requests/examenes/RequestsExamenes";
 
 // Subcomponentes
 import DatosGenerales from './DatosGenerales';
@@ -78,6 +78,7 @@ const loadDraft = () => {
 };
 
 const ExamenVista = () => {
+  const location = useLocation();
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -86,6 +87,23 @@ const ExamenVista = () => {
   const [guardadoExitoso, setGuardadoExitoso] = useState(false);
   const [numeroExamenGuardado, setNumeroExamenGuardado] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const pacienteDesdeRuta = location.state?.paciente;
+    if (!pacienteDesdeRuta) return;
+
+    const noPaciente =
+      pacienteDesdeRuta?.noPaciente ?? pacienteDesdeRuta?.numeroDePaciente ?? pacienteDesdeRuta?.NoPaciente ?? 0;
+    const nombrePaciente =
+      pacienteDesdeRuta?.nombre ?? pacienteDesdeRuta?.Nombre ?? pacienteDesdeRuta?.nombrePaciente ?? "";
+
+    setExamen((prev) => ({
+      ...prev,
+      NoPaciente: noPaciente || 0,
+      NombrePaciente: nombrePaciente,
+      Paciente: pacienteDesdeRuta,
+    }));
+  }, [location.state]);
 
   const examenResumen = useMemo(() => {
     // Mostrar todos los campos de `examen` de forma legible y no editable.
@@ -314,8 +332,9 @@ const ExamenVista = () => {
   }, [examen]);
 
   const stepsContent = [
-    <Box key="datos-generales" sx={{ display: activeStep === 0 ? 'block' : 'none' }}>
-      <DatosGenerales examen={examen} setExamen={setExamen} />
+
+    <Box key="datos-generales" sx={{ display: activeStep === 0 ? "block" : "none" }}>
+      <DatosGenerales examen={examen} setExamen={setExamen} initialPaciente={examen.Paciente} />
     </Box>,
     <Box key="graduacion-rx" sx={{ display: activeStep === 1 ? 'block' : 'none' }}>
       <GraduacionRx examen={examen} setExamen={setExamen} />

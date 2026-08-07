@@ -59,30 +59,28 @@ const CampoMotivo = ({ value, onCommit }) => {
   );
 };
 
-const DatosGenerales = ({ examen, setExamen }) => {
-  const handlePacienteChange = useCallback(
-    (paciente) => {
-      setExamen((prev) => ({
-        ...prev,
-        NoPaciente: paciente?.noPaciente ?? 0,
-        NombrePaciente: paciente?.nombre ?? paciente?.Nombre ?? prev.NombrePaciente ?? '',
-        Paciente: paciente ?? null,
-      }));
-    },
-    [setExamen],
-  );
+const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
+    const handlePacienteChange = useCallback((paciente) => {
+        setExamen((prev) => ({
+            ...prev,
+            NoPaciente: paciente?.noPaciente ?? 0,
+            NombrePaciente: paciente?.nombre ?? paciente?.Nombre ?? prev.NombrePaciente ?? "",
+            Paciente: paciente ?? null,
+        }));
+    }, [setExamen]);
 
-  const handleDoctorChange = useCallback(
-    (doctor) => {
-      setExamen((prev) => ({
-        ...prev,
-        NombreProfesional: doctor?.nombre || doctor?.Nombre || '',
-        CodigoProfesional: doctor?.codigoProfesional || doctor?.CodigoProfesional || '',
-        IdProfesional: doctor?.idUsuario ?? doctor?.identificador ?? doctor?.id ?? null,
-      }));
-    },
-    [setExamen],
-  );
+    const handleDoctorChange = useCallback((doctor) => {
+        setExamen((prev) => ({
+            ...prev,
+            NombreProfesional: doctor?.nombre || doctor?.Nombre || "",
+            CodigoProfesional: doctor?.codigoProfesional || doctor?.CodigoProfesional || "",
+            IdProfesional:
+                doctor?.idUsuario ??
+                doctor?.identificador ??
+                doctor?.id ??
+                null,
+        }));
+    }, [setExamen]);
 
   // Callback estable para "commitear" el Motivo al estado del padre
   const handleMotivoCommit = useCallback(
@@ -143,6 +141,7 @@ const DatosGenerales = ({ examen, setExamen }) => {
           <Box mb={2}>
             <BusquedaDePaciente
               noPaciente={examen.NoPaciente}
+              initialPaciente={initialPaciente}
               onPacienteChange={handlePacienteChange}
             />
           </Box>
