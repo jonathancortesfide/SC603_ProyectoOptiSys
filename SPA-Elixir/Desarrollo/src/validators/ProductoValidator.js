@@ -66,10 +66,8 @@ export const validarProductoBasico = (producto) => {
     errores.descripcion = 'La descripción no puede exceder 500 caracteres';
   }
 
-  // Validar grupo
-  if (!producto.noGrupo || producto.noGrupo <= 0) {
-    errores.noGrupo = ERRORES.GRUPO_REQUERIDO;
-  }
+  // Validar grupo - es opcional, se asignará por defecto al servidor
+  // El backend asignará grupo 1 si no se proporciona
 
   // Validar tipo de artículo
   if (!producto.tipoArticulo || !String(producto.tipoArticulo).trim()) {
@@ -261,27 +259,29 @@ export const normalizarProducto = (producto) => {
     : (producto.activo !== undefined ? Boolean(producto.activo) : true);
 
   return {
-    IdProducto: producto.idProducto || 0, // PascalCase para coincidir con el DTO del backend
+    IdProducto: producto.idProducto || 0,
     NoEmpresa: Number(producto.noEmpresa) || 1,
     Codigo: String(producto.codigo || '').trim(),
-    Nombre: String(producto.nombre || '').trim(),
     Descripcion: String(producto.descripcion || '').trim(),
     CodigoBarra: String(producto.codigoBarras || '').trim(),
+    CodigoProveedor: String(producto.codigoProveedor || '').trim(),
     CodigoAuxiliar: String(producto.codigoAuxiliar || '').trim(),
     CodigoCabys: String(producto.codigoCabys || '').trim(),
-    CodigoProveedor: String(producto.codigoProveedor || '').trim(),
     TipoArticulo: producto.tipoArticulo || 'Material',
-    NoGrupo: Number(producto.noGrupo) || 0,
+    NoGrupo: producto.noGrupo ? Number(producto.noGrupo) : null, // Permitir null
     NoMarca: producto.noMarca ? Number(producto.noMarca) : null,
     TipoProducto: String(producto.tipoProducto || 'AR').trim(),
     NoTipo: Number(producto.noTipo) || 1,
     TipoImpuesto: producto.tipoImpuesto || 'IVA',
     PorcentajeImpuesto: Number(producto.porcentajeImpuesto) || 0,
-    UnidadMedida: String(producto.unidadMedida || '').trim(),
+    NoUnidadMedida: String(producto.unidadMedida || '').trim() || null,
+    CodigoMaterial: String(producto.codigoMaterial || '').trim() || null,
+    CodigoImpuesto: String(producto.codigoImpuesto || '').trim() || null,
+    NoTarifa: String(producto.noTarifa || '').trim() || null,
     Existencia: Number(producto.existencia) || 0,
     Minimo: Number(producto.minimo) || 0,
     Perecedero: Boolean(producto.esPerecedero),
-    Activo: esActivo, // Propiedad esperada por el backend (PascalCase, singular)
+    Activo: esActivo,
     CostoPromedio: producto.costoPromedio ? Number(producto.costoPromedio) : 0,
     UltimoCosto: producto.ultimoCosto ? Number(producto.ultimoCosto) : 0,
     UltimoPrecioCosto: producto.ultimoPrecioCosto ? Number(producto.ultimoPrecioCosto) : 0,

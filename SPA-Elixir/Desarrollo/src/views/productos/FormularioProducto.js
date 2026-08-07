@@ -56,7 +56,7 @@ const TIPOS_IMPUESTO = ['Exento', 'IVA', 'Otro'];
  * Incluye validaciones completas según el manual
  */
 const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
-  const { crearProducto, actualizarProducto, loading, error, cargarProductoPorId, productoActual } = useProductos();
+  const { crearProducto, actualizarProducto, loading, error, successMessage, cargarProductoPorId, productoActual } = useProductos();
   const usuarioActual = getCurrentUsername();
 
   // Estado del formulario
@@ -95,6 +95,7 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
   const [errores, setErrores] = useState({});
   const [tiposLente, setTiposLente] = useState([]);
   const [enviando, setEnviando] = useState(false);
+  const [guardoExitoso, setGuardoExitoso] = useState(false);
 
   // ============================================
   // EFECTOS
@@ -103,6 +104,24 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
   useEffect(() => {
     cargarTiposLente();
   }, []);
+
+  // Verificar si la creación/actualización fue exitosa
+  useEffect(() => {
+    if (guardoExitoso && !loading && !error) {
+      console.log('✅ Producto guardado exitosamente en Redux');
+      setEnviando(false);
+      onGuardar && onGuardar();
+    }
+  }, [guardoExitoso, loading, error, onGuardar]);
+
+  // Mostrar error si ocurrió
+  useEffect(() => {
+    if (error && !guardoExitoso) {
+      console.error('❌ Error en Redux:', error);
+      setErrores({ general: error });
+      setEnviando(false);
+    }
+  }, [error]);
 
   // Cargar datos iniciales cuando se abre el formulario
   useEffect(() => {
@@ -221,25 +240,33 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
     }
 
     setEnviando(true);
+    setGuardoExitoso(false);
+    
+    // Limpiar errores previos
+    setErrores({});
+
     try {
       // Normalizar datos
       const productoNormalizado = normalizarProducto(form);
 
-      // Enviar
+      console.log('📝 FormularioProducto - Enviando:', productoNormalizado);
+      console.log('👤 Usuario actual:', productoNormalizado.Usuario);
+      console.log('👥 Grupo (NoGrupo):', productoNormalizado.NoGrupo);
+
+      // Enviar (el resultado se verifica en el useEffect)
       if (modoEdicion) {
         await actualizarProducto(productoNormalizado);
       } else {
         await crearProducto(productoNormalizado);
       }
 
-      // Si llegó aquí, fue exitoso
-      onGuardar && onGuardar();
+      // Marcar como que se envió, el useEffect verificará el resultado
+      setGuardoExitoso(true);
     } catch (err) {
-      console.error('Error al guardar producto:', err);
+      console.error('❌ Error al guardar producto:', err);
       setErrores({
         general: err.message || 'Error al guardar el producto',
       });
-    } finally {
       setEnviando(false);
     }
   };
@@ -446,20 +473,24 @@ const FormularioProducto = ({ producto, modoEdicion, onGuardar, onCancel }) => {
 
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      label="Grupo *"
+                      label="Grupo"
                       select
                       fullWidth
                       size="small"
-                      value={form.noGrupo}
-                      onChange={handleChange('noGrupo')}
+                      value={form.noGrupo || ''}
+                      onChange={(e) => {
+                        const valor = e.target.value;
+                        handleChange('noGrupo')(e);
+                        console.log('🏷️ Grupo seleccionado:', valor, 'tipo:', typeof valor);
+                      }}
                       error={Boolean(errores.noGrupo)}
-                      helperText={errores.noGrupo}
+                      helperText={errores.noGrupo || 'Opcional - se asignará automáticamente'}
                     >
                       <MenuItem value="">Seleccionar grupo</MenuItem>
-                      <MenuItem value={1}>Lentes</MenuItem>
-                      <MenuItem value={2}>Accesorios</MenuItem>
-                      <MenuItem value={3}>Armazones</MenuItem>
-                      <MenuItem value={4}>Otros</MenuItem>
+                      <MenuItem value="1">Lentes</MenuItem>
+                      <MenuItem value="2">Accesorios</MenuItem>
+                      <MenuItem value="3">Armazones</MenuItem>
+                      <MenuItem value="4">Otros</MenuItem>
                     </TextField>
                   </Grid>
 

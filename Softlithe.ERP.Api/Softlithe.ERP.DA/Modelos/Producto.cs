@@ -32,7 +32,7 @@ public partial class Producto
     public string Descripcion { get; set; } = null!;
 
     [Column("no_grupo")]
-    public int NoGrupo { get; set; }
+    public int? NoGrupo { get; set; }
 
     [Column("activo")]
     public bool Activo { get; set; } = true;

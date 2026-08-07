@@ -49,13 +49,24 @@ export const createProducto = createAsyncThunk(
   'productos/createProducto',
   async (producto, { rejectWithValue }) => {
     try {
+      console.log('➕ Creando producto:', producto);
       const response = await agregarProducto(producto);
-      if (response && response.esCorrecto !== false) {
+      console.log('📨 Respuesta del servidor al crear:', response);
+      
+      // Verificar si la creación fue exitosa
+      // EsCorrecto viene en PascalCase desde el backend .NET
+      const esExitoso = response?.EsCorrecto === true || response?.esCorrecto === true;
+      
+      if (esExitoso) {
+        console.log('✅ Producto creado correctamente');
         return { ...producto };
       } else {
-        return rejectWithValue(response?.mensaje || 'Error al crear producto');
+        const mensajeError = response?.Mensaje || response?.mensaje || 'Error al crear producto';
+        console.error('❌ Error en creación:', mensajeError);
+        return rejectWithValue(mensajeError);
       }
     } catch (error) {
+      console.error('❌ Excepción al crear:', error);
       return rejectWithValue(error.message || 'Error al crear producto');
     }
   }
@@ -65,13 +76,24 @@ export const updateProducto = createAsyncThunk(
   'productos/updateProducto',
   async (producto, { rejectWithValue }) => {
     try {
+      console.log('✏️ Modificando producto:', producto);
       const response = await modificarProducto(producto);
-      if (response && response.esCorrecto !== false) {
+      console.log('📨 Respuesta del servidor al modificar:', response);
+      
+      // Verificar si la modificación fue exitosa
+      // EsCorrecto viene en PascalCase desde el backend .NET
+      const esExitoso = response?.EsCorrecto === true || response?.esCorrecto === true;
+      
+      if (esExitoso) {
+        console.log('✅ Producto modificado correctamente');
         return producto;
       } else {
-        return rejectWithValue(response?.mensaje || 'Error al modificar producto');
+        const mensajeError = response?.Mensaje || response?.mensaje || 'Error al modificar producto';
+        console.error('❌ Error en modificación:', mensajeError);
+        return rejectWithValue(mensajeError);
       }
     } catch (error) {
+      console.error('❌ Excepción al modificar:', error);
       return rejectWithValue(error.message || 'Error al modificar producto');
     }
   }
