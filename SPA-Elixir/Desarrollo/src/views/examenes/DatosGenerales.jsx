@@ -106,9 +106,12 @@ const DatosGenerales = ({ examen, setExamen }) => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Fecha del Examen"
-            type="date"
-            value={examen.FechaExamen || new Date().toISOString().split('T')[0]}
+            label="Fecha y hora del examen"
+            type="datetime-local"
+            required
+            error={!String(examen?.FechaExamen ?? '').trim()}
+            helperText={!String(examen?.FechaExamen ?? '').trim() ? 'Debe seleccionar una fecha y hora.' : ''}
+            value={examen?.FechaExamen ?? ''}
             onChange={(e) => setExamen(prev => ({
               ...prev,
               FechaExamen: e.target.value

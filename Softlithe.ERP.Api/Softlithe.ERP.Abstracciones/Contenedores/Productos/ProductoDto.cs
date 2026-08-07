@@ -28,8 +28,8 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Productos
         [Required(ErrorMessage = MensajeDeProductoDto.DescripcionProductoRequerida)]
         public string Descripcion { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El grupo del producto es requerido.")]
-        public int NoGrupo { get; set; }
+        // NoGrupo es opcional
+        public int? NoGrupo { get; set; }
 
         public bool? Activo { get; set; }
 
@@ -60,6 +60,17 @@ namespace Softlithe.ERP.Abstracciones.Contenedores.Productos
 
         /// <summary>Precio unitario con impuesto (<c>PrecioVenta.precio_neto</c>) en la lista por defecto.</summary>
         public decimal? PrecioConImpuesto { get; set; }
+
+        // Campos de ProductoDetalle
+        public int? Existencia { get; set; }
+
+        public double? Minimo { get; set; }
+
+        public bool? Perecedero { get; set; }
+
+        public string? CaracteristicasAdicionales { get; set; }
+
+        public byte[]? Foto { get; set; }
     }
 
     public class ProductoDetalleDto : ProductoDto

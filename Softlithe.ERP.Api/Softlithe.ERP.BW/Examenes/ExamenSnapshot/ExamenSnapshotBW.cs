@@ -66,6 +66,35 @@ namespace Softlithe.ERP.BW.Examenes.ExamenSnapshot
             }
         }
 
+        public async Task<ModeloValidacionConDatos<List<ExamenSnapshotDto>>> ObtenerPorNoPaciente(int noPaciente)
+        {
+            var respuesta = new ModeloValidacionConDatos<List<ExamenSnapshotDto>>
+            {
+                Mensaje = string.Empty,
+                EsCorrecto = false,
+                Datos = null
+            };
+            try
+            {
+                var examenesSnapshot = await _examenSnapshotAD.ObtenerPorNoPaciente(noPaciente);
+
+                respuesta.Datos = examenesSnapshot;
+                respuesta.EsCorrecto = true;
+                respuesta.Mensaje = "Exámenes obtenidos correctamente.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al obtener exámenes snapshot por número de paciente: {noPaciente}",
+                    noPaciente);
+
+                respuesta.Mensaje = "Ocurrió un error al obtener los exámenes.";
+            }
+
+            return respuesta;
+        }
+
 
 
         public async Task<ModeloValidacionConDatos<bool>> Crear(ExamenSnapshotDto examenSnapshot)

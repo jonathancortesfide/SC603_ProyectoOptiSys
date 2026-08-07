@@ -13,6 +13,9 @@ namespace Softlithe.ERP.Abstracciones.DA.Productos
         Task<int> ActualizarProductoAsync(ProductoDto productoDto);
 
         Task<int> ModificaEstadoProductoAsync(ProductoInActivaDto productoInActivaDto);
+        
+        Task<int> EliminarProductoAsync(int idProducto);
+        
         Task<List<ProductoDto>> ObtenerProductosMTAsync(int noEmpresa, int noTipo);
 
         Task<List<ProductoDto>> ObtenerProductosARAsync(int noEmpresa, string descripcion);
