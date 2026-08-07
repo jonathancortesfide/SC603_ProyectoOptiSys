@@ -59,7 +59,7 @@ const CampoMotivo = ({ value, onCommit }) => {
   );
 };
 
-const DatosGenerales = ({ examen, setExamen }) => {
+const DatosGenerales = ({ examen, setExamen, initialPaciente = null }) => {
   const handlePacienteChange = useCallback((paciente) => {
     setExamen(prev => ({
       ...prev,
@@ -126,6 +126,7 @@ const DatosGenerales = ({ examen, setExamen }) => {
           <Box mb={2}>
             <BusquedaDePaciente
               noPaciente={examen.NoPaciente}
+              initialPaciente={initialPaciente}
               onPacienteChange={handlePacienteChange}
             />
           </Box>

@@ -26,7 +26,7 @@ import {
 import Autocomplete from '@mui/material/Autocomplete';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
@@ -448,6 +448,7 @@ const ResumenExamen = ({ examen }) => {
 };
 
 const ConsultaExamenVista = () => {
+  const location = useLocation();
   const [filtroExamen, setFiltroExamen] = useState('');
   const [examen, setExamen] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -597,6 +598,15 @@ const ConsultaExamenVista = () => {
       setExamenesPacienteLoading(false);
     }
   };
+
+  useEffect(() => {
+    const pacienteDesdeRuta = location.state?.paciente;
+    if (!pacienteDesdeRuta) return;
+
+    setPacienteSeleccionado(pacienteDesdeRuta);
+    setPacienteTexto(obtenerEtiquetaPaciente(pacienteDesdeRuta));
+    cargarExamenesPorPaciente(pacienteDesdeRuta);
+  }, [location.state]);
 
   const graduaciones = examen ? parsearGraduaciones(examen.xml_graduaciones) : null;
 
