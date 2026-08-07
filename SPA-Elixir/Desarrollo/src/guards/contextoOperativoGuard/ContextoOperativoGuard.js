@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import useAuth from 'src/guards/authGuard/UseAuth';
 import { hasEmpresaElegidaParaAcceso } from 'src/utils/empresa';
@@ -14,29 +14,26 @@ export const STATE_CONTEXTO_OPERATIVO_INCOMPLETO = 'contextoOperativoIncompleto'
  * Si el usuario autenticado abre una URL del app sin ese contexto, se cierra sesión y se envía a login.
  */
 const ContextoOperativoGuard = ({ children }) => {
-  const { isAuthenticated, isInitialized, logout } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const contextoCompleto = hasEmpresaElegidaParaAcceso() && hasSucursalElegidaParaAcceso();
 
   useEffect(() => {
     if (!isInitialized || !isAuthenticated) return;
-    if (hasEmpresaElegidaParaAcceso() && hasSucursalElegidaParaAcceso()) return;
+    if (contextoCompleto) return;
 
-    let cancelled = false;
-    (async () => {
-      await logout();
-      if (!cancelled) {
-        navigate('/auth/login', {
-          replace: true,
-          state: { [STATE_CONTEXTO_OPERATIVO_INCOMPLETO]: true },
-        });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isInitialized, isAuthenticated, navigate, logout]);
+    const currentPath = `${location.pathname}${location.search}`;
+    const isResolverFlow = currentPath.startsWith('/resolver-contexto') || currentPath.startsWith('/seleccion-empresa') || currentPath.startsWith('/seleccion-sucursal') || currentPath.startsWith('/sin-sucursal');
+
+    if (!isResolverFlow) {
+      navigate('/resolver-contexto', {
+        replace: true,
+        state: { [STATE_CONTEXTO_OPERATIVO_INCOMPLETO]: true },
+      });
+    }
+  }, [isInitialized, isAuthenticated, contextoCompleto, location.pathname, location.search, navigate]);
 
   if (!isInitialized) {
     return null;

@@ -7,7 +7,7 @@ import AuthLogin from '../authForms/AuthLogin';
 
 const Login = () => (
   <PageContainer title="Login" description="this is Login page">
-    <Grid container spacing={0} sx={{ overflowX: 'hidden' }}>
+    <Grid container spacing={0} sx={{ overflow: 'hidden', width: '100%' }}>
       <Grid
         item
         xs={12}
@@ -29,7 +29,16 @@ const Login = () => (
         }}
       >
         <Box position="relative">
-          <Box px={3}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              px: 0,
+              pt: 2,
+              ml: 0,
+            }}
+          >
             <Logo />
           </Box>
           <Box
@@ -69,16 +78,16 @@ const Login = () => (
       >
         <Box p={4}>
           <AuthLogin
-            title="Welcome to Softlithe"
+            title="Bienvenido a LENSSYS"
             subtext={
               <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                Your Admin Dashboard
+                Tu plataforma administrativa
               </Typography>
             }
             subtitle={
               <Stack direction="row" spacing={1} mt={3}>
                 <Typography color="textSecondary" variant="h6" fontWeight="500">
-                  New to Softlithe?
+                  ¿Eres nuevo en LENSSYS?
                 </Typography>
                 <Typography
                   component={Link}
@@ -89,7 +98,7 @@ const Login = () => (
                     color: 'primary.main',
                   }}
                 >
-                  Create an account
+                  Crea una cuenta
                 </Typography>
               </Stack>
             }

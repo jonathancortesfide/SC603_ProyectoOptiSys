@@ -102,8 +102,8 @@ const Router = [
       </AuthGuard>
     ),
     children: [
-      { path: '/', element: <Navigate to="/sample-page" /> },
-      { path: '/sample-page', exact: true, element: <SamplePage /> },
+      { path: '/', element: <SamplePage /> },
+      { path: '/sample-page', exact: true, element: <Navigate to="/" replace /> },
       { path: '/pacientes', exact: true, element: <ProtectedRoute requiredPermissions={['PACIENTE_VER']}><Pacientes /></ProtectedRoute> },
       { path: '/crearexamen', exact: true, element: <ProtectedRoute requiredPermissions={['EXAMEN_CREAR']}><ExamenDeLaVista /></ProtectedRoute> },
       { path: '/verexamenes', exact: true, element: <ProtectedRoute requiredPermissions={['EXAMEN_VER']}><VerExamenesDeLaVista /></ProtectedRoute> },
