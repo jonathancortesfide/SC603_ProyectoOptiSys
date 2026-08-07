@@ -77,8 +77,11 @@ namespace Softlithe.ERP.DA.Pacientes
             {
                 var conexion = await ObtenerConexionAsync();
 
+                var idTipoIdentificacion = pacienteDto.IdTipoIdentificacion;
+
                 var parametros = new DynamicParameters();
                 parametros.Add("@Identificador", pacienteDto.Identificador);
+                parametros.Add("@IdTipoIdentificacion", idTipoIdentificacion);
                 parametros.Add("@TipoIdentificacion", string.IsNullOrWhiteSpace(pacienteDto.TipoIdentificacion) ? null : pacienteDto.TipoIdentificacion);
                 parametros.Add("@Cedula", pacienteDto.Cedula);
                 parametros.Add("@Nombre", pacienteDto.Nombre);
@@ -118,9 +121,12 @@ namespace Softlithe.ERP.DA.Pacientes
             {
                 var conexion = await ObtenerConexionAsync();
 
+                var idTipoIdentificacion = pacienteDto.IdTipoIdentificacion;
+
                 var parametros = new DynamicParameters();
                 parametros.Add("@NoPaciente", pacienteDto.NoPaciente);
                 parametros.Add("@Identificador", pacienteDto.Identificador);
+                parametros.Add("@IdTipoIdentificacion", idTipoIdentificacion);
                 parametros.Add("@TipoIdentificacion", string.IsNullOrWhiteSpace(pacienteDto.TipoIdentificacion) ? null : pacienteDto.TipoIdentificacion);
                 parametros.Add("@Cedula", pacienteDto.Cedula);
                 parametros.Add("@Nombre", pacienteDto.Nombre);

@@ -14,11 +14,21 @@ const _CACHE_TTL = 30 * 1000;
 const invalidarCache = () => { _cachePacientes = { data: null, ts: 0 }; };
 
 const TIPO_ID_MAP = {
-    fisica:    '01',
-    juridica:  '02',
-    dimex:     '02',
-    nite:      '04',
-    pasaporte: '03',
+    1: 'FISICA',
+    2: 'JURIDICA',
+};
+
+const toTipoIdentificacionId = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue) && numericValue > 0) return numericValue;
+
+    const normalized = String(value).trim().toLowerCase();
+    if (normalized === 'juridica' || normalized === '02') return 2;
+    if (normalized === 'fisica' || normalized === '01') return 1;
+
+    return null;
 };
 
 const buildDto = (form, noPaciente = 0) => ({
@@ -27,7 +37,8 @@ const buildDto = (form, noPaciente = 0) => ({
     cedula:                     form.identificacion || '',
     nombre:                     form.nombre || '',
     usuario:                    getCurrentUsername(),
-    tipoIdentificacion:         TIPO_ID_MAP[form.tipoIdentificacion] ?? form.tipoIdentificacion ?? null,
+    idTipoIdentificacion:       toTipoIdentificacionId(form.tipoIdentificacion),
+    tipoIdentificacion:         TIPO_ID_MAP[toTipoIdentificacionId(form.tipoIdentificacion)] ?? form.tipoIdentificacion ?? null,
     direccion:                  form.direccion || null,
     fechaNacimiento:            form.fechaNacimiento ? `${form.fechaNacimiento}T00:00:00` : null,
     email:                      form.email1 || null,
