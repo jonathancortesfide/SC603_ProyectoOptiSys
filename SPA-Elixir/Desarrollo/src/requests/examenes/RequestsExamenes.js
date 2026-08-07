@@ -92,7 +92,15 @@ const buildAgregarExamenDto = (examen = {}) => {
     let fechaExamen = new Date().toISOString();
     if (examen.FechaExamen) {
         if (typeof examen.FechaExamen === 'string') {
-            fechaExamen = new Date(`${examen.FechaExamen}T00:00:00`).toISOString();
+            // Si ya viene con hora (2026-08-12T15:47), la conserva.
+            // Si solo viene la fecha (2026-08-12), agrega la hora actual.
+            if (examen.FechaExamen.includes('T')) {
+                fechaExamen = examen.FechaExamen.slice(0, 16);
+            } else {
+                const ahora = new Date();
+                const horaActual = ahora.toTimeString().slice(0, 5); // HH:mm
+                fechaExamen = `${examen.FechaExamen}T${horaActual}`;
+            }
         } else if (examen.FechaExamen instanceof Date) {
             fechaExamen = examen.FechaExamen.toISOString();
         }
@@ -143,7 +151,7 @@ const buildAgregarExamenDto = (examen = {}) => {
         CostoMaterial: sanitizeValue(examen.CostoMaterial),
         CostoExamen: sanitizeValue(examen.CostoExamen),
         PrecioFinal: sanitizeValue(examen.PrecioFinal),
-       
+
 
 
         Estado: sanitizeValue(examen.Estado) ?? 'Activo',
@@ -155,9 +163,9 @@ const buildAgregarExamenDto = (examen = {}) => {
         NombrePaciente: sanitizeValue(examen.NombrePaciente),
         NombreProfesional: sanitizeValue(examen.NombreProfesional),
         NumeroEmpresa: sanitizeValue(examen.NumeroEmpresa) ?? identificador ?? 1,
-        
-        
-        
+
+
+
     });
 
     return dto;

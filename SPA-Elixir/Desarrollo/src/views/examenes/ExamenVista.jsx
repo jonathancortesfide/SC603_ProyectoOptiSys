@@ -24,14 +24,14 @@ const EXAMEN_STORAGE_KEY = "examenDraft";
 const createInitialExamenState = () => ({
   NoExamen: 0,
   NoPaciente: 0,
-  FechaExamen: new Date().toISOString().split("T")[0],
+  FechaExamen: "",
   Motivo: "",
   NombrePaciente: "",
   Paciente: null,
   NombreProfesional: "",
   CodigoProfesional: "",
   IdProfesional: null,
-  
+
   observacionesGenerales: "",
   TipoLente: "",
   TipoLenteId: null,
@@ -148,7 +148,7 @@ const ExamenVista = () => {
     const obtenerProximoNumeroExamen = async () => {
       try {
         const identificadorSucursal = getSucursalIdentificador();
-        
+
         if (!identificadorSucursal) {
           console.warn("No se encontró identificador de sucursal en sesión");
           return;
@@ -160,7 +160,7 @@ const ExamenVista = () => {
         );
 
         console.log("Respuesta de API:", response.data);
-        
+
         if (response.data && typeof response.data === 'number') {
           console.log("Actualizando NoExamen a:", response.data);
           setExamen((prev) => ({
@@ -177,7 +177,9 @@ const ExamenVista = () => {
   }, []);
 
   const isStep0Valid = () => {
-    if (!examen.FechaExamen) {
+    const fechaExamen = String(examen?.FechaExamen ?? "").trim();
+
+    if (!fechaExamen) {
       return { valid: false, message: "Debe seleccionar una fecha de examen." };
     }
     if (!examen.NoPaciente) {
@@ -365,7 +367,7 @@ const ExamenVista = () => {
           variant="filled"
           onClose={() => setOpenSnackbar(false)}
         >
-          Examen número {examen.NoExamen} guardado correctamente
+          Examen número  guardado correctamente
         </Alert>
       </Snackbar>
     </PageContainer>
